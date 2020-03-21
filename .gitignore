@@ -1,1 +1,5 @@
-Credentials/spotifyToken.txt
+__pycache__
+credentials/spotifyCredentials.txt
+credentials/databaseCredentials.txt
+.cache*
+credentials/*
