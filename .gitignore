@@ -3,3 +3,4 @@ credentials/spotifyCredentials.txt
 credentials/databaseCredentials.txt
 .cache*
 credentials/*
+web/node_modules/*
