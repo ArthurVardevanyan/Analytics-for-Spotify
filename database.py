@@ -58,7 +58,7 @@ def add_song(spotify, cursor):
             spotify.get("item").get("duration_ms"),
         )
         cursor.execute(add_song, data_song)
-        add_song_artists(spotify, cursor)
+        add_song_artists(spotify, cursor)  # Function
     else:
         playCount = playCount + 1
         add_song = ("UPDATE songs SET playCount = '" + str(playCount) +
@@ -73,6 +73,7 @@ def listenting_history(spotify, cursor):
     local_time = utc_time.astimezone()
     timestamp = local_time.strftime("%Y%m%d%H%M%S")
     timePlayed = local_time.strftime("%Y-%m-%d %H:%M:%S")
+
     add_play = ("INSERT  INTO listeningHistory"
                 "(timestamp,timePlayed, songID,json)"
                 "VALUES (%s, %s, %s, %s)")
