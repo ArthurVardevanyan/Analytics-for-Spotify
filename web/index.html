@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Spotify Analytics</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="node_modules/chart.js/dist/Chart.js"></script>
+    <script type="text/javascript" src="chart.js"></script>
+    <link rel="stylesheet" type="text/css" href="main.css">
+
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <h1 style="font-family: 'Roboto', sans-serif; text-align: center;">Spotify Analytics: Listening History</h1>
+    <div style="width: 35%; text-align: left; float: left;">
+
+        <table id="listeningHistory" class="display" width="100%"></table>
+
+    </div>
+
+
+    <div style="width: 65%; text-align: right;float: right">
+        <div id="nav-bar">
+            <ul class="nav">
+                <li class="nav">
+                    <a class="nav-link" id="orders_3">1W</a>
+                </li>
+                <li class="nav">
+                    <a class="nav-link active" id="orders_2">1M</a>
+                </li>
+                <li class="nav">
+                    <a class="nav-link" id="orders_1">1Y</a>
+                </li>
+            </ul>
+        </div>
+        <script>
+            var btnContainer = document.getElementById("nav-bar");
+
+            // Get all buttons with class="btn" inside the container
+            var btns = btnContainer.getElementsByClassName("nav-link");
+
+            // Loop through the buttons and add the active class to the current/clicked button
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].addEventListener("click", function () {
+                    var current = document.getElementsByClassName("active");
+                    current[0].className = current[0].className.replace(" active", "");
+                    this.className += " active";
+                });
+            }
+        </script>
+        <canvas id="line-chart" width="800" height="450"></canvas>
+    </div>
+    <table id="songs" class="display" width="100%"></table>
+
+</body>
+
+</html>
