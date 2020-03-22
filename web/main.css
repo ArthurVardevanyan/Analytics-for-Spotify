@@ -70,3 +70,44 @@ table#t01 tr:nth-child(even) {
 table#t01 tr:nth-child(odd) {
   background-color: #ececec;
 }
+
+h1,
+h2 {
+  font-family: 'Roboto', sans-serif;
+  text-align: center;
+
+}
+
+#lineChartDIV {
+  width: 65%;
+  text-align: right;
+  float: right
+}
+
+#listeningHistoryDIV {
+  width: 35%;
+  text-align: left;
+  float: left
+}
+
+#playCountDIV {
+  width: 100%;
+  text-align: center;
+  clear: both;
+}
+
+@media only screen and (max-width: 768px) {
+
+
+  #lineChartDIV {
+    width: 100%;
+    text-align: center;
+    float: center
+  }
+
+  #listeningHistoryDIV {
+    width: 100%;
+    text-align: center;
+    float: center
+  }
+}
