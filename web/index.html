@@ -25,7 +25,6 @@
 <body>
 
     <h1>Spotify Analytics</h1>
-    <h2>Listening History</h2>
     <div id="lineChartDIV">
         <div id="nav-bar">
             <ul class="nav">
@@ -57,9 +56,45 @@
         </script>
         <canvas id="line-chart" width="800" height="450"></canvas>
     </div>
-    <div id="listeningHistoryDIV">
-        <table id="listeningHistory" class="display" width="100%"></table>
+    <div id="hourlyLineChartDIV">
+        <div id="nav-bar">
+            <ul class="nav">
+                <li class="nav">
+                    <a class="nav-link" id="orders_4">1W</a>
+                </li>
+                <li class="nav">
+                    <a class="nav-link " id="orders_5">1M</a>
+                </li>
+                <li class="nav">
+                    <a class="nav-link " id="orders_6">1Y</a>
+                </li>
+                <li class="nav">
+                    <a class="nav-link  active" id="orders_6">LifeTime</a>
+                </li>
+            </ul>
+        </div>
+        <script>
+            var btnContainer_1 = document.getElementById("nav-bar");
 
+            // Get all buttons with class="btn" inside the container
+            var btns_1 = btnContainer_1.getElementsByClassName("nav-link");
+
+            // Loop through the buttons and add the active class to the current/clicked button
+            for (var i = 0; i < btns_1.length; i++) {
+                btns_1[i].addEventListener("click", function () {
+                    var current = document.getElementsByClassName("active");
+                    current[0].className = current[0].className.replace(" active", "");
+                    this.className += " active";
+                });
+            }
+        </script>
+        <canvas id="hourlyLine-chart" width="800" height="450"></canvas>
+    </div>
+
+    <div id="listeningHistoryDIV">
+        <h2>Listening History</h2>
+
+        <table id="listeningHistory" class="display" width="100%"></table>
     </div>
     <div id="playCountDIV">
         <h2>Song Play Counts</h2>

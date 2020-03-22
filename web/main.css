@@ -16,33 +16,34 @@ li.nav a {
 
 .active {
   background-color: #878787;
-
 }
 
 /* unvisited link */
+
 a:link {
   color: #6b6b6b;
 }
 
 /* visited link */
+
 a:visited {
   color: #454545;
 }
 
 /* mouse over link */
+
 a:hover {
   color: #adadad;
 }
 
 /* selected link */
+
 a:active {
   color: black;
 }
 
-
 .dataTables_wrapper {
   font-family: roboto;
-
 }
 
 table {
@@ -50,15 +51,12 @@ table {
   font-family: Roboto;
 }
 
-table,
-th,
-td {
+table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
 }
 
-th,
-td {
+th, td {
   padding: 10px;
   text-align: left;
 }
@@ -71,43 +69,57 @@ table#t01 tr:nth-child(odd) {
   background-color: #ececec;
 }
 
-h1,
-h2 {
+h1, h2 {
   font-family: 'Roboto', sans-serif;
   text-align: center;
-
 }
 
 #lineChartDIV {
-  width: 65%;
+  width: 50%;
+  text-align: left;
+  float: left
+}
+
+#hourlyLineChartDIV {
+  width: 50%;
   text-align: right;
   float: right
 }
 
 #listeningHistoryDIV {
-  width: 35%;
+  width: 38%;
   text-align: left;
   float: left
 }
 
 #playCountDIV {
-  width: 100%;
-  text-align: center;
-  clear: both;
+  width: 60%;
+  text-align: right;
+  float: right;
 }
 
 @media only screen and (max-width: 768px) {
-
-
+  table {
+    font-size: 15px;
+  }
+  #hourlyLineChartDIV {
+    width: 100%;
+    text-align: right;
+    float: right
+  }
   #lineChartDIV {
     width: 100%;
     text-align: center;
     float: center
   }
-
   #listeningHistoryDIV {
     width: 100%;
     text-align: center;
     float: center
+  }
+  #playCountDIV {
+    width: 100%;
+    text-align: center;
+    float: center;
   }
 }
