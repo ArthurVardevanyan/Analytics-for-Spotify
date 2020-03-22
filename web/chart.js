@@ -36,7 +36,7 @@ window.onload = function () {
         options: {
           title: {
             display: true,
-            text: 'Listens Orders Per Day'
+            text: 'Listens Per Day'
           }
         }
       });
@@ -110,7 +110,56 @@ window.onload = function () {
         lineChart.update();
       });
     }
+  });
+  $.ajax({
+    url: "/spotify/listeningHistory.php",
+    method: "GET",
+    success: function (data) {
+      //"01", "02", "03", "04", "05", "06", 
+      //0, 0, 0, 0, 0, 0, 
+      var songs = ["07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
+      var plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+      for (var i in data) {
+        hour = data[i].timePlayed.slice(11, 13);
+        for (let j = 0; j < songs.length; j++) {
+          if (hour === songs[j]) {
+            plays[j] = plays[j] + 1;
+          }
+        }
+
+
+      }
+      var hourlyLineChart = new Chart(document.getElementById("hourlyLine-chart"), {
+        type: 'line',
+        data: {
+          labels: songs,
+          datasets: [{
+            data: plays,
+            label: "Hourly Listen History",
+            borderColor: "#3e95cd",
+            fill: false
+          }
+          ]
+        },
+        options: {
+          title: {
+            display: true,
+            text: 'Hourly Listens'
+          }
+        }
+
+      });
+
+      $("#orders_7").click(function () {
+        var data = hourlyLineChart.data;
+        data.labels = songs;
+        data.datasets[0].data = plays;
+        hourlyLineChart.update();
+      });
+    }
   })
+
   $.ajax({
     url: "/spotify/listeningHistory.php",
     method: "GET",
@@ -127,7 +176,7 @@ window.onload = function () {
           "order": [[0, "desc"]],
           "pageLength": 10,
           "columns": [
-            { "data": "timePlayed", "title": "Time Played" },
+            { "data": "timePlayed", "title": "Time Played", "width": "135" },
             { "data": "name", "title": "Song Name" },
           ]
         });
@@ -148,7 +197,7 @@ window.onload = function () {
         oTblReport.DataTable({
           data: aDemoItems,
           "order": [[2, "desc"]],
-          "pageLength": 20,
+          "pageLength": 10,
           "columns": [
             { "data": "name", "title": "Song Name" },
             { "data": "artists", "title": "Artists" },
