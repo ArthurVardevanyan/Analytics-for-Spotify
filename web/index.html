@@ -19,18 +19,25 @@
             -ms-user-select: none;
         }
     </style>
-
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        $(function () {
+            $("#datePicker").datepicker();
+        });
+    </script>
 </head>
 
 <body>
 
-    <h1>Spotify Analytics</h1>
+    <h1 style="margin-bottom: 5px;">Spotify Analytics</h1>
+    <h2 style="margin: 0px;" id="stats"></h2>
     <div id="lineChartDIV">
         <div id="nav-bar">
             <ul class="nav">
                 <li class="nav">
                     <a class="nav-link" id="orders_3">1W</a>
-                </li>
+                    <br> </li>
                 <li class="nav">
                     <a class="nav-link active" id="orders_2">1M</a>
                 </li>
@@ -38,6 +45,7 @@
                     <a class="nav-link" id="orders_1">1Y</a>
                 </li>
             </ul>
+
         </div>
         <script>
             var btnContainer = document.getElementById("nav-bar");
@@ -48,8 +56,8 @@
             // Loop through the buttons and add the active class to the current/clicked button
             for (var i = 0; i < btns.length; i++) {
                 btns[i].addEventListener("click", function () {
-                    var current = document.getElementsByClassName("active");
-                    current[0].className = current[0].className.replace(" active", "");
+                    var current = document.getElementsByClassName("nav-link active");
+                    current[0].className = current[0].className.replace("nav-link active", "nav-link");
                     this.className += " active";
                 });
             }
@@ -57,33 +65,38 @@
         <canvas id="line-chart" width="800" height="450"></canvas>
     </div>
     <div id="hourlyLineChartDIV">
-        <div id="nav-bar">
-            <ul class="nav">
-                <li class="nav">
-                    <a class="nav-link" id="orders_4">1W</a>
+        <div id="h_nav-bar">
+            <ul class="h_nav">
+                <li class="h_nav">
+                    <a class="h_nav-link" id="orders_4">1D </a><input type="text" id="datePicker"
+                        value="Pick a Day, 1D To Update">
                 </li>
-                <li class="nav">
-                    <a class="nav-link " id="orders_5">1M</a>
+                <!--
+                <li class="h_nav">
+                    <a class="h_nav-link" id="orders_">1W</a>
                 </li>
-                <li class="nav">
-                    <a class="nav-link " id="orders_6">1Y</a>
+                <li class="h_nav">
+                    <a class="h_nav-link " id="orders_6">1M</a>
                 </li>
-                <li class="nav">
-                    <a class="nav-link  active" id="orders_6">LifeTime</a>
+                <li class="h_nav">
+                    <a class="h_nav-link " id="orders_7">1Y</a>
+                </li>-->
+                <li class="h_nav">
+                    <a class="h_nav-link active" id="orders_8">LifeTime</a>
                 </li>
             </ul>
         </div>
         <script>
-            var btnContainer_1 = document.getElementById("nav-bar");
+            var btnContainer_1 = document.getElementById("h_nav-bar");
 
             // Get all buttons with class="btn" inside the container
-            var btns_1 = btnContainer_1.getElementsByClassName("nav-link");
+            var btns_1 = btnContainer_1.getElementsByClassName("h_nav-link");
 
             // Loop through the buttons and add the active class to the current/clicked button
             for (var i = 0; i < btns_1.length; i++) {
                 btns_1[i].addEventListener("click", function () {
-                    var current = document.getElementsByClassName("active");
-                    current[0].className = current[0].className.replace(" active", "");
+                    var current = document.getElementsByClassName("h_nav-link active");
+                    current[0].className = current[0].className.replace("h_nav-link active", "h_nav-link");
                     this.className += " active";
                 });
             }
