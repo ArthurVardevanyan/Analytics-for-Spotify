@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 include 'credentials.php';
 
 //query to get data from the table
-$query = sprintf("SELECT timePlayed, songs.name FROM `listeningHistory`
+$query = sprintf("SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory`
 INNER JOIN songs ON songs.id =listeningHistory.songID  ORDER BY timePlayed");
 
 //execute query
