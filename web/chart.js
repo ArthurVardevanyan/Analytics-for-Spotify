@@ -37,7 +37,14 @@ window.onload = function () {
           title: {
             display: true,
             text: 'Listens Per Day'
-          }
+          },
+          scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
         }
       });
       $("#orders_1").click(function () {
