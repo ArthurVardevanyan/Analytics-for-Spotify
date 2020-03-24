@@ -117,8 +117,8 @@ window.onload = function () {
     success: function (data) {
       //"01", "02", "03", "04", "05", "06", 
       //0, 0, 0, 0, 0, 0, 
-      var songs = ["07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
-      var plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      var songs = ["06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
+      var plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
       for (var i in data) {
         hour = data[i].timePlayed.slice(11, 13);
@@ -136,7 +136,7 @@ window.onload = function () {
           labels: songs,
           datasets: [{
             data: plays,
-            label: "Hourly Listen History",
+            label: "Average Hourly Listen History",
             borderColor: "#3e95cd",
             fill: false
           }
@@ -145,16 +145,45 @@ window.onload = function () {
         options: {
           title: {
             display: true,
-            text: 'Hourly Listens'
+            text: 'Average Hourly Listens'
           }
         }
 
       });
 
-      $("#orders_7").click(function () {
-        var data = hourlyLineChart.data;
-        data.labels = songs;
-        data.datasets[0].data = plays;
+      $("#orders_8").click(function () {
+        var chartData = hourlyLineChart.data;
+        chartData.labels = songs;
+        chartData.datasets[0].data = plays;
+        hourlyLineChart.update();
+      });
+      $("#orders_4").click(function () {
+        var chartData = hourlyLineChart.data;
+        var date = new Date(document.getElementById("datePicker").value);
+        //var last = new Date(date.getTime() - (days * 24 * 60 * 60 * 1000));
+        var newDay = (date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2));
+
+        var dailySongs = ["06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
+        var dailyPlays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+        for (var i in data) {
+          day = data[i].timePlayed.slice(0, 10);
+          hour = data[i].timePlayed.slice(11, 13);
+          for (let j = 0; j < dailySongs.length; j++) {
+            if (day === newDay) {
+              if (hour === dailySongs[j]) {
+                dailyPlays[j] = dailyPlays[j] + 1;
+              }
+            }
+          }
+
+        }
+
+
+
+
+        chartData.labels = dailySongs;
+        chartData.datasets[0].data = dailyPlays;
         hourlyLineChart.update();
       });
     }
@@ -205,6 +234,19 @@ window.onload = function () {
           ]
         });
       });
+    }
+  })
+  $.ajax({
+    url: "/spotify/listeningHistory.php",
+    method: "GET",
+    success: function (data) {
+      timeListened = 0;
+      SongsListenedTo = data.length;
+      for (var i in data) {
+        timeListened = timeListened += parseInt(data[i].trackLength);
+      }
+      timeListened = Math.round(timeListened / 60000 / 60 * 10) / 10
+      document.getElementById("stats").innerHTML = "Songs Listened To: " + SongsListenedTo + " & Hours Listened To: " + timeListened
     }
   })
 };
