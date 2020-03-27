@@ -107,7 +107,23 @@ h2 {
   float: right;
 }
 
+#statsMobile {
+
+  display: none;
+}
+
+
 @media only screen and (max-width: 768px) {
+  #statsDesktop {
+
+    display: none;
+  }
+
+  #statsMobile {
+
+    display: block;
+  }
+
   table {
     font-size: 15px;
   }

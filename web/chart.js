@@ -37,6 +37,13 @@ window.onload = function () {
           title: {
             display: true,
             text: 'Listens Per Day'
+          },
+          scales: {
+            yAxes: [{
+              ticks: {
+                beginAtZero: true
+              }
+            }]
           }
         }
       });
@@ -230,7 +237,7 @@ window.onload = function () {
           "columns": [
             { "data": "name", "title": "Song Name" },
             { "data": "artists", "title": "Artists" },
-            { "data": "playCount", "title": "Play Count" },
+            { "data": "playCount", "title": "Count" },
           ]
         });
       });
@@ -246,7 +253,8 @@ window.onload = function () {
         timeListened = timeListened += parseInt(data[i].trackLength);
       }
       timeListened = Math.round(timeListened / 60000 / 60 * 10) / 10
-      document.getElementById("stats").innerHTML = "Songs Listened To: " + SongsListenedTo + " & Hours Listened To: " + timeListened
+      document.getElementById("statsDesktop").innerHTML = "Songs Listened To: " + SongsListenedTo + " & Hours Listened To: " + timeListened
+      document.getElementById("statsMobile").innerHTML = "Songs Listened To: " + SongsListenedTo + "<br>Hours Listened To: " + timeListened
     }
   })
 };
