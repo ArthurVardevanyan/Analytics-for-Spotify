@@ -99,7 +99,7 @@ def database_input(spotify):
         host="localhost",
         user=cred[0],
         passwd=cred[1],
-        database='spotify',
+        database=cred[2],
         auth_plugin='mysql_native_password'
     )
 
