@@ -1,22 +1,7 @@
--- phpMyAdmin SQL Dump
--- version 4.9.2deb1
--- https://www.phpmyadmin.net/
---
--- Host: localhost:3306
--- Generation Time: Mar 21, 2020 at 09:47 AM
--- Server version: 8.0.19-0ubuntu4
--- PHP Version: 7.4.3
-
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
 
 --
 -- Database: `spotify`
@@ -31,7 +16,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `artists` (
   `id` varchar(22) NOT NULL,
   `name` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -44,7 +29,7 @@ CREATE TABLE `listeningHistory` (
   `timePlayed` text NOT NULL,
   `songID` varchar(22) NOT NULL,
   `json` json DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -53,9 +38,9 @@ CREATE TABLE `listeningHistory` (
 --
 
 CREATE TABLE `songArtists` (
-  `songID` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `artistID` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `songID` varchar(22) ,
+  `artistID` varchar(22) 
+) ;
 
 -- --------------------------------------------------------
 
@@ -64,11 +49,11 @@ CREATE TABLE `songArtists` (
 --
 
 CREATE TABLE `songs` (
-  `id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `id` varchar(22) ,
   `name` text NOT NULL,
   `playCount` int DEFAULT '1',
   `trackLength` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ;
 
 --
 -- Indexes for dumped tables
@@ -117,7 +102,3 @@ ALTER TABLE `songArtists`
   ADD CONSTRAINT `songArtists_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `songArtists_ibfk_2` FOREIGN KEY (`artistID`) REFERENCES `artists` (`id`) ON UPDATE CASCADE;
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
