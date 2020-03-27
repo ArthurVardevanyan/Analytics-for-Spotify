@@ -1,6 +1,5 @@
 __pycache__
 credentials/spotifyCredentials.txt
-credentials/databaseCredentials.txt
 .cache*
-credentials/*
 web/node_modules/*
+logs/*
