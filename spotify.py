@@ -5,6 +5,12 @@ import requests
 from authorization import authorization as authorize
 import time
 import database
+import log
+
+log.logInit("spotify")
+print = log.Print
+input = log.Input
+
 try:
     url = 'https://api.spotify.com/v1/me/player/currently-playing?market=ES'
     header = {"Accept": "application/json",
