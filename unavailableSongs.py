@@ -3,6 +3,7 @@ __version__ = "v20200328"
 
 import requests
 from authorization import authorization as authorize
+import database
 
 
 def main():
@@ -24,6 +25,9 @@ def main():
     loop = True
     response = requests.get(url, headers=header)
     response = response.json()
+    playlist = response
+    database.add_playlist(playlist)
+
     playlistSections.append(response.get("tracks").get("items"))
     if response.get("tracks").get("next") == None:
         loop = False
@@ -39,24 +43,29 @@ def main():
         else:
             url = response.get("next")
 
-    songs, localSongs,  unavailableSongs = seperator(playlistSections)
+    songs, localSongs,  unavailableSongs = seperator(
+        playlistSections, playlist)
     for song in unavailableSongs:
         print(song.get("track").get("artists")[0].get(
             "name") + " - " + song.get("track").get("name"))
 
 
-def seperator(playlistSections):
+def seperator(playlistSections, playlist):
     songs = []
     localSongs = []
     unavailableSongs = []
+
     for section in playlistSections:
         for song in section:
             if song.get("is_local"):
                 localSongs.append(song)
+                database.playlist_input(song, playlist, "local")
             elif song.get("track").get("is_playable"):
                 songs.append(song)
+                database.playlist_input(song, playlist, "playable")
             else:
                 unavailableSongs.append(song)
+                database.playlist_input(song, playlist, "unplayable")
 
     return songs, localSongs, unavailableSongs
 
