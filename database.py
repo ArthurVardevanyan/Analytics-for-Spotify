@@ -48,7 +48,7 @@ def add_artists(spotify, cursor):
 def add_song_artists(spotify, cursor):
 
     for iter in spotify.get("item").get("artists"):
-        add_song_artist = ("INSERT INTO songArtists"
+        add_song_artist = ("INSERT IGNORE INTO songArtists"
                            "(songID,artistID)"
                            "VALUES (%s, %s)")
         data_song_artist = (
@@ -66,7 +66,7 @@ def add_song(spotify, cursor, count=1):
     playCount = 0
     for (id) in cursor:
         playCount = int(id[0])
-    if playCount == 0:
+    if playCount == 0 or count == 0:
         add_song = ("INSERT IGNORE INTO songs"
                     "(id,name,playCount,trackLength)"
                     "VALUES (%s, %s, %s, %s)")
@@ -162,9 +162,9 @@ def playlist_input(spotify, playlist, status):
     if(spotify.get("item").get("is_local")):
         spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
             "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
-    for i in range(0, len(spotify.get("item").get("artists"))):
-        spotify["item"]["artists"][i]["id"] = (
-            (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+        for i in range(0, len(spotify.get("item").get("artists"))):
+            spotify["item"]["artists"][i]["id"] = (
+                (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
     add_artists(spotify, cursor)
     add_song(spotify, cursor, 0)
     add_playlist_songs(cursor, spotify,  playlist, status)
