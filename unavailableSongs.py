@@ -1,4 +1,4 @@
-__version__ = "v20200328"
+__version__ = "v20200329"
 
 
 import requests
@@ -7,7 +7,7 @@ import database
 
 
 def main():
-
+    print("Checking for Unavailable Songs")
     playlists = ""
     try:
         with open("credentials/playlists.txt") as f:
@@ -46,7 +46,7 @@ def main():
     songs, localSongs,  unavailableSongs = seperator(
         playlistSections, playlist)
     for song in unavailableSongs:
-        print(song.get("track").get("artists")[0].get(
+        print("Unplayable: " + song.get("track").get("artists")[0].get(
             "name") + " - " + song.get("track").get("name"))
 
 

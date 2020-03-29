@@ -1,4 +1,4 @@
-__version__ = "v20200323"
+__version__ = "v20200329"
 
 
 import requests
@@ -6,16 +6,42 @@ from authorization import authorization as authorize
 import time
 import database
 import log
+import unavailableSongs
+import _thread
+import threading
+from datetime import datetime, timezone
 
 log.logInit("spotify")
 print = log.Print
 input = log.Input
 
+
+def unavailableSongsChecker():
+    time.sleep(30)
+    previousDay = ""
+    while(True):
+        utc_time = datetime.now()
+        local_time = utc_time.astimezone()
+        lastUpdated = local_time.strftime("%Y-%m-%d")
+        if previousDay != lastUpdated:
+            unavailableSongs.main()
+            previousDay = lastUpdated
+            time.sleep(3600)
+        time.sleep(360)
+
+
 try:
+    USC = threading.Thread(target=unavailableSongsChecker, args=())
+    USC.start()
+except:
+    print("Thread Failure")
+try:
+    time.sleep(30)
     url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + authorize()}
     previous = " "
+
     while(True):
         try:
             response = requests.get(url, headers=header)
