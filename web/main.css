@@ -78,7 +78,8 @@ table#t01 tr:nth-child(odd) {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   font-family: 'Roboto', sans-serif;
   text-align: center;
 }
@@ -105,6 +106,13 @@ h2 {
   width: 60%;
   text-align: right;
   float: right;
+}
+
+
+#playlistDIV {
+  width: 100%;
+  text-align: center;
+  float: left;
 }
 
 #statsMobile {
