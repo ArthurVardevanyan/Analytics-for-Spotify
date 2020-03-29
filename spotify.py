@@ -12,7 +12,7 @@ print = log.Print
 input = log.Input
 
 try:
-    url = 'https://api.spotify.com/v1/me/player/currently-playing?market=ES'
+    url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + authorize()}
     previous = " "
