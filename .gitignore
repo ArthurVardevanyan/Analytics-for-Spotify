@@ -3,3 +3,4 @@ credentials/spotifyCredentials.txt
 .cache*
 web/node_modules/*
 logs/*
+credentials/playlists.txt
