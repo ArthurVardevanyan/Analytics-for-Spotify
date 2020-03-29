@@ -1,4 +1,4 @@
-__version__ = "v20200320"
+__version__ = "v20200329"
 
 import mysql.connector
 import json
