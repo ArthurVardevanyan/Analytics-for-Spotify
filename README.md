@@ -81,10 +81,12 @@ Log Into MySql (sudo password, if asked)
 ```
 sudo mysql
 ```
-Within mysql Create User, Grant Privileges, and create database. 
+Within mysql Create User, Grant Privileges, and create database. <br/> 
+Note: Alter statement may error out on older versions of MySql, you can ignore the error and continue.
 ```
 CREATE USER 'spotify'@'localhost' IDENTIFIED BY 'spotify'; 
 GRANT ALL PRIVILEGES ON *.* TO 'spotify'@'localhost';
+alter user 'spotify'@'localhost' identified with mysql_native_password by 'spotify'
 flush privileges;
 create database spotify;
 exit;
