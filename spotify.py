@@ -1,4 +1,4 @@
-__version__ = "v20200329"
+__version__ = "v20200402"
 
 
 import requests
@@ -10,6 +10,7 @@ import unavailableSongs
 import _thread
 import threading
 from datetime import datetime, timezone
+import os
 
 log.logInit("spotify")
 print = log.Print
@@ -31,12 +32,15 @@ def unavailableSongsChecker():
 
 
 def unavailableSongThread():
-    time.sleep(30)
-    try:
-        USC = threading.Thread(target=unavailableSongsChecker, args=())
-        USC.start()
-    except:
-        print("Thread Failure")
+    if os.path.exists("credentials/playlists.txt"):
+        time.sleep(30)
+        try:
+            USC = threading.Thread(target=unavailableSongsChecker, args=())
+            USC.start()
+        except:
+            print("Thread Failure")
+    else:
+        return 0
 
 
 def spotify():
