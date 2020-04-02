@@ -244,6 +244,35 @@ window.onload = function () {
     }
   })
   $.ajax({
+    url: "/spotify/playlistSongs.php",
+    method: "GET",
+    success: function (data) {
+      $(document).ready(function () {
+        //https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
+        var aDemoItems = data;
+        if (data.length > 0) {
+          document.getElementById("playlistHeader").innerHTML = "Playlist Songs"
+          document.getElementById("playlists").innerHTML = "Last Updated: " + data[0]["lastUpdated"]
+
+          //Load  data table
+          var oTblReport = $("#playlist")
+
+          oTblReport.DataTable({
+            data: aDemoItems,
+            "order": [[2, "desc"]],
+            "pageLength": 10,
+            "columns": [
+              { "data": "name", "title": "Song Name" },
+              { "data": "artists", "title": "Artists" },
+              { "data": "songStatus", "title": "Status" },
+              { "data": "playCount", "title": "Count" },
+            ]
+          });
+        }
+      });
+    }
+  })
+  $.ajax({
     url: "/spotify/listeningHistory.php",
     method: "GET",
     success: function (data) {
