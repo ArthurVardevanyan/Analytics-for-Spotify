@@ -1,4 +1,4 @@
-__version__ = "v20200320"
+__version__ = "v20200406"
 
 import pprint
 import sys
@@ -7,7 +7,7 @@ import subprocess
 
 import spotipy
 import spotipy.util as util
-
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 # https://stackoverflow.com/questions/42743405/spotify-api-authentication-via-command-line
 # https://spotipy.readthedocs.io/en/latest/
 
@@ -16,7 +16,8 @@ try:
     with open("credentials/spotifyCredentials.txt") as f:
         key = f.readlines()
     key = [x.strip() for x in key]
-except:
+except Exception as e:
+    print(e)
     print("Credential Failure")
 
 
