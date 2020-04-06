@@ -1,9 +1,19 @@
+import os
 from django.shortcuts import render
-
-# Create your views here.
 from django.http import HttpResponse
 from django.db import connection
 import json
+import requests
+import time
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+key = []
+try:
+    with open("credentials/spotifyCredentials.txt") as f:
+        key = f.readlines()
+    key = [x.strip() for x in key]
+except Exception as e:
+    print(e)
+    print("Credential Failure")
 
 
 def dictfetchall(cursor):
@@ -45,3 +55,42 @@ def playlistSongs(request):
     cursor.execute(query)
     json_data = dictfetchall(cursor)
     return HttpResponse(json_data, content_type="application/json")
+
+
+def accessToken(CODE):
+    CS = key[4]
+    URI = "http://localhost/analytics/loginResponce"
+    url = 'https://accounts.spotify.com/api/token'
+    # "Accept": "application/json",
+    # "Content-Type": "application/json",
+    header = {"Authorization": "Basic " + CS}
+    data = {
+        "grant_type": "authorization_code",
+        "code": CODE,
+        "redirect_uri": URI}
+    response = requests.post(url, headers=header, data=data)
+    auth = response.json()
+    currentTime = int(time.time())
+    expire = auth.get("expires_in")
+    auth["expires_at"] = currentTime + expire
+    url = "https://api.spotify.com/v1/me"
+    header = {"Accept": "application/json",
+              "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
+    user_response = requests.get(url, headers=header)
+    user_response = user_response.json()
+    with open('.cache-' + user_response.get("id"), 'w+') as f:
+        json.dump(auth, f, indent=4, separators=(',', ': '))
+    return response
+
+
+def login(request):
+    url = '<meta http-equiv="Refresh" content="0; url='+key[3]+'" />'
+    return HttpResponse(url, content_type="text/html")
+
+
+def loginResponce(request):
+    # http://localhost:8000/analytics/loginResponce
+    CODE = request.GET.get("code")
+    accessToken(CODE)
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/" />'
+    return HttpResponse(url, content_type="text/html")

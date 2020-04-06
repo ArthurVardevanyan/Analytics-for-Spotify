@@ -11,13 +11,28 @@ import _thread
 import threading
 from datetime import datetime, timezone
 import os
+import glob
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 log.logInit("spotify")
 print = log.Print
 input = log.Input
 
 
+def file_list():
+    # Grabs the PDF's in the requested order
+    fileList = sorted(
+        glob.glob(".cache-*"))
+    # Strips the file path data to leave just the filename
+    Stripped_List = [os.path.basename(x) for x in fileList]
+    return Stripped_List  # Returns the Stripped List to Main Function
+
+
 def unavailableSongsChecker():
+    Load = True
+    while Load:
+         if (len(file_list()) == 1):
+            time.sleep(1)
+            Load = False
     time.sleep(30)
     previousDay = ""
     while(True):
@@ -52,8 +67,13 @@ def spotifyThread():
 
 
 def spotify():
+    Load = True
+    while Load:
+         if (len(file_list()) == 1):
+            time.sleep(1)
+            Load = False
     try:
-        time.sleep(30)
+        #time.sleep(30)
         url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize()}
@@ -102,6 +122,7 @@ def spotify():
 def main():
     unavailableSongThread()
     spotifyThread()
+    return 1
 
 
 if __name__ == "__main__":

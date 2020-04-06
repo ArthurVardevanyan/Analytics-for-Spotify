@@ -40,7 +40,7 @@ CREATE TABLE `listeningHistory` (
 CREATE TABLE `playlists` (
   `id` varchar(22) NOT NULL,
   `name` text NOT NULL,
-  `lastUpdated` datetime NOT NULL
+  `lastUpdated` text NOT NULL
 ) ;
 
 -- --------------------------------------------------------
