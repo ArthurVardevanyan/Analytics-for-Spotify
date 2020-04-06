@@ -33,14 +33,21 @@ def unavailableSongsChecker():
 
 def unavailableSongThread():
     if os.path.exists("credentials/playlists.txt"):
-        time.sleep(30)
         try:
             USC = threading.Thread(target=unavailableSongsChecker, args=())
             USC.start()
         except:
-            print("Thread Failure")
+            print("Playlist Thread Failure")
     else:
         return 0
+
+
+def spotifyThread():
+    try:
+        S = threading.Thread(target=spotify, args=())
+        S.start()
+    except:
+        print("Song Thread Failure")
 
 
 def spotify():
@@ -91,6 +98,10 @@ def spotify():
         time.sleep(60)
 
 
-if __name__ == "__main__":
+def main():
     unavailableSongThread()
-    spotify()
+    spotifyThread()
+
+
+if __name__ == "__main__":
+    main()

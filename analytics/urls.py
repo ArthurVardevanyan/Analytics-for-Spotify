@@ -1,0 +1,10 @@
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('listeningHistory/', views.listeningHistory, name='listeningHistory'),
+    path('songs/', views.songs, name='songs'),
+    path('playlistSongs/', views.playlistSongs, name='playlistSongs'),
+]
+

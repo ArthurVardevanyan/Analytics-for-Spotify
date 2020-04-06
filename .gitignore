@@ -4,3 +4,6 @@ credentials/spotifyCredentials.txt
 web/node_modules/*
 logs/*
 credentials/playlists.txt
+credentials/secret_key.txt
+credentials/debug_key.txt
+.vscode/*

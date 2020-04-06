@@ -3,31 +3,15 @@ __version__ = "v20200329"
 import mysql.connector
 import json
 from datetime import datetime, timezone
-
-
-def credentials():
-    try:
-        with open("credentials/databaseCredentials.txt") as f:
-            cred = f.readlines()
-        cred = [x.strip() for x in cred]
-    except:
-        print("Credential Failure")
-
-    db = mysql.connector.connect(
-        host="localhost",
-        user=cred[0],
-        passwd=cred[1],
-        database=cred[2],
-        auth_plugin='mysql_native_password'
-    )
-    return db
+import analytics.models as D
+from django.db import connection
 
 
 def add_artists(spotify, cursor):
     artists = "SELECT * from artists"
     cursor.execute(artists)
     artists = []
-    for (id) in cursor:
+    for id in cursor:
         artists.append(id[0])
     for iter in spotify.get("item").get("artists"):
         exists = False
@@ -35,6 +19,10 @@ def add_artists(spotify, cursor):
             if iter.get("id") == i:
                 exists = True
         if not exists:
+            data_artist = (
+                iter.get("id"),
+                iter.get("name")
+            )
             add_artist = ("INSERT IGNORE INTO artists"
                           "(id,name)"
                           "VALUES (%s, %s)")
@@ -64,7 +52,7 @@ def add_song(spotify, cursor, count=1):
 
     cursor.execute(playCount)
     playCount = 0
-    for (id) in cursor:
+    for id in cursor:
         playCount = int(id[0])
     if playCount == 0 or count == 0:
         add_song = ("INSERT IGNORE INTO songs"
@@ -106,30 +94,26 @@ def listenting_history(spotify, cursor):
 
 
 def add_playlist(playlist):
-    utc_time = datetime.now()
-    local_time = utc_time.astimezone()
-    lastUpdated = local_time.strftime("%Y-%m-%d %H:%M:%S")
-    db = credentials()
-    cursor = db.cursor()
+    with connection.cursor() as cursor:
+        utc_time = datetime.now()
+        local_time = utc_time.astimezone()
+        lastUpdated = local_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    sql = "DELETE FROM playlistSongs WHERE playlistID = '" + \
-        playlist.get("id")+"'"
-    cursor.execute(sql)
-    sql = "DELETE FROM playlists WHERE id = '"+playlist.get("id")+"'"
-    cursor.execute(sql)
+        sql = "DELETE FROM playlistSongs WHERE playlistID = '" + \
+            playlist.get("id")+"'"
+        cursor.execute(sql)
+        sql = "DELETE FROM playlists WHERE id = '"+playlist.get("id")+"'"
+        cursor.execute(sql)
 
-    addPlaylist = ("INSERT IGNORE INTO playlists"
-                   "(id,name, lastUpdated)"
-                   "VALUES (%s, %s, %s)")
-    dataPlaylist = (
-        playlist.get("id"),
-        playlist.get("name"),
-        lastUpdated
-    )
-    cursor.execute(addPlaylist, dataPlaylist)
-
-    db.commit()
-    db.close
+        addPlaylist = ("INSERT IGNORE INTO playlists"
+                       "(id,name, lastUpdated)"
+                       "VALUES (%s, %s, %s)")
+        dataPlaylist = (
+            playlist.get("id"),
+            playlist.get("name"),
+            lastUpdated
+        )
+        cursor.execute(addPlaylist, dataPlaylist)
 
 
 def add_playlist_songs(cursor, song, playlist, status):
@@ -145,29 +129,22 @@ def add_playlist_songs(cursor, song, playlist, status):
 
 
 def database_input(spotify):
-
-    db = credentials()
-    cursor = db.cursor()
-    add_artists(spotify, cursor)
-    add_song(spotify, cursor)
-    listenting_history(spotify, cursor)
-    db.commit()
-    db.close
+    with connection.cursor() as cursor:
+        add_artists(spotify, cursor)
+        add_song(spotify, cursor)
+        listenting_history(spotify, cursor)
 
 
 def playlist_input(spotify, playlist, status):
-    db = credentials()
-    cursor = db.cursor()
-    spotify["item"] = spotify.get("track")
-    if(spotify.get("item").get("is_local")):
-        spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
-            "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
-        for i in range(0, len(spotify.get("item").get("artists"))):
-            spotify["item"]["artists"][i]["id"] = (
-                (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
-    add_artists(spotify, cursor)
-    add_song(spotify, cursor, 0)
-    add_playlist_songs(cursor, spotify,  playlist, status)
-    db.commit()
-    db.close
+    with connection.cursor() as cursor:
+        spotify["item"] = spotify.get("track")
+        if(spotify.get("item").get("is_local")):
+            spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
+                "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
+            for i in range(0, len(spotify.get("item").get("artists"))):
+                spotify["item"]["artists"][i]["id"] = (
+                    (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+        add_artists(spotify, cursor)
+        add_song(spotify, cursor, 0)
+        add_playlist_songs(cursor, spotify,  playlist, status)
     return 1

@@ -1,6 +1,6 @@
 window.onload = function () {
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:8000/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       var songs = [];
@@ -119,7 +119,7 @@ window.onload = function () {
     }
   });
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:8000/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       //"01", "02", "03", "04", "05", "06", 
@@ -197,7 +197,7 @@ window.onload = function () {
   })
 
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:8000/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -220,7 +220,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "/spotify/songs.php",
+    url: "http://127.0.0.1:8000/analytics/songs",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -244,7 +244,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "/spotify/playlistSongs.php",
+    url: "http://127.0.0.1:8000/analytics/playlistSongs/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -273,7 +273,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:8000/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       timeListened = 0;
