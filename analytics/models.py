@@ -95,6 +95,11 @@ class Songs(models.Model):
 
 class Users(models.Model):
     user = models.CharField(primary_key=True, max_length=30)
+    enabled = models.IntegerField()
+    # Field name made lowercase.
+    statussong = models.IntegerField(db_column='statusSong')
+    # Field name made lowercase.
+    statusplaylist = models.IntegerField(db_column='statusPlaylist')
 
     class Meta:
         managed = False

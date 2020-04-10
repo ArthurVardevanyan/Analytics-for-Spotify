@@ -96,6 +96,12 @@ def accessToken(request, CODE):
     request.session['spotify'] = user_response.get("id")  # SESSION
     with open('.cache-' + user_response.get("id"), 'w+') as f:
         json.dump(auth, f, indent=4, separators=(',', ': '))
+
+    query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`) VALUES ('" + \
+        user_response.get("id") + "', 0, 0, 0) "
+    cursor = connection.cursor()
+    cursor.execute(query)
+
     return response
 
 
@@ -108,5 +114,17 @@ def loginResponce(request):
     # http://localhost:8000/analytics/loginResponce
     CODE = request.GET.get("code")
     accessToken(request, CODE)
-    url = '<meta http-equiv="Refresh" content="0; url=/spotify/" />'
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
     return HttpResponse(url, content_type="text/html")
+
+
+def status(request):
+    spotifyID = request.session.get('spotify')
+    status = 0
+    with connection.cursor() as cursor:
+        query = "SELECT * from users where user = '" + \
+            request.session.get('spotify') + "'"
+        cursor.execute(query)
+        for stat in cursor:
+            status = stat[1]
+    return HttpResponse(status)

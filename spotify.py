@@ -29,18 +29,41 @@ def file_list():
     return Stripped_List  # Returns the Stripped List to Main Function
 
 
+def user_status(user):
+    with connection.cursor() as cursor:
+        status = 0
+        users = "SELECT * from users where user ='" + user + "'"
+        cursor.execute(users)
+        for s in cursor:
+            status = s[1]
+        return status
+
+
+def update_status(user, status, value):
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE users SET  `" + status + "` = " +
+                       str(value) + " where user ='" + user + "'")
+
+
 def unavailableSongsChecker(user):
+    update_status(user, "statusPlaylist", 0)
     time.sleep(30)
     previousDay = ""
-    while(True):
+    status = user_status(user)
+    while(status):
+        update_status(user, "statusPlaylist", 2)
         utc_time = datetime.now()
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
             unavailableSongs.main(user)
             previousDay = lastUpdated
+            update_status(user, "statusPlaylist", 1)
             time.sleep(3600)
+        update_status(user, "statusPlaylist", 1)
         time.sleep(360)
+        status = user_status(user)
+    update_status(user, "statusPlaylist", 0)
 
 
 def unavailableSongThread(user):
@@ -62,19 +85,16 @@ def spotifyThread(user):
 
 
 def spotify(user):
-    Load = True
-    while Load:
-        if (len(file_list()) == 1):
-            time.sleep(1)
-            Load = False
     try:
+        update_status(user, "statusSong", 0)
         time.sleep(30)
         url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
-
-        while(True):
+        status = user_status(user)
+        while(status):
+            update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
                 if("the access token expired" in str.lower(response.text)):
@@ -83,6 +103,7 @@ def spotify(user):
                     response = requests.get(url, headers=header)
                 elif("no content" in str.lower(response.reason)):
                     print("Nothing is Playing")
+                    update_status(user, "statusSong", 1)
                     time.sleep(60)
                 else:
                     response = response.json()
@@ -100,18 +121,25 @@ def spotify(user):
                                 previous = track
                                 database.database_input(user, response)
                                 print("Song Counted as Played")
+                                update_status(user, "statusSong", 1)
                                 time.sleep(25)
 
                     else:
                         print("Nothing is Playing")
+                        update_status(user, "statusSong", 1)
                         time.sleep(60)
+                update_status(user, "statusSong", 1)
                 time.sleep(1)
             except Exception as e:
                 print(e)
+                update_status(user, "statusSong", 1)
                 time.sleep(60)
+            status = user_status(user)
     except Exception as e:
         print(e)
+        update_status(user, "statusSong", 1)
         time.sleep(60)
+    update_status(user, "statusSong", 0)
 
 
 def main():

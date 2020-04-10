@@ -5,7 +5,21 @@ window.onload = function () {
     method: "GET",
     success: function (data) {
       if (data === "False") {
-        window.location.href = "http://localhost:80/analytics/login";
+        window.location.href = "http://localhost:80/spotify";
+      }
+    }
+
+  });
+
+  $.ajax({
+    url: "http://localhost:80/analytics/status/",
+    method: "GET",
+    success: function (data) {
+      if (data === "1") {
+        document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:green'>Service is Running</h3>"
+      }
+      else {
+        document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:red'>Service is not Running</h3>"
       }
     }
 

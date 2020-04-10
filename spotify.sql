@@ -40,7 +40,7 @@ CREATE TABLE `listeningHistory` (
 
 CREATE TABLE `playcount` (
   `user` varchar(30) NOT NULL,
-  `song` varchar(22) NOT NULL,
+  `songID` varchar(22) NOT NULL,
   `playCount` int NOT NULL DEFAULT '1'
 ) ;
 
@@ -99,7 +99,10 @@ CREATE TABLE `songs` (
 --
 
 CREATE TABLE `users` (
-  `user` varchar(30) NOT NULL
+  `user` varchar(30) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `statusSong` mediumint NOT NULL DEFAULT '0',
+  `statusPlaylist` mediumint NOT NULL DEFAULT '0'
 ) ;
 
 --
@@ -124,8 +127,8 @@ ALTER TABLE `listeningHistory`
 -- Indexes for table `playcount`
 --
 ALTER TABLE `playcount`
-  ADD PRIMARY KEY (`user`,`song`),
-  ADD KEY `song` (`song`);
+  ADD PRIMARY KEY (`user`,`songID`),
+  ADD KEY `song` (`songID`);
 
 --
 -- Indexes for table `playlists`
@@ -177,7 +180,7 @@ ALTER TABLE `listeningHistory`
 --
 ALTER TABLE `playcount`
   ADD CONSTRAINT `playcount_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`),
-  ADD CONSTRAINT `playcount_ibfk_2` FOREIGN KEY (`song`) REFERENCES `songs` (`id`);
+  ADD CONSTRAINT `playcount_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`);
 
 --
 -- Constraints for table `playlists`
