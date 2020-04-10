@@ -8,5 +8,5 @@ urlpatterns = [
     path('playlistSongs/', views.playlistSongs, name='playlistSongs'),
     path('login/', views.login, name='login'),
     path('loginResponce', views.loginResponce, name='loginResponce'),
+    path('authenticated/', views.authenticated),
 ]
-

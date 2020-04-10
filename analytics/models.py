@@ -1,10 +1,3 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
 
@@ -16,7 +9,9 @@ class Artists(models.Model):
         managed = False
         db_table = 'artists'
 
+
 class Listeninghistory(models.Model):
+    user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
     timestamp = models.BigIntegerField(primary_key=True)
     # Field name made lowercase.
     timeplayed = models.TextField(db_column='timePlayed')
@@ -28,6 +23,21 @@ class Listeninghistory(models.Model):
     class Meta:
         managed = False
         db_table = 'listeningHistory'
+        unique_together = (('timestamp', 'user'),)
+
+
+class Playcount(models.Model):
+    user = models.OneToOneField(
+        'Users', models.DO_NOTHING, db_column='user', primary_key=True)
+    # Field name made lowercase.
+    songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
+    # Field name made lowercase.
+    playcount = models.IntegerField(db_column='playCount')
+
+    class Meta:
+        managed = False
+        db_table = 'playcount'
+        unique_together = (('user', 'songid'),)
 
 
 class Playlistsongs(models.Model):
@@ -46,7 +56,8 @@ class Playlistsongs(models.Model):
 
 
 class Playlists(models.Model):
-    id = models.CharField(primary_key=True, max_length=22)
+    user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
+    id = models.CharField(primary_key=True, max_length=100)
     name = models.TextField()
     # Field name made lowercase.
     lastupdated = models.TextField(db_column='lastUpdated')
@@ -54,6 +65,7 @@ class Playlists(models.Model):
     class Meta:
         managed = False
         db_table = 'playlists'
+        unique_together = (('id', 'user'),)
 
 
 class Songartists(models.Model):
@@ -74,12 +86,16 @@ class Songs(models.Model):
     id = models.CharField(primary_key=True, max_length=22)
     name = models.TextField()
     # Field name made lowercase.
-    playcount = models.IntegerField(
-        db_column='playCount', blank=True, null=True)
-    # Field name made lowercase.
     tracklength = models.BigIntegerField(db_column='trackLength')
 
     class Meta:
         managed = False
         db_table = 'songs'
 
+
+class Users(models.Model):
+    user = models.CharField(primary_key=True, max_length=30)
+
+    class Meta:
+        managed = False
+        db_table = 'users'

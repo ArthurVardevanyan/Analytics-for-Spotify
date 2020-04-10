@@ -1,4 +1,4 @@
-__version__ = "v20200329"
+__version__ = "v20200410"
 
 import mysql.connector
 import json
@@ -46,34 +46,45 @@ def add_song_artists(spotify, cursor):
         cursor.execute(add_song_artist, data_song_artist)
 
 
-def add_song(spotify, cursor, count=1):
-    playCount = "SELECT `playCount` from `songs` where `id` = '" + \
-        spotify.get("item").get("id") + "'"
-
+def add_song_count(user, spotify, cursor, count=1):
+    playCount = "SELECT `playCount` from `playcount` WHERE songID = '" + \
+        spotify.get("item").get("id") + "' and  user = '" + user + "'"
     cursor.execute(playCount)
     playCount = 0
     for id in cursor:
         playCount = int(id[0])
-    if playCount == 0 or count == 0:
-        add_song = ("INSERT IGNORE INTO songs"
-                    "(id,name,playCount,trackLength)"
-                    "VALUES (%s, %s, %s, %s)")
+    if playCount == 0 and count == 0:
+        add_song = ("INSERT IGNORE INTO playcount "
+                    "(user,songID,playCount) "
+                    "VALUES (%s, %s, %s)")
         data_song = (
+            user,
             spotify.get("item").get("id"),
-            spotify.get("item").get("name"),
             count,
-            spotify.get("item").get("duration_ms")
         )
         cursor.execute(add_song, data_song)
         add_song_artists(spotify, cursor)  # Function
     else:
         playCount = playCount + count
-        add_song = ("UPDATE songs SET playCount = '" + str(playCount) +
-                    "' WHERE id = '" + spotify.get("item").get("id") + "'")
+        add_song = ("UPDATE playcount SET playCount = '" + str(playCount) +
+                    "' WHERE songID = '" + spotify.get("item").get("id") + "' and  user = '" + user + "'")
         cursor.execute(add_song)
 
 
-def listenting_history(spotify, cursor):
+def add_song(spotify, cursor):
+    add_song = ("INSERT IGNORE INTO songs"
+                "(id,name,trackLength)"
+                "VALUES (%s, %s, %s)")
+    data_song = (
+        spotify.get("item").get("id"),
+        spotify.get("item").get("name"),
+        spotify.get("item").get("duration_ms")
+    )
+    cursor.execute(add_song, data_song)
+    add_song_artists(spotify, cursor)  # Function
+
+
+def listenting_history(user, spotify, cursor):
     # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
     utc_time = datetime.fromtimestamp(
         spotify.get('timestamp')/1000, timezone.utc)
@@ -82,9 +93,10 @@ def listenting_history(spotify, cursor):
     timePlayed = local_time.strftime("%Y-%m-%d %H:%M:%S")
 
     add_play = ("INSERT  INTO listeningHistory"
-                "(timestamp,timePlayed, songID,json)"
-                "VALUES (%s, %s, %s, %s)")
+                "(user, timestamp,timePlayed, songID,json)"
+                "VALUES (%s, %s, %s, %s, %s)")
     data_play = (
+        user,
         timestamp,
         timePlayed,
         spotify.get("item").get("id"),
@@ -93,27 +105,29 @@ def listenting_history(spotify, cursor):
     cursor.execute(add_play, data_play)
 
 
-def add_playlist(playlist):
+def get_playlists(user):
+    with connection.cursor() as cursor:
+        query = "  SELECT id from playlists where user = '"+user+"'"
+        cursor.execute(query)
+        playlists = []
+        for playlist in cursor:
+            playlists.append(playlist[0])
+        return playlists
+
+
+def add_playlist(user, playlist):
     with connection.cursor() as cursor:
         utc_time = datetime.now()
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d %H:%M:%S")
 
         sql = "DELETE FROM playlistSongs WHERE playlistID = '" + \
-            playlist.get("id")+"'"
-        cursor.execute(sql)
-        sql = "DELETE FROM playlists WHERE id = '"+playlist.get("id")+"'"
+            playlist+"'"
         cursor.execute(sql)
 
-        addPlaylist = ("INSERT IGNORE INTO playlists"
-                       "(id,name, lastUpdated)"
-                       "VALUES (%s, %s, %s)")
-        dataPlaylist = (
-            playlist.get("id"),
-            playlist.get("name"),
-            lastUpdated
-        )
-        cursor.execute(addPlaylist, dataPlaylist)
+        addPlaylist = " UPDATE playlists SET lastUpdated = '"+lastUpdated+"' WHERE id = '" + \
+            playlist+"'"
+        cursor.execute(addPlaylist)
 
 
 def add_playlist_songs(cursor, song, playlist, status):
@@ -121,21 +135,22 @@ def add_playlist_songs(cursor, song, playlist, status):
                    "(playlistID, songID, songStatus)"
                    "VALUES (%s, %s, %s)")
     dataPlaylist = (
-        playlist.get("id"),
+        playlist,
         song.get("item").get("id"),
         status
     )
     cursor.execute(addPlaylist, dataPlaylist)
 
 
-def database_input(spotify):
+def database_input(user, spotify):
     with connection.cursor() as cursor:
         add_artists(spotify, cursor)
         add_song(spotify, cursor)
-        listenting_history(spotify, cursor)
+        add_song_count(user, spotify, cursor)
+        listenting_history(user, spotify, cursor)
 
 
-def playlist_input(spotify, playlist, status):
+def playlist_input(user, spotify, playlist, status):
     with connection.cursor() as cursor:
         spotify["item"] = spotify.get("track")
         if(spotify.get("item").get("is_local")):
@@ -145,6 +160,7 @@ def playlist_input(spotify, playlist, status):
                 spotify["item"]["artists"][i]["id"] = (
                     (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
         add_artists(spotify, cursor)
-        add_song(spotify, cursor, 0)
+        add_song(spotify, cursor)
+        add_song_count(user, spotify, cursor, 0)
         add_playlist_songs(cursor, spotify,  playlist, status)
     return 1

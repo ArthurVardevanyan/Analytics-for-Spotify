@@ -25,6 +25,7 @@ CREATE TABLE `artists` (
 --
 
 CREATE TABLE `listeningHistory` (
+  `user` varchar(30) NOT NULL,
   `timestamp` bigint NOT NULL,
   `timePlayed` text NOT NULL,
   `songID` varchar(22) NOT NULL,
@@ -34,11 +35,24 @@ CREATE TABLE `listeningHistory` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `playcount`
+--
+
+CREATE TABLE `playcount` (
+  `user` varchar(30) NOT NULL,
+  `song` varchar(22) NOT NULL,
+  `playCount` int NOT NULL DEFAULT '1'
+) ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `playlists`
 --
 
 CREATE TABLE `playlists` (
-  `id` varchar(22) NOT NULL,
+  `user` varchar(30) NOT NULL,
+  `id` varchar(100) NOT NULL,
   `name` text NOT NULL,
   `lastUpdated` text NOT NULL
 ) ;
@@ -50,19 +64,20 @@ CREATE TABLE `playlists` (
 --
 
 CREATE TABLE `playlistSongs` (
-  `playlistID` varchar(22) NOT NULL,
+  `playlistID` varchar(100) NOT NULL,
   `songID` varchar(22) NOT NULL,
   `songStatus` text NOT NULL
 ) ;
 
 -- --------------------------------------------------------
+
 --
 -- Table structure for table `songArtists`
 --
 
 CREATE TABLE `songArtists` (
-  `songID` varchar(22) ,
-  `artistID` varchar(22) 
+  `songID` varchar(22) NOT NULL,
+  `artistID` varchar(22) NOT NULL
 ) ;
 
 -- --------------------------------------------------------
@@ -72,10 +87,19 @@ CREATE TABLE `songArtists` (
 --
 
 CREATE TABLE `songs` (
-  `id` varchar(22) ,
+  `id` varchar(22) NOT NULL,
   `name` text NOT NULL,
-  `playCount` int DEFAULT '1',
   `trackLength` bigint NOT NULL
+) ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `user` varchar(30) NOT NULL
 ) ;
 
 --
@@ -92,14 +116,23 @@ ALTER TABLE `artists`
 -- Indexes for table `listeningHistory`
 --
 ALTER TABLE `listeningHistory`
-  ADD PRIMARY KEY (`timestamp`),
-  ADD KEY `songID` (`songID`);
+  ADD PRIMARY KEY (`timestamp`,`user`) USING BTREE,
+  ADD KEY `songID` (`songID`),
+  ADD KEY `user` (`user`);
+
+--
+-- Indexes for table `playcount`
+--
+ALTER TABLE `playcount`
+  ADD PRIMARY KEY (`user`,`song`),
+  ADD KEY `song` (`song`);
 
 --
 -- Indexes for table `playlists`
 --
 ALTER TABLE `playlists`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`,`user`) USING BTREE,
+  ADD KEY `user` (`user`);
 
 --
 -- Indexes for table `playlistSongs`
@@ -123,6 +156,12 @@ ALTER TABLE `songs`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`user`);
+
+--
 -- Constraints for dumped tables
 --
 
@@ -130,7 +169,21 @@ ALTER TABLE `songs`
 -- Constraints for table `listeningHistory`
 --
 ALTER TABLE `listeningHistory`
-  ADD CONSTRAINT `listeningHistory_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `listeningHistory_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `listeningHistory_ibfk_2` FOREIGN KEY (`user`) REFERENCES `users` (`user`);
+
+--
+-- Constraints for table `playcount`
+--
+ALTER TABLE `playcount`
+  ADD CONSTRAINT `playcount_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`),
+  ADD CONSTRAINT `playcount_ibfk_2` FOREIGN KEY (`song`) REFERENCES `songs` (`id`);
+
+--
+-- Constraints for table `playlists`
+--
+ALTER TABLE `playlists`
+  ADD CONSTRAINT `playlists_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`);
 
 --
 -- Constraints for table `playlistSongs`

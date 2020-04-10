@@ -1,4 +1,15 @@
 window.onload = function () {
+
+  $.ajax({
+    url: "http://localhost:80/analytics/authenticated/",
+    method: "GET",
+    success: function (data) {
+      if (data === "False") {
+        window.location.href = "http://localhost:80/analytics/login";
+      }
+    }
+
+  });
   $.ajax({
     url: "http://localhost:80/analytics/listeningHistory/",
     method: "GET",
@@ -220,7 +231,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "http://127.0.0.1:80/analytics/songs",
+    url: "http://localhost:80/analytics/songs",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -244,7 +255,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "http://127.0.0.1:80/analytics/playlistSongs/",
+    url: "http://localhost:80/analytics/playlistSongs/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -286,4 +297,5 @@ window.onload = function () {
       document.getElementById("statsMobile").innerHTML = "Songs Listened To: " + SongsListenedTo + "<br>Hours Listened To: " + timeListened
     }
   })
+
 };

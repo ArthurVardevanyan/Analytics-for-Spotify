@@ -1,6 +1,6 @@
 import os
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.db import connection
 import json
 import requests
@@ -16,6 +16,14 @@ except Exception as e:
     print("Credential Failure")
 
 
+def authenticated(request):
+    if request.session.get('spotify'):
+        response = request.session.get('spotify')
+        return HttpResponse(True)
+    else:
+        return HttpResponse(False)
+
+
 def dictfetchall(cursor):
     # https://stackoverflow.com/a/58969129
     "Return all rows from a cursor as a dict"
@@ -25,7 +33,10 @@ def dictfetchall(cursor):
 
 
 def listeningHistory(request):
-    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  ORDER BY timePlayed"
+    spotifyID = request.session.get('spotify')
+    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
+    WHERE listeningHistory.user = '"+spotifyID + "' \
+    ORDER BY timePlayed"
     cursor = connection.cursor()
     cursor.execute(query)
     json_data = dictfetchall(cursor)
@@ -33,9 +44,11 @@ def listeningHistory(request):
 
 
 def songs(request):
-    query = "SELECT songs.name as 'name', `playCount`, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
+    spotifyID = request.session.get('spotify')
+    query = "SELECT songs.name as 'name', playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
     INNER JOIN songs ON songs.id=songArtists.songID \
-    INNER JOIN artists ON artists.id=songArtists.artistID \
+    INNER JOIN artists ON artists.id = songArtists.artistID \
+	INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user = '"+spotifyID + "'\
     GROUP BY songs.id"
     cursor = connection.cursor()
     cursor.execute(query)
@@ -44,20 +57,22 @@ def songs(request):
 
 
 def playlistSongs(request):
-    query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", `playCount`, GROUP_CONCAT(artists.name  SEPARATOR", ") \
+    spotifyID = request.session.get('spotify')
+    query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR", ") \
     as "artists" FROM playlistSongs\
     INNER JOIN songs ON songs.id =playlistSongs.songID \
     INNER JOIN songArtists ON songs.id=songArtists.songID \
     INNER JOIN artists ON artists.id=songArtists.artistID \
     INNER JOIN playlists ON playlists.id=playlistSongs.playlistID \
-    GROUP BY songs.id  '
+    INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user  = "'+spotifyID + '" and playlists.user =  "'+spotifyID + '"\
+    GROUP BY songs.id'
     cursor = connection.cursor()
     cursor.execute(query)
     json_data = dictfetchall(cursor)
     return HttpResponse(json_data, content_type="application/json")
 
 
-def accessToken(CODE):
+def accessToken(request, CODE):
     CS = key[4]
     URI = "http://localhost/analytics/loginResponce"
     url = 'https://accounts.spotify.com/api/token'
@@ -78,6 +93,7 @@ def accessToken(CODE):
               "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
     user_response = requests.get(url, headers=header)
     user_response = user_response.json()
+    request.session['spotify'] = user_response.get("id")  # SESSION
     with open('.cache-' + user_response.get("id"), 'w+') as f:
         json.dump(auth, f, indent=4, separators=(',', ': '))
     return response
@@ -91,6 +107,6 @@ def login(request):
 def loginResponce(request):
     # http://localhost:8000/analytics/loginResponce
     CODE = request.GET.get("code")
-    accessToken(CODE)
+    accessToken(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/" />'
     return HttpResponse(url, content_type="text/html")

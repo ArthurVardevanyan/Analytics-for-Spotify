@@ -1,4 +1,4 @@
-__version__ = "v20200406"
+__version__ = "v20200410"
 
 import pprint
 import sys
@@ -21,11 +21,11 @@ except Exception as e:
     print("Credential Failure")
 
 
-def authorization():
+def authorization(user):
     client_id = key[0]
     client_secret = key[1]
     redirect_uri = 'http://localhost:80'
-    username = key[2]
+    username = user
     scope = 'user-read-currently-playing'
 
     token = util.prompt_for_user_token(
