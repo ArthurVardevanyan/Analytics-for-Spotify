@@ -120,6 +120,53 @@ h3 {
   display: none;
 }
 
+.btn-spotify:hover {
+  background-color: #1ed760;
+}
+.btn-spotify{
+  background-color: #1db954;
+  border-color: #1aa34a;
+}
+
+.btn-green:hover {
+  background-color: #1BC156;
+}
+.btn-green{
+  background-color: #328F32;
+}
+
+
+.btn-red:hover {
+  background-color: red;
+}
+.btn-red{
+  background-color: #E10000;
+}
+
+.btn {
+  color: #fff;
+  
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 500px;
+  padding: 11px 32px 9px;
+  transition-property: background-color, border-color, color, box-shadow, filter;
+  transition-duration: .3s;
+  border-width: 0;
+  letter-spacing: 2px;
+  min-width: 160px;
+  text-transform: uppercase;
+  white-space: normal;
+  font-family: roboto;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  touch-action: manipulation;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  user-select: none;
+}
 
 @media only screen and (max-width: 768px) {
   #statsDesktop {

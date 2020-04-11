@@ -128,3 +128,23 @@ def status(request):
         for stat in cursor:
             status = stat[1]
     return HttpResponse(status)
+
+
+def stop(request):
+    spotifyID = request.session.get('spotify')
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE users SET enabled = 0 where user ='" + spotifyID + "'")
+
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
+    return HttpResponse(url, content_type="text/html")
+
+
+def start(request):
+    spotifyID = request.session.get('spotify')
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE users SET enabled = 1 where user ='" + spotifyID + "'")
+
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
+    return HttpResponse(url, content_type="text/html")
