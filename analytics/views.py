@@ -5,6 +5,7 @@ from django.db import connection
 import json
 import requests
 import time
+import hashlib
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 key = []
 try:
@@ -72,6 +73,15 @@ def playlistSongs(request):
     return HttpResponse(json_data, content_type="application/json")
 
 
+def userHash(auth):
+    url = "https://api.spotify.com/v1/me"
+    header = {"Accept": "application/json",
+              "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
+    result = hashlib.sha512(str.encode(
+        requests.get(url, headers=header).json().get("id")))
+    return result.hexdigest()
+
+
 def accessToken(request, CODE):
     CS = key[4]
     URI = "http://localhost/analytics/loginResponce"
@@ -88,17 +98,13 @@ def accessToken(request, CODE):
     currentTime = int(time.time())
     expire = auth.get("expires_in")
     auth["expires_at"] = currentTime + expire
-    url = "https://api.spotify.com/v1/me"
-    header = {"Accept": "application/json",
-              "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
-    user_response = requests.get(url, headers=header)
-    user_response = user_response.json()
-    request.session['spotify'] = user_response.get("id")  # SESSION
-    with open('.cache-' + user_response.get("id"), 'w+') as f:
+    userID = userHash(auth)
+    request.session['spotify'] = userID  # SESSION
+    with open('.cache-' + userID, 'w+') as f:
         json.dump(auth, f, indent=4, separators=(',', ': '))
 
     query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`) VALUES ('" + \
-        user_response.get("id") + "', 0, 0, 0) "
+        userID + "', 0, 0, 0) "
     cursor = connection.cursor()
     cursor.execute(query)
 

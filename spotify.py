@@ -1,6 +1,3 @@
-__version__ = "v20200410"
-
-
 import requests
 from authorization import authorization as authorize
 import time
@@ -88,11 +85,13 @@ def spotify(user):
     try:
         update_status(user, "statusSong", 0)
         time.sleep(30)
+        status = user_status(user)
+        if (not status):
+            return
         url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
-        status = user_status(user)
         while(status):
             update_status(user, "statusSong", 2)
             try:
