@@ -1,5 +1,3 @@
-__version__ = "v20200410"
-
 import mysql.connector
 import json
 from datetime import datetime, timezone
@@ -86,11 +84,9 @@ def add_song(spotify, cursor):
 
 def listenting_history(user, spotify, cursor):
     # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
-    utc_time = datetime.fromtimestamp(
-        spotify.get('timestamp')/1000, timezone.utc)
-    local_time = utc_time.astimezone()
-    timestamp = local_time.strftime("%Y%m%d%H%M%S")
-    timePlayed = local_time.strftime("%Y-%m-%d %H:%M:%S")
+    utc_time = datetime.fromisoformat(spotify.get('played_at')[:-5])
+    timestamp = utc_time.strftime("%Y%m%d%H%M%S")
+    timePlayed = utc_time.strftime("%Y-%m-%d %H:%M:%S")
 
     add_play = ("INSERT  INTO listeningHistory"
                 "(user, timestamp,timePlayed, songID,json)"
@@ -144,10 +140,12 @@ def add_playlist_songs(cursor, song, playlist, status):
 
 def database_input(user, spotify):
     with connection.cursor() as cursor:
+        spotify["item"] = spotify.get("track")
         add_artists(spotify, cursor)
         add_song(spotify, cursor)
         add_song_count(user, spotify, cursor)
         listenting_history(user, spotify, cursor)
+    return spotify.get("track").get("name")
 
 
 def playlist_input(user, spotify, playlist, status):

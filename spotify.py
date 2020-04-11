@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import os
 import glob
 from django.db import connection
+from _datetime import timedelta
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 log.logInit("spotify")
@@ -73,22 +74,23 @@ def unavailableSongThread(user):
         print("Playlist Thread Failure")
 
 
-def spotifyThread(user):
+def historySpotifyThread(user):
     try:
-        S = threading.Thread(target=spotify, args=(user,))
+        S = threading.Thread(target=historySpotify, args=(user,))
         S.start()
     except:
         print("Song Thread Failure")
 
 
-def spotify(user):
+def historySpotify(user):
     try:
         update_status(user, "statusSong", 0)
         time.sleep(30)
         status = user_status(user)
         if (not status):
             return
-        url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
+        url = "https://api.spotify.com/v1/me/player/recently-played?limit=50"
+
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
@@ -100,35 +102,30 @@ def spotify(user):
                     header = {"Accept": "application/json",
                               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
                     response = requests.get(url, headers=header)
-                elif("no content" in str.lower(response.reason)):
-                    print("Nothing is Playing")
-                    update_status(user, "statusSong", 1)
-                    time.sleep(60)
                 else:
                     response = response.json()
-                    if(response.get("is_playing")):
-                        track = response.get("item").get("name")
-                        if(previous != track):
-                            if(response.get("item").get("is_local")):
-                                response["item"]["id"] = ":" + response.get("item").get("uri").replace("%2C", "").replace(
-                                    "+", "").replace("%28", "").replace(":", "")[12:30] + response.get("item").get("uri")[-3:]
-                                for i in range(0, len(response.get("item").get("artists"))):
-                                    response["item"]["artists"][i]["id"] = (
-                                        (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
-                            if(int(response.get("progress_ms")) > 30000):
-                                print(track)
-                                previous = track
-                                database.database_input(user, response)
-                                print("Song Counted as Played")
-                                update_status(user, "statusSong", 1)
-                                time.sleep(25)
-
-                    else:
-                        print("Nothing is Playing")
-                        update_status(user, "statusSong", 1)
-                        time.sleep(60)
+                    query = "SELECT * FROM `listeningHistory`  where user ='" + user + \
+                        "' ORDER BY `listeningHistory`.`timePlayed`  DESC  LIMIT 50"
+                    listeningHistoy = []
+                    with connection.cursor() as cursor:
+                        cursor.execute(query)
+                        listenTemp = []
+                        for song in cursor:
+                            for listened in response.get("items"):
+                                utc_time = datetime.fromisoformat(
+                                    listened.get('played_at')[:-5])
+                                timestamp = utc_time.strftime("%Y%m%d%H%M%S")
+                                if(int(timestamp) == song[1]):
+                                    listenTemp.append(listened)
+                        for listened in response.get("items"):
+                            tracked = False
+                            for temp in listenTemp:
+                                if(listened.get('played_at') == temp.get('played_at')):
+                                    tracked = True
+                            if(not tracked):
+                                print(database.database_input(user, listened))
                 update_status(user, "statusSong", 1)
-                time.sleep(1)
+                time.sleep(1200)
             except Exception as e:
                 print(e)
                 update_status(user, "statusSong", 1)
@@ -147,7 +144,8 @@ def main():
         cursor.execute(users)
         for user in cursor:
             unavailableSongThread(user[0])
-            spotifyThread(user[0])
+            historySpotifyThread(user[0])
+            time.sleep(1)
     return 1
 
 

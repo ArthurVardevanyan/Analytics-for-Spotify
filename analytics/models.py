@@ -94,7 +94,7 @@ class Songs(models.Model):
 
 
 class Users(models.Model):
-    user = models.CharField(primary_key=True, max_length=30)
+    user = models.CharField(primary_key=True, max_length=128)
     enabled = models.IntegerField()
     # Field name made lowercase.
     statussong = models.IntegerField(db_column='statusSong')

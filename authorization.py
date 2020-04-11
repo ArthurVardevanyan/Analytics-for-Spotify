@@ -1,5 +1,3 @@
-__version__ = "v20200410"
-
 import pprint
 import sys
 import os
@@ -26,7 +24,7 @@ def authorization(user):
     client_secret = key[1]
     redirect_uri = 'http://localhost:80'
     username = user
-    scope = 'user-read-currently-playing'
+    scope = 'user-read-currently-playing user-read-recently-played'
 
     token = util.prompt_for_user_token(
         username, scope, client_id, client_secret, redirect_uri)

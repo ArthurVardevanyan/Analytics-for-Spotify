@@ -25,7 +25,7 @@ CREATE TABLE `artists` (
 --
 
 CREATE TABLE `listeningHistory` (
-  `user` varchar(30) NOT NULL,
+  `user` char(128) NOT NULL,
   `timestamp` bigint NOT NULL,
   `timePlayed` text NOT NULL,
   `songID` varchar(22) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE `listeningHistory` (
 --
 
 CREATE TABLE `playcount` (
-  `user` varchar(30) NOT NULL,
+  `user` char(128) NOT NULL,
   `songID` varchar(22) NOT NULL,
   `playCount` int NOT NULL DEFAULT '1'
 ) ;
@@ -51,7 +51,7 @@ CREATE TABLE `playcount` (
 --
 
 CREATE TABLE `playlists` (
-  `user` varchar(30) NOT NULL,
+  `user` char(128) NOT NULL,
   `id` varchar(100) NOT NULL,
   `name` text NOT NULL,
   `lastUpdated` text NOT NULL
@@ -99,7 +99,7 @@ CREATE TABLE `songs` (
 --
 
 CREATE TABLE `users` (
-  `user` varchar(30) NOT NULL,
+  `user` char(128) NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT '0',
   `statusSong` mediumint NOT NULL DEFAULT '0',
   `statusPlaylist` mediumint NOT NULL DEFAULT '0'
@@ -172,21 +172,21 @@ ALTER TABLE `users`
 -- Constraints for table `listeningHistory`
 --
 ALTER TABLE `listeningHistory`
-  ADD CONSTRAINT `listeningHistory_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `listeningHistory_ibfk_2` FOREIGN KEY (`user`) REFERENCES `users` (`user`);
+  ADD CONSTRAINT `listeningHistory_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `listeningHistory_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `playcount`
 --
 ALTER TABLE `playcount`
-  ADD CONSTRAINT `playcount_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`),
-  ADD CONSTRAINT `playcount_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`);
+  ADD CONSTRAINT `playcount_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `playcount_ibfk_3` FOREIGN KEY (`user`) REFERENCES `users` (`user`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `playlists`
 --
 ALTER TABLE `playlists`
-  ADD CONSTRAINT `playlists_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`);
+  ADD CONSTRAINT `playlists_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `playlistSongs`
@@ -199,6 +199,6 @@ ALTER TABLE `playlistSongs`
 -- Constraints for table `songArtists`
 --
 ALTER TABLE `songArtists`
-  ADD CONSTRAINT `songArtists_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `songArtists_ibfk_2` FOREIGN KEY (`artistID`) REFERENCES `artists` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `songArtists_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `songArtists_ibfk_2` FOREIGN KEY (`artistID`) REFERENCES `artists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
