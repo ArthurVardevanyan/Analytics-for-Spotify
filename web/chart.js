@@ -25,14 +25,17 @@ window.onload = function () {
     url: "http://localhost:80/analytics/status/",
     method: "GET",
     success: function (data) {
-      if (data === "1") {
-        document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:green'>Service is Running</h3>"
-      }
+      data = data.split(':')
+      if (data[0] === "1") { document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:green'>Service is Running</h3>"; }
       else {
-        document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:red'>Service is not Running</h3>"
+        if (data[1] === "1") {
+          document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:yellow'>Service is being Stopped</h3>";
+        } else if (data[1] === "0") {
+          document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:red'>Service is not Running</h3>";
+        }
       }
-    }
 
+    }
   });
   $.ajax({
     url: "http://localhost:80/analytics/listeningHistory/",

@@ -5,6 +5,8 @@ from django.db import connection
 import json
 import requests
 import time
+import database
+import spotify
 import hashlib
 import cryptography
 from cryptography.fernet import Fernet
@@ -151,7 +153,7 @@ def status(request):
             request.session.get('spotify') + "'"
         cursor.execute(query)
         for stat in cursor:
-            status = stat[1]
+            status = str(stat[1])+":"+str(stat[2])
     return HttpResponse(status)
 
 
@@ -170,7 +172,9 @@ def start(request):
     with connection.cursor() as cursor:
         cursor.execute(
             "UPDATE users SET enabled = 1 where user ='" + spotifyID + "'")
-
+        user = database.user_status(spotifyID, 1)
+        if(user[2] == 0):
+            spotify.SpotifyThread(user)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
     return HttpResponse(url, content_type="text/html")
 

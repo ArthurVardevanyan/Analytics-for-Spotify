@@ -5,6 +5,20 @@ import analytics.models as D
 from django.db import connection
 
 
+def user_status(user, detailed=0):
+    with connection.cursor() as cursor:
+        users = "SELECT * from users where user ='" + user + "'"
+        cursor.execute(users)
+        if(detailed):
+            for s in cursor:
+                return s
+        else:
+            status = 0
+            for s in cursor:
+                status = s[1]
+            return status
+
+
 def add_artists(spotify, cursor):
     artists = "SELECT * from artists"
     cursor.execute(artists)
@@ -83,18 +97,14 @@ def add_song(spotify, cursor):
 
 
 def listenting_history(user, spotify, cursor):
-    # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
-    utc_time = datetime.fromisoformat(spotify.get('played_at')[:-5])
-    timestamp = utc_time.strftime("%Y%m%d%H%M%S")
-    timePlayed = utc_time.strftime("%Y-%m-%d %H:%M:%S")
 
     add_play = ("INSERT  INTO listeningHistory"
                 "(user, timestamp,timePlayed, songID,json)"
                 "VALUES (%s, %s, %s, %s, %s)")
     data_play = (
         user,
-        timestamp,
-        timePlayed,
+        spotify.get('utc_timestamp'),
+        spotify.get('utc_timePlayed'),
         spotify.get("item").get("id"),
         json.dumps(spotify)
     )
@@ -140,12 +150,11 @@ def add_playlist_songs(cursor, song, playlist, status):
 
 def database_input(user, spotify):
     with connection.cursor() as cursor:
-        spotify["item"] = spotify.get("track")
         add_artists(spotify, cursor)
         add_song(spotify, cursor)
         add_song_count(user, spotify, cursor)
         listenting_history(user, spotify, cursor)
-    return spotify.get("track").get("name")
+    return spotify
 
 
 def playlist_input(user, spotify, playlist, status):
