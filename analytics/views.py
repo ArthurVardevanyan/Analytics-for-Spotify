@@ -6,6 +6,10 @@ import json
 import requests
 import time
 import hashlib
+import cryptography
+from cryptography.fernet import Fernet
+import ast
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 key = []
 try:
@@ -88,6 +92,14 @@ def userHash(auth):
     return result.hexdigest()
 
 
+def encryptJson(auth, key):
+    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
+    # initialize the Fernet class
+    f = Fernet(key)
+    # encrypt the message
+    return (f.encrypt(str(auth).encode())).decode("utf-8")
+
+
 def accessToken(request, CODE):
     CS = key[4]
     URI = "http://localhost/analytics/loginResponce"
@@ -108,12 +120,13 @@ def accessToken(request, CODE):
     request.session['spotify'] = userID  # SESSION
     with open('.cache-' + userID, 'w+') as f:
         json.dump(auth, f, indent=4, separators=(',', ': '))
-
-    query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`) VALUES ('" + \
-        userID + "', 0, 0, 0) "
+    cache = encryptJson(auth, key[5])
+    query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ('" + \
+        userID + "', 0, 0, 0, '"+cache+"') "
     cursor = connection.cursor()
     cursor.execute(query)
-
+    query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
+    cursor.execute(query)
     return response
 
 
@@ -160,3 +173,35 @@ def start(request):
 
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
     return HttpResponse(url, content_type="text/html")
+
+
+def refresh_token(userID):
+    # Checks For and Provides Refresh Token
+    CS = key[4]
+    URI = "http://localhost/analytics/loginResponce"
+    url = 'https://accounts.spotify.com/api/token'
+
+    access = ''
+    with open('.cache-' + userID) as json_file:
+        access = json.load(json_file)
+    if(int(time.time()) >= access["expires_at"]):
+        header = {"Authorization": "Basic " + CS}
+        data = {"grant_type": "refresh_token",
+                "refresh_token": access.get("refresh_token"),
+                "redirect_uri": URI}
+        response = requests.post(url, headers=header, data=data)
+        auth = response.json()
+        currentTime = int(time.time())
+        expire = auth.get("expires_in")
+        auth["expires_at"] = currentTime + expire
+        auth["refresh_token"] = auth.get(
+            "refresh_token", access.get("refresh_token"))
+        with open('.cache-' + userID, 'w+') as f:
+            json.dump(auth, f, indent=4, separators=(',', ': '))
+        cache = encryptJson(auth, key[5])
+        cursor = connection.cursor()
+        query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
+        cursor.execute(query)
+        return auth.get("access_token")
+    else:
+        return access.get("access_token")

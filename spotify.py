@@ -1,5 +1,5 @@
 import requests
-from authorization import authorization as authorize
+from analytics.views import refresh_token as authorize
 import time
 import database
 import log

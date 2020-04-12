@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import mysql.connector
 import os
+from SpotifyAnalytics.credentials import C_DEBUG, C_SECERT
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,19 +21,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
-
-# Read secret key from a file
-with open(BASE_DIR + '/credentials/secret_key.txt') as f:
-    SECRET_KEY = f.read().strip()
+SECRET_KEY = C_SECERT
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = ''
-with open(BASE_DIR + '/credentials/debug_key.txt') as f:
-    DEBUG = f.read().strip()
-
-if DEBUG == "True":
-    DEBUG = True
+DEBUG = C_DEBUG
 
 ALLOWED_HOSTS = []
 
@@ -132,6 +124,9 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 86400
 
 
 # Static files (CSS, JavaScript, Images)

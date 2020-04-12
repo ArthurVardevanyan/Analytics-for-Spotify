@@ -1,23 +1,22 @@
-__version__ = "v20200410"
-
-
 import requests
-from authorization import authorization as authorize
+from analytics.views import refresh_token as authorize
 import database
 
 
 def main(user):
     print("Checking for Unavailable Songs")
     playlists = ""
+    url = ""
     try:
         playlists = database.get_playlists(user)
+        url = 'https://api.spotify.com/v1/playlists/' + \
+            playlists[0] + "/tracks?offset=0&limit=100&market=US"
     except:
         print("Playlist Reterival Failure")
-    url = 'https://api.spotify.com/v1/playlists/' + \
-        playlists[0] + "/tracks?offset=0&limit=100&market=US"
+        return
+
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
-
     playlistSections = []
     loop = True
     response = requests.get(url, headers=header)
