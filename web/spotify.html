@@ -26,6 +26,7 @@
             $("#datePicker").datepicker();
         });
     </script>
+
 </head>
 
 <body>
@@ -33,8 +34,8 @@
         <button id="status" class="btn "></button>
         <button onclick="window.location.href = '/analytics/start/';" class="btn btn-green">Start Service</button>
         <button onclick="window.location.href = '/analytics/stop/';" class="btn btn-red">Stop Service</button>
-        <button onclick="window.location.href = '/spotify';" class="btn btn-spotify">Log Out</button>
-
+        <button onclick='deleteCookies();window.location.href = "/analytics/logout/";' class="btn btn-spotify">Log
+            Out</button>
     </div>
     <div style="clear: right; float:center; display:block;">
         <h1 style="margin-bottom: 5px;">Spotify Analytics</h1>

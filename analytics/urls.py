@@ -12,4 +12,6 @@ urlpatterns = [
     path('status/', views.status),
     path('stop/', views.stop),
     path('start/', views.start),
+    path('logout/', views.logout),
+
 ]

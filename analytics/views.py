@@ -25,6 +25,12 @@ def authenticated(request):
         return HttpResponse(False)
 
 
+def logout(request):
+    request.session.pop('spotify')
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
+    return HttpResponse(url, content_type="text/html")
+
+
 def dictfetchall(cursor):
     # https://stackoverflow.com/a/58969129
     "Return all rows from a cursor as a dict"
