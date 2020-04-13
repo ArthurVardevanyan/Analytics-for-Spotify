@@ -150,6 +150,7 @@ h3 {
   line-height: 1;
   border-radius: 500px;
   padding: 11px 32px 9px;
+  margin: 4px;
   transition-property: background-color, border-color, color, box-shadow, filter;
   transition-duration: .3s;
   border-width: 0;

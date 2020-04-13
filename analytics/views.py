@@ -96,8 +96,8 @@ def userHash(auth):
     url = "https://api.spotify.com/v1/me"
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
-    result = hashlib.sha512(str.encode(
-        requests.get(url, headers=header).json().get("id")))
+    result = hashlib.sha512(str.encode(cred.API.get("salt") +
+                                       requests.get(url, headers=header).json().get("id")))
     return result.hexdigest()
 
 
@@ -113,10 +113,9 @@ def accessToken(request, CODE):
     currentTime = int(time.time())
     expire = auth.get("expires_in")
     auth["expires_at"] = currentTime + expire
+    userID = ""
     userID = userHash(auth)
     request.session['spotify'] = userID  # SESSION
-    # with open('.cache-' + userID, 'w+') as f:
-    #    json.dump(auth, f, indent=4, separators=(',', ': '))
     cache = cred.encryptJson(auth)
     query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ('" + \
         userID + "', 0, 0, 0, '"+cache+"') "
@@ -124,12 +123,16 @@ def accessToken(request, CODE):
     cursor.execute(query)
     query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
     cursor.execute(query)
-    return response
+    return True
 
 
 def login(request):
-    url = '<meta http-equiv="Refresh" content="0; url=' + \
-        cred.API.get("url")+'" />'
+    url = ""
+    if(isinstance(cred.API, dict)):
+        url = '<meta http-equiv="Refresh" content="0; url=' + \
+            cred.API.get("url")+'" />'
+    else:
+        url = '<meta http-equiv="Refresh" content="0; url=/spotify/" />'
     return HttpResponse(url, content_type="text/html")
 
 
@@ -137,7 +140,7 @@ def loginResponce(request):
     # http://localhost:8000/analytics/loginResponce
     CODE = request.GET.get("code")
     accessToken(request, CODE)
-    url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
@@ -159,7 +162,7 @@ def stop(request):
         cursor.execute(
             "UPDATE users SET enabled = 0 where user ='" + spotifyID + "'")
 
-    url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
@@ -171,5 +174,5 @@ def start(request):
         user = database.user_status(spotifyID, 1)
         if(user[2] == 0):
             spotify.SpotifyThread(user)
-    url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")

@@ -1,4 +1,4 @@
-# SpotifyAnalytics
+# Analytics for Spotify
 
 Self Hosted Last.FM Alternative to keeping track of your Spotify History
 

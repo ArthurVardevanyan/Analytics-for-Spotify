@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Spotify Analytics</title>
+    <title>Analytics for Spotify</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="node_modules/chart.js/dist/Chart.js"></script>
@@ -31,6 +31,8 @@
 
 <body>
     <div style="float:right; display:block;">
+        <button style="color: black" class="btn">DA Place Holder</button>
+        <button style="color: black" class="btn">DH Place Holder</button>
         <button id="status" class="btn "></button>
         <button onclick="window.location.href = '/analytics/start/';" class="btn btn-green">Start Service</button>
         <button onclick="window.location.href = '/analytics/stop/';" class="btn btn-red">Stop Service</button>
@@ -38,7 +40,7 @@
             Out</button>
     </div>
     <div style="clear: right; float:center; display:block;">
-        <h1 style="margin-bottom: 5px;">Spotify Analytics</h1>
+        <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
         <h2 style="margin: 0px;" id="statsDesktop"></h2>
         <h2 style="margin: 0px;" id="statsMobile"></h2>
         <h3 style="margin: 0px;">Thier may be up to a 20 minute delay in song history</h3>
@@ -79,7 +81,7 @@
         <div id="h_nav-bar">
             <ul class="h_nav">
                 <li class="h_nav">
-                    <a class="h_nav-link" id="orders_4">1D </a><input type="text" id="datePicker"
+                    <a class="h_nav-link" id="orders_4">1 Day</a><input type="text" id="datePicker"
                         value="Pick a Day, 1D To Update">
                 </li>
                 <!--
