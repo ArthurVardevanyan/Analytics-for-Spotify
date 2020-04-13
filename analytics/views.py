@@ -12,56 +12,17 @@ import hashlib
 import cryptography
 from cryptography.fernet import Fernet
 import ast
+import analytics.credentials as cred
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-key = []
-API = ""
-# try:
-#     with open("credentials/spotifyCredentials.txt") as f:
-#         key = f.readlines()
-#     key = [x.strip() for x in key]
-# except Exception as e:
-#     print(e)
-#     print("Credential Failure")
-f = ""
-
-
-def encryptJson(auth):
-    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
-    # initialize the Fernet class
-    # encrypt the message
-    return (f.encrypt(str(auth).encode())).decode("utf-8")
-
-
-def decryptUserJson(userID):
-    userData = ""
-    with connection.cursor() as cursor:
-        users = "SELECT * from users  WHERE user = '" + userID + "'"
-        cursor.execute(users)
-        for user in cursor:
-            userData = user
-    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
-    # initialize the Fernet class
-    # encrypt the message
-    return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
-
-
-def apiDecrypt():
-    with connection.cursor() as cursor:
-        api = "SELECT * from spotifyAPI"
-        cursor.execute(api)
-        for api in cursor:
-            return ast.literal_eval((f.decrypt(api[0]).decode("utf-8")))
 
 
 @csrf_exempt
 def boot(request):
     t = (request.POST.get("code")).encode()
     try:
-        global f
-        f = Fernet(t)
-        global API
-        API = apiDecrypt()
+        cred.f = Fernet(t)
+        cred.API = cred.apiDecrypt()
         spotify.main()
     except Exception as e:
         e = e
@@ -141,7 +102,7 @@ def userHash(auth):
 
 
 def accessToken(request, CODE):
-    header = {"Authorization": "Basic " + API.get("B64CS")}
+    header = {"Authorization": "Basic " + cred.API.get("B64CS")}
     data = {
         "grant_type": "authorization_code",
         "code": CODE,
@@ -156,7 +117,7 @@ def accessToken(request, CODE):
     request.session['spotify'] = userID  # SESSION
     # with open('.cache-' + userID, 'w+') as f:
     #    json.dump(auth, f, indent=4, separators=(',', ': '))
-    cache = encryptJson(auth)
+    cache = cred.encryptJson(auth)
     query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ('" + \
         userID + "', 0, 0, 0, '"+cache+"') "
     cursor = connection.cursor()
@@ -167,7 +128,8 @@ def accessToken(request, CODE):
 
 
 def login(request):
-    url = '<meta http-equiv="Refresh" content="0; url='+API.get("url")+'" />'
+    url = '<meta http-equiv="Refresh" content="0; url=' + \
+        cred.API.get("url")+'" />'
     return HttpResponse(url, content_type="text/html")
 
 
@@ -211,33 +173,3 @@ def start(request):
             spotify.SpotifyThread(user)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/spotify.html" />'
     return HttpResponse(url, content_type="text/html")
-
-
-def refresh_token(userID):
-    # Checks For and Provides Refresh Token
-    access = ''
-    # with open('.cache-' + userID) as json_file:
-    #    access = json.load(json_file)
-    access = decryptUserJson(userID)
-    if(int(time.time()) >= access["expires_at"]):
-        header = {"Authorization": "Basic " + API.get("B64CS")}
-        data = {"grant_type": "refresh_token",
-                "refresh_token": access.get("refresh_token"),
-                "redirect_uri": "http://localhost/analytics/loginResponce"}
-        response = requests.post(
-            'https://accounts.spotify.com/api/token', headers=header, data=data)
-        auth = response.json()
-        currentTime = int(time.time())
-        expire = auth.get("expires_in")
-        auth["expires_at"] = currentTime + expire
-        auth["refresh_token"] = auth.get(
-            "refresh_token", access.get("refresh_token"))
-        # with open('.cache-' + userID, 'w+') as f:
-        #    json.dump(auth, f, indent=4, separators=(',', ': '))
-        cache = encryptJson(auth)
-        cursor = connection.cursor()
-        query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
-        cursor.execute(query)
-        return auth.get("access_token")
-    else:
-        return access.get("access_token")
