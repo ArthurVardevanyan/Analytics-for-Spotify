@@ -95,6 +95,16 @@ CREATE TABLE `songs` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `spotifyAPI`
+--
+
+CREATE TABLE `spotifyAPI` (
+  `api` longblob NOT NULL
+) ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -102,7 +112,9 @@ CREATE TABLE `users` (
   `user` char(128) NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT '0',
   `statusSong` mediumint NOT NULL DEFAULT '0',
-  `statusPlaylist` mediumint NOT NULL DEFAULT '0'
+  `statusPlaylist` mediumint NOT NULL DEFAULT '0',
+  `cache` longblob NOT NULL,
+  `realTime` int NOT NULL
 ) ;
 
 --

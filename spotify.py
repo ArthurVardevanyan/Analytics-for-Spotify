@@ -8,7 +8,6 @@ import _thread
 import threading
 from datetime import datetime, timezone
 import os
-import glob
 from django.db import connection
 from _datetime import timedelta
 
@@ -16,15 +15,6 @@ os.chdir(os.path.abspath(os.path.dirname(__file__)))
 log.logInit("spotify")
 print = log.Print
 input = log.Input
-
-
-def file_list():
-    # Grabs the PDF's in the requested order
-    fileList = sorted(
-        glob.glob(".cache-*"))
-    # Strips the file path data to leave just the filename
-    Stripped_List = [os.path.basename(x) for x in fileList]
-    return Stripped_List  # Returns the Stripped List to Main Function
 
 
 def update_status(user, status, value):

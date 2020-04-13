@@ -13,5 +13,6 @@ urlpatterns = [
     path('stop/', views.stop),
     path('start/', views.start),
     path('logout/', views.logout),
+    path('boot/', views.boot),
 
 ]

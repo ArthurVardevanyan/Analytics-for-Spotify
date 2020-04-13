@@ -93,6 +93,14 @@ class Songs(models.Model):
         db_table = 'songs'
 
 
+class Spotifyapi(models.Model):
+    api = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'spotifyAPI'
+
+
 class Users(models.Model):
     user = models.CharField(primary_key=True, max_length=128)
     enabled = models.IntegerField()
@@ -100,6 +108,9 @@ class Users(models.Model):
     statussong = models.IntegerField(db_column='statusSong')
     # Field name made lowercase.
     statusplaylist = models.IntegerField(db_column='statusPlaylist')
+    cache = models.TextField()
+    # Field name made lowercase.
+    realtime = models.IntegerField(db_column='realTime')
 
     class Meta:
         managed = False

@@ -1,3 +1,4 @@
+from django.views.decorators.csrf import csrf_exempt
 import os
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -14,13 +15,58 @@ import ast
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 key = []
-try:
-    with open("credentials/spotifyCredentials.txt") as f:
-        key = f.readlines()
-    key = [x.strip() for x in key]
-except Exception as e:
-    print(e)
-    print("Credential Failure")
+API = ""
+# try:
+#     with open("credentials/spotifyCredentials.txt") as f:
+#         key = f.readlines()
+#     key = [x.strip() for x in key]
+# except Exception as e:
+#     print(e)
+#     print("Credential Failure")
+f = ""
+
+
+def encryptJson(auth):
+    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
+    # initialize the Fernet class
+    # encrypt the message
+    return (f.encrypt(str(auth).encode())).decode("utf-8")
+
+
+def decryptUserJson(userID):
+    userData = ""
+    with connection.cursor() as cursor:
+        users = "SELECT * from users  WHERE user = '" + userID + "'"
+        cursor.execute(users)
+        for user in cursor:
+            userData = user
+    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
+    # initialize the Fernet class
+    # encrypt the message
+    return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
+
+
+def apiDecrypt():
+    with connection.cursor() as cursor:
+        api = "SELECT * from spotifyAPI"
+        cursor.execute(api)
+        for api in cursor:
+            return ast.literal_eval((f.decrypt(api[0]).decode("utf-8")))
+
+
+@csrf_exempt
+def boot(request):
+    t = (request.POST.get("code")).encode()
+    try:
+        global f
+        f = Fernet(t)
+        global API
+        API = apiDecrypt()
+        spotify.main()
+    except Exception as e:
+        e = e
+        return HttpResponse("", content_type="text/html")
+    return HttpResponse("", content_type="text/html")
 
 
 def authenticated(request):
@@ -94,35 +140,23 @@ def userHash(auth):
     return result.hexdigest()
 
 
-def encryptJson(auth, key):
-    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
-    # initialize the Fernet class
-    f = Fernet(key)
-    # encrypt the message
-    return (f.encrypt(str(auth).encode())).decode("utf-8")
-
-
 def accessToken(request, CODE):
-    CS = key[4]
-    URI = "http://localhost/analytics/loginResponce"
-    url = 'https://accounts.spotify.com/api/token'
-    # "Accept": "application/json",
-    # "Content-Type": "application/json",
-    header = {"Authorization": "Basic " + CS}
+    header = {"Authorization": "Basic " + API.get("B64CS")}
     data = {
         "grant_type": "authorization_code",
         "code": CODE,
-        "redirect_uri": URI}
-    response = requests.post(url, headers=header, data=data)
+        "redirect_uri": "http://localhost/analytics/loginResponce"}
+    response = requests.post(
+        'https://accounts.spotify.com/api/token', headers=header, data=data)
     auth = response.json()
     currentTime = int(time.time())
     expire = auth.get("expires_in")
     auth["expires_at"] = currentTime + expire
     userID = userHash(auth)
     request.session['spotify'] = userID  # SESSION
-    with open('.cache-' + userID, 'w+') as f:
-        json.dump(auth, f, indent=4, separators=(',', ': '))
-    cache = encryptJson(auth, key[5])
+    # with open('.cache-' + userID, 'w+') as f:
+    #    json.dump(auth, f, indent=4, separators=(',', ': '))
+    cache = encryptJson(auth)
     query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ('" + \
         userID + "', 0, 0, 0, '"+cache+"') "
     cursor = connection.cursor()
@@ -133,7 +167,7 @@ def accessToken(request, CODE):
 
 
 def login(request):
-    url = '<meta http-equiv="Refresh" content="0; url='+key[3]+'" />'
+    url = '<meta http-equiv="Refresh" content="0; url='+API.get("url")+'" />'
     return HttpResponse(url, content_type="text/html")
 
 
@@ -181,28 +215,26 @@ def start(request):
 
 def refresh_token(userID):
     # Checks For and Provides Refresh Token
-    CS = key[4]
-    URI = "http://localhost/analytics/loginResponce"
-    url = 'https://accounts.spotify.com/api/token'
-
     access = ''
-    with open('.cache-' + userID) as json_file:
-        access = json.load(json_file)
+    # with open('.cache-' + userID) as json_file:
+    #    access = json.load(json_file)
+    access = decryptUserJson(userID)
     if(int(time.time()) >= access["expires_at"]):
-        header = {"Authorization": "Basic " + CS}
+        header = {"Authorization": "Basic " + API.get("B64CS")}
         data = {"grant_type": "refresh_token",
                 "refresh_token": access.get("refresh_token"),
-                "redirect_uri": URI}
-        response = requests.post(url, headers=header, data=data)
+                "redirect_uri": "http://localhost/analytics/loginResponce"}
+        response = requests.post(
+            'https://accounts.spotify.com/api/token', headers=header, data=data)
         auth = response.json()
         currentTime = int(time.time())
         expire = auth.get("expires_in")
         auth["expires_at"] = currentTime + expire
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
-        with open('.cache-' + userID, 'w+') as f:
-            json.dump(auth, f, indent=4, separators=(',', ': '))
-        cache = encryptJson(auth, key[5])
+        # with open('.cache-' + userID, 'w+') as f:
+        #    json.dump(auth, f, indent=4, separators=(',', ': '))
+        cache = encryptJson(auth)
         cursor = connection.cursor()
         query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
         cursor.execute(query)
