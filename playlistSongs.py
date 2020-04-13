@@ -4,7 +4,7 @@ import database
 
 
 def main(user):
-    print("Checking for Unavailable Songs")
+    print("Checking for Playlist Songs")
     playlists = ""
     url = ""
     try:
@@ -40,9 +40,9 @@ def main(user):
         else:
             url = response.get("next")
 
-    songs, localSongs,  unavailableSongs = seperator(user,
-                                                     playlistSections, playlist)
-    for song in unavailableSongs:
+    songs, localSongs,  playlistSongs = seperator(user,
+                                                  playlistSections, playlist)
+    for song in playlistSongs:
         print("Unplayable: " + song.get("track").get("artists")[0].get(
             "name") + " - " + song.get("track").get("name"))
 
@@ -50,7 +50,7 @@ def main(user):
 def seperator(user, playlistSections, playlist):
     songs = []
     localSongs = []
-    unavailableSongs = []
+    playlistSongs = []
 
     for section in playlistSections:
         for song in section:
@@ -61,10 +61,10 @@ def seperator(user, playlistSections, playlist):
                 songs.append(song)
                 database.playlist_input(user, song, playlist, "playable")
             else:
-                unavailableSongs.append(song)
+                playlistSongs.append(song)
                 database.playlist_input(user, song, playlist, "unplayable")
 
-    return songs, localSongs, unavailableSongs
+    return songs, localSongs, playlistSongs
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from analytics.credentials import refresh_token as authorize
 import time
 import database
 import log
-import unavailableSongs
+import playlistSongs
 import _thread
 import threading
 from datetime import datetime, timezone
@@ -23,7 +23,7 @@ def update_status(user, status, value):
                        str(value) + " where user ='" + user + "'")
 
 
-def unavailableSongsChecker(user):
+def playlistSongsChecker(user):
     update_status(user, "statusPlaylist", 0)
     time.sleep(30)
     previousDay = ""
@@ -34,7 +34,7 @@ def unavailableSongsChecker(user):
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
-            unavailableSongs.main(user)
+            playlistSongs.main(user)
             previousDay = lastUpdated
             update_status(user, "statusPlaylist", 1)
             time.sleep(3600)
@@ -44,11 +44,11 @@ def unavailableSongsChecker(user):
     update_status(user, "statusPlaylist", 0)
 
 
-def unavailableSongThread(user):
+def playlistSongThread(user):
     try:
-        print("unavailableSongThread: " + user)
+        print("playlistSongThread: " + user)
         USC = threading.Thread(
-            target=unavailableSongsChecker, args=(user,))
+            target=playlistSongsChecker, args=(user,))
         USC.start()
     except Exception as e:
         print(e)
@@ -202,7 +202,7 @@ def main():
         users = "SELECT * from users"
         cursor.execute(users)
         for user in cursor:
-            unavailableSongThread(user[0])
+            playlistSongThread(user[0])
             SpotifyThread(user)
             time.sleep(1)
     return 1
