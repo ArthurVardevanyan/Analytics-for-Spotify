@@ -4,3 +4,5 @@ credentials/spotifyCredentials.txt
 web/node_modules/*
 logs/*
 credentials/playlists.txt
+.vscode/*
+SpotifyAnalytics/credentials.py

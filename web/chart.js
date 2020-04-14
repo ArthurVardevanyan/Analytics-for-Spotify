@@ -128,7 +128,8 @@ window.onload = function () {
       var plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
       for (var i in data) {
-        hour = data[i].timePlayed.slice(11, 13);
+        localTime = new Date(data[i].timePlayed + ' UTC');
+        hour = ('0' + String(localTime.getHours())).slice(-2);
         for (let j = 0; j < songs.length; j++) {
           if (hour === songs[j]) {
             plays[j] = plays[j] + 1;
@@ -174,8 +175,9 @@ window.onload = function () {
         var dailyPlays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
         for (var i in data) {
-          day = data[i].timePlayed.slice(0, 10);
-          hour = data[i].timePlayed.slice(11, 13);
+          localTime = new Date(data[i].timePlayed + ' UTC');
+          day = (localTime.getFullYear() + '-' + ('0' + (localTime.getMonth() + 1)).slice(-2) + '-' + ('0' + localTime.getDate()).slice(-2));
+          hour = ('0' + String(localTime.getHours())).slice(-2);
           for (let j = 0; j < dailySongs.length; j++) {
             if (day === newDay) {
               if (hour === dailySongs[j]) {
@@ -202,8 +204,19 @@ window.onload = function () {
     success: function (data) {
       $(document).ready(function () {
         //https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
-        var aDemoItems = data;
 
+
+        for (let i = 0; i < data.length; i++) {
+          lt = new Date(data[i].timePlayed + ' UTC');
+          localDateTime = (lt.getFullYear() + '-' +
+            ('0' + (lt.getMonth() + 1)).slice(-2) + '-' +
+            ('0' + lt.getDate()).slice(-2) + " " +
+            ('0' + lt.getHours()).slice(-2) + ":" +
+            ('0' + lt.getMinutes()).slice(-2) + ":" +
+            ('0' + lt.getSeconds()).slice(-2));
+          data[i].timePlayed = localDateTime;
+        }
+        var aDemoItems = data;
         //Load  data table
         var oTblReport = $("#listeningHistory")
 
@@ -250,25 +263,29 @@ window.onload = function () {
       $(document).ready(function () {
         //https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
         var aDemoItems = data;
-        if (data.length > 0) {
-          document.getElementById("playlistHeader").innerHTML = "Playlist Songs"
-          document.getElementById("playlists").innerHTML = "Last Updated: " + data[0]["lastUpdated"]
+        lt = new Date(aDemoItems[0]["lastUpdated"] + ' UTC');
+        localDateTime = (lt.getFullYear() + '-' +
+          ('0' + (lt.getMonth() + 1)).slice(-2) + '-' +
+          ('0' + lt.getDate()).slice(-2) + " " +
+          ('0' + lt.getHours()).slice(-2) + ":" +
+          ('0' + lt.getMinutes()).slice(-2) + ":" +
+          ('0' + lt.getSeconds()).slice(-2));
+        document.getElementById("playlists").innerHTML = "Last Updated: " + localDateTime;
 
-          //Load  data table
-          var oTblReport = $("#playlist")
+        //Load  data table
+        var oTblReport = $("#playlist")
 
-          oTblReport.DataTable({
-            data: aDemoItems,
-            "order": [[2, "desc"]],
-            "pageLength": 10,
-            "columns": [
-              { "data": "name", "title": "Song Name" },
-              { "data": "artists", "title": "Artists" },
-              { "data": "songStatus", "title": "Status" },
-              { "data": "playCount", "title": "Count" },
-            ]
-          });
-        }
+        oTblReport.DataTable({
+          data: aDemoItems,
+          "order": [[2, "desc"]],
+          "pageLength": 10,
+          "columns": [
+            { "data": "name", "title": "Song Name" },
+            { "data": "artists", "title": "Artists" },
+            { "data": "songStatus", "title": "Status" },
+            { "data": "playCount", "title": "Count" },
+          ]
+        });
       });
     }
   })

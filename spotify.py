@@ -1,6 +1,3 @@
-__version__ = "v20200402"
-
-
 import requests
 from authorization import authorization as authorize
 import time
@@ -82,7 +79,7 @@ def spotify():
                     else:
                         print("Nothing is Playing")
                         time.sleep(60)
-                time.sleep(1)
+                time.sleep(3)
             except Exception as e:
                 print(e)
                 time.sleep(60)
