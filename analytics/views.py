@@ -13,6 +13,7 @@ import cryptography
 from cryptography.fernet import Fernet
 import ast
 import analytics.credentials as cred
+import SpotifyAnalytics.settings as SET
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -39,32 +40,34 @@ def authenticated(request):
 
 
 def logout(request):
-    request.session.pop('spotify')
+    if(request.session.get('spotify', False) != False):
+        request.session.pop('spotify')
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
 def dictfetchall(cursor):
     # https://stackoverflow.com/a/58969129
-    "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
-    js = [dict(zip(columns, row)) for row in cursor.fetchall()]
-    return json.dumps(js)
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
 def listeningHistory(request):
-    spotifyID = request.session.get('spotify')
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
     query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
     WHERE listeningHistory.user = '"+spotifyID + "' \
     ORDER BY timePlayed"
     cursor = connection.cursor()
     cursor.execute(query)
-    json_data = dictfetchall(cursor)
-    return HttpResponse(json_data, content_type="application/json")
+    return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
 
 
 def songs(request):
-    spotifyID = request.session.get('spotify')
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
     query = "SELECT songs.name as 'name', playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
     INNER JOIN songs ON songs.id=songArtists.songID \
     INNER JOIN artists ON artists.id = songArtists.artistID \
@@ -73,23 +76,34 @@ def songs(request):
     cursor = connection.cursor()
     cursor.execute(query)
     json_data = dictfetchall(cursor)
-    return HttpResponse(json_data, content_type="application/json")
+    return HttpResponse(json.dumps(json_data), content_type="application/json")
 
 
 def playlistSongs(request):
-    spotifyID = request.session.get('spotify')
-    query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR", ") \
-    as "artists" FROM playlistSongs\
-    INNER JOIN songs ON songs.id =playlistSongs.songID \
-    INNER JOIN songArtists ON songs.id=songArtists.songID \
-    INNER JOIN artists ON artists.id=songArtists.artistID \
-    INNER JOIN playlists ON playlists.id=playlistSongs.playlistID \
-    INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user  = "'+spotifyID + '" and playlists.user =  "'+spotifyID + '"\
-    GROUP BY songs.id'
-    cursor = connection.cursor()
-    cursor.execute(query)
-    json_data = dictfetchall(cursor)
-    return HttpResponse(json_data, content_type="application/json")
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+    playlistsData = []
+    playlists = database.get_playlists(spotifyID)
+    for playlist in playlists:
+        playlistDict = {}
+        query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR", ") \
+        as "artists" FROM playlistSongs\
+        INNER JOIN songs ON songs.id =playlistSongs.songID \
+        INNER JOIN songArtists ON songs.id=songArtists.songID \
+        INNER JOIN artists ON artists.id=songArtists.artistID \
+        INNER JOIN playlists ON playlists.id=playlistSongs.playlistID \
+        INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user  = "'+spotifyID + '" and playlists.user =  "'+spotifyID + '"\
+        and playlists.id =  "'+playlist[0] + '"\
+        GROUP BY songs.id'
+        cursor = connection.cursor()
+        cursor.execute(query)
+        json_data = dictfetchall(cursor)
+        playlistDict["name"] = playlist[2]
+        playlistDict["hash"] = playlist[0]
+        playlistDict["tracks"] = json_data
+        playlistsData.append(playlistDict)
+    return HttpResponse(json.dumps(playlistsData), content_type="application/json")
 
 
 def userHash(auth):
@@ -116,7 +130,7 @@ def accessToken(request, CODE):
     userID = ""
     userID = userHash(auth)
     request.session['spotify'] = userID  # SESSION
-    cache = cred.encryptJson(auth)
+    cache = cred.encryptContent(auth)
     query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ('" + \
         userID + "', 0, 0, 0, '"+cache+"') "
     cursor = connection.cursor()
@@ -145,7 +159,9 @@ def loginResponce(request):
 
 
 def status(request):
-    spotifyID = request.session.get('spotify')
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
     status = 0
     with connection.cursor() as cursor:
         query = "SELECT * from users where user = '" + \
@@ -157,7 +173,9 @@ def status(request):
 
 
 def stop(request):
-    spotifyID = request.session.get('spotify')
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
     with connection.cursor() as cursor:
         cursor.execute(
             "UPDATE users SET enabled = 0 where user ='" + spotifyID + "'")
@@ -166,13 +184,87 @@ def stop(request):
     return HttpResponse(url, content_type="text/html")
 
 
+def deleteUser(request):
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+    cursor = connection.cursor()
+    query = "DELETE FROM `users`  WHERE user = '" + spotifyID + "'"
+    cursor.execute(query)
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify"/>'
+    return HttpResponse(url, content_type="text/html")
+
+
+def playlistSubmission(request):
+
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+    return HttpResponse(url, content_type="text/html")
+
+
 def start(request):
-    spotifyID = request.session.get('spotify')
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
     with connection.cursor() as cursor:
         cursor.execute(
             "UPDATE users SET enabled = 1 where user ='" + spotifyID + "'")
         user = database.user_status(spotifyID, 1)
         if(user[2] == 0):
             spotify.SpotifyThread(user)
+        if(user[3] == 0):
+            spotify.playlistSongThread(spotifyID[0])
+
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+    return HttpResponse(url, content_type="text/html")
+
+
+def playlistSubmission(request):
+    from analytics.credentials import refresh_token as authorize
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+    response = ""
+    try:
+        playlist = request.GET.get("playlist")
+        playlist = playlist.split("playlist/")[1].split("?")[0]
+        url = 'https://api.spotify.com/v1/playlists/' + \
+            playlist + "?market=US"
+        header = {"Accept": "application/json",
+                  "Content-Type": "application/json", "Authorization": "Bearer " + authorize(spotifyID)}
+        response = requests.get(url, headers=header).json()
+        if (not response.get("href", False)):
+            return HttpResponse(status=400)
+    except:
+        return HttpResponse(status=401)
+    playlistHash = hashlib.sha512(str.encode(
+        cred.API.get("salt") + playlist)).hexdigest()
+    playlistEncrypt = cred.encryptContent(playlist)
+
+    add = ("INSERT IGNORE INTO playlists"
+           "(user, id,name, lastUpdated,idEncrypt)"
+           "VALUES (%s, %s, %s, %s, %s)")
+    data = (
+        spotifyID,
+        playlistHash,
+        cred.encryptContent(response.get('name')),
+        "N/A",
+        playlistEncrypt,
+    )
+    cursor = connection.cursor()
+    cursor.execute(add, data)
+    spotify.playlistSongThread(spotifyID)
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+    return HttpResponse(url, content_type="text/html")
+
+
+def deletePlaylist(request):
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+    playlist = request.GET.get("playlist")
+    cursor = connection.cursor()
+    query = "DELETE FROM `playlists`  WHERE user = '" + \
+        spotifyID + "' and  id = '" + playlist + "'"
+    cursor.execute(query)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")

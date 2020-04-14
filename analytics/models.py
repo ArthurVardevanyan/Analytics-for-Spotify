@@ -42,25 +42,27 @@ class Playcount(models.Model):
 
 class Playlistsongs(models.Model):
     # Field name made lowercase.
-    playlistid = models.ForeignKey(
-        'Playlists', models.DO_NOTHING, db_column='playlistID')
+    playlistid = models.OneToOneField(
+        'Playlists', models.DO_NOTHING, db_column='playlistID', primary_key=True)
     # Field name made lowercase.
-    songid = models.OneToOneField(
-        'Songs', models.DO_NOTHING, db_column='songID')
+    songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
     # Field name made lowercase.
     songstatus = models.TextField(db_column='songStatus')
 
     class Meta:
         managed = False
         db_table = 'playlistSongs'
+        unique_together = (('playlistid', 'songid'),)
 
 
 class Playlists(models.Model):
     user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
-    id = models.CharField(primary_key=True, max_length=100)
+    id = models.CharField(primary_key=True, max_length=128)
     name = models.TextField()
     # Field name made lowercase.
     lastupdated = models.TextField(db_column='lastUpdated')
+    # Field name made lowercase.
+    idencrypt = models.TextField(db_column='idEncrypt')
 
     class Meta:
         managed = False

@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timezone
 import analytics.models as D
 from django.db import connection
+import analytics.credentials as cred
 
 
 def user_status(user, detailed=0):
@@ -65,7 +66,7 @@ def add_song_count(user, spotify, cursor, count=1):
     playCount = -1
     for id in cursor:
         playCount = int(id[0])
-    if playCount <= 0:
+    if playCount < 0:
         add_song = ("INSERT IGNORE INTO playcount "
                     "(user,songID,playCount) "
                     "VALUES (%s, %s, %s)")
@@ -113,19 +114,19 @@ def listenting_history(user, spotify, cursor):
 
 def get_playlists(user):
     with connection.cursor() as cursor:
-        query = "  SELECT id from playlists where user = '"+user+"'"
+        query = "SELECT id, idEncrypt, name from playlists where user = '"+user+"'"
         cursor.execute(query)
         playlists = []
         for playlist in cursor:
-            playlists.append(playlist[0])
+            playlists.append((playlist[0], cred.decryptPlaylist(
+                playlist[1]), cred.decryptPlaylist(playlist[2])))
         return playlists
 
 
 def add_playlist(user, playlist):
     with connection.cursor() as cursor:
-        utc_time = datetime.now()
-        local_time = utc_time.astimezone()
-        lastUpdated = local_time.strftime("%Y-%m-%d %H:%M:%S")
+        utc_time = datetime.utcnow()
+        lastUpdated = utc_time.strftime("%Y-%m-%d %H:%M:%S")
 
         sql = "DELETE FROM playlistSongs WHERE playlistID = '" + \
             playlist+"'"
@@ -137,7 +138,7 @@ def add_playlist(user, playlist):
 
 
 def add_playlist_songs(cursor, song, playlist, status):
-    addPlaylist = ("INSERT IGNORE INTO  playlistSongs"
+    addPlaylist = ("INSERT INTO  playlistSongs"
                    "(playlistID, songID, songStatus)"
                    "VALUES (%s, %s, %s)")
     dataPlaylist = (

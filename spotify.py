@@ -25,7 +25,7 @@ def update_status(user, status, value):
 
 def playlistSongsChecker(user):
     update_status(user, "statusPlaylist", 0)
-    time.sleep(30)
+    # time.sleep(30)
     previousDay = ""
     status = database.user_status(user)
     while(status):
@@ -34,7 +34,15 @@ def playlistSongsChecker(user):
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
-            playlistSongs.main(user)
+            with connection.cursor() as cursor:
+                playlists = database.get_playlists(user)
+                count = 0
+                for playlist in playlists:
+                    playlistSongs.main(user, playlist)
+                    count = count + 1
+                if(count == 0):
+                    update_status(user, "statusPlaylist", 0)
+                    return
             previousDay = lastUpdated
             update_status(user, "statusPlaylist", 1)
             time.sleep(3600)
@@ -76,10 +84,8 @@ def historySpotify(user):
         if (not status):
             return
         url = "https://api.spotify.com/v1/me/player/recently-played?limit=50"
-
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
-        previous = " "
         while(status):
             update_status(user, "statusSong", 2)
             try:
@@ -114,6 +120,13 @@ def historySpotify(user):
                                 if(listened.get('played_at') == temp.get('played_at')):
                                     tracked = True
                             if(not tracked):
+                                utc_time = datetime.fromisoformat(
+                                    listened.get('played_at')[:-5])
+                                # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
+                                listened["utc_timestamp"] = utc_time.strftime(
+                                    "%Y%m%d%H%M%S")
+                                listened["utc_timePlayed"] = utc_time.strftime(
+                                    "%Y-%m-%d %H:%M:%S")
                                 listened["item"] = listened.get("track")
                                 print(database.database_input(
                                     user, listened).get("track").get("name"))
@@ -178,7 +191,6 @@ def realTimeSpotify(user):
                                 print("Song Counted as Played")
                                 update_status(user, "statusSong", 1)
                                 time.sleep(25)
-
                     else:
                         print("Nothing is Playing")
                         update_status(user, "statusSong", 1)

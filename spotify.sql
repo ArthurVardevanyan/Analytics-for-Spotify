@@ -52,9 +52,10 @@ CREATE TABLE `playcount` (
 
 CREATE TABLE `playlists` (
   `user` char(128) NOT NULL,
-  `id` varchar(100) NOT NULL,
-  `name` text NOT NULL,
-  `lastUpdated` text NOT NULL
+  `id` char(128) NOT NULL,
+  `name` longblob NOT NULL,
+  `lastUpdated` text NOT NULL,
+  `idEncrypt` longblob NOT NULL
 ) ;
 
 -- --------------------------------------------------------
@@ -64,7 +65,7 @@ CREATE TABLE `playlists` (
 --
 
 CREATE TABLE `playlistSongs` (
-  `playlistID` varchar(100) NOT NULL,
+  `playlistID` char(128) NOT NULL,
   `songID` varchar(22) NOT NULL,
   `songStatus` text NOT NULL
 ) ;
@@ -153,8 +154,8 @@ ALTER TABLE `playlists`
 -- Indexes for table `playlistSongs`
 --
 ALTER TABLE `playlistSongs`
-  ADD UNIQUE KEY `songID` (`songID`),
-  ADD KEY `playlistID` (`playlistID`);
+  ADD PRIMARY KEY (`playlistID`,`songID`),
+  ADD KEY `songID` (`songID`);
 
 --
 -- Indexes for table `songArtists`
@@ -204,8 +205,8 @@ ALTER TABLE `playlists`
 -- Constraints for table `playlistSongs`
 --
 ALTER TABLE `playlistSongs`
-  ADD CONSTRAINT `playlistSongs_ibfk_1` FOREIGN KEY (`playlistID`) REFERENCES `playlists` (`id`),
-  ADD CONSTRAINT `playlistSongs_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`);
+  ADD CONSTRAINT `playlistSongs_ibfk_1` FOREIGN KEY (`playlistID`) REFERENCES `playlists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `playlistSongs_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `songArtists`

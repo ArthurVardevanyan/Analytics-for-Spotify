@@ -16,16 +16,19 @@ API = ""
 f = ""
 
 
-def encryptJson(auth):
+def decryptPlaylist(e):
+    return str(f.decrypt(e).decode("utf-8"))
+
+
+def encryptContent(e):
     # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
-    return (f.encrypt(str(auth).encode())).decode("utf-8")
+    return (f.encrypt(str(e).encode())).decode("utf-8")
 
 
 def decryptUserJson(userID):
     userData = ""
     with connection.cursor() as cursor:
-        users = "SELECT * from users  WHERE user = '" + userID + "'"
-        cursor.execute(users)
+        cursor.execute("SELECT * from users  WHERE user = '" + userID + "'")
         for user in cursor:
             userData = user
     return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
@@ -33,8 +36,7 @@ def decryptUserJson(userID):
 
 def apiDecrypt():
     with connection.cursor() as cursor:
-        api = "SELECT * from spotifyAPI"
-        cursor.execute(api)
+        cursor.execute("SELECT * from spotifyAPI")
         for api in cursor:
             return ast.literal_eval((f.decrypt(api[0]).decode("utf-8")))
 
@@ -48,15 +50,13 @@ def refresh_token(userID):
         data = {"grant_type": "refresh_token",
                 "refresh_token": access.get("refresh_token"),
                 "redirect_uri": "http://localhost/analytics/loginResponce"}
-        response = requests.post(
-            'https://accounts.spotify.com/api/token', headers=header, data=data)
-        auth = response.json()
-        currentTime = int(time.time())
+        auth = requests.post(
+            'https://accounts.spotify.com/api/token', headers=header, data=data).json()
         expire = auth.get("expires_in")
-        auth["expires_at"] = currentTime + expire
+        auth["expires_at"] = int(time.time()) + expire
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
-        cache = encryptJson(auth)
+        cache = encryptContent(auth)
         cursor = connection.cursor()
         query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
         cursor.execute(query)

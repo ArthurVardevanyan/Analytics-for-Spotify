@@ -31,8 +31,9 @@
 
 <body>
     <div style="float:right; display:block;">
-        <button style="color: black" class="btn">DA Place Holder</button>
-        <button style="color: black" class="btn">DH Place Holder</button>
+        <!--<button style="color: black" class="btn">DA Place Holder</button>-->
+        <button onclick="window.location.href = '/analytics/delete/';" style="color: black" class="btn">Delete
+            User</button>
         <button id="status" class="btn "></button>
         <button onclick="window.location.href = '/analytics/start/';" class="btn btn-green">Start Service</button>
         <button onclick="window.location.href = '/analytics/stop/';" class="btn btn-red">Stop Service</button>
@@ -41,9 +42,9 @@
     </div>
     <div style="clear: right; float:center; display:block;">
         <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
-        <h2 style="margin: 0px;" id="statsDesktop"></h2>
-        <h2 style="margin: 0px;" id="statsMobile"></h2>
-        <h3 style="margin: 0px;">Thier may be up to a 20 minute delay in song history</h3>
+        <h2 id="statsDesktop"></h2>
+        <h2 id="statsMobile"></h2>
+        <h3>Thier may be up to a 20 minute delay in song history</h3>
     </div>
     <div id="lineChartDIV">
         <div id="nav-bar">
@@ -127,13 +128,15 @@
         <table id="songs" class="display" width="100%">
         </table>
     </div>
-    <div id="playlistDIV">
-        <h2 style="margin: 0px;" id=playlistHeader></h2>
-        <h3 style=" margin: 0px;" id="playlists">
-        </h3>
-        <table id="playlist" class="display" width="100%">
-        </table>
+
+    <div style="clear:both; text-align:center; margin: auto;  width: 100%; display: block;">
+        <br>
+        <h3>Input Playlist URL to Track:</h3>
+        <input type="text" id="playlist" value=""> <button onclick=playlist() style="color: black" class="btn">Submit
+            Playlist</button>
     </div>
+    <div id="playlists"></div>
+
 </body>
 
 </html>

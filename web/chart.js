@@ -8,6 +8,16 @@ function deleteCookies() {
       + new Date(0).toUTCString();
   }
 }
+
+function playlist() {
+  window.location.href = "http://localhost:80/analytics/playlistSubmission?playlist=" + document.getElementById("playlist").value
+}
+
+
+function deletePlaylist(id) {
+  window.location.href = "http://localhost:80/analytics/deletePlaylist?playlist=" + id
+}
+
 window.onload = function () {
 
   $.ajax({
@@ -311,26 +321,47 @@ window.onload = function () {
     success: function (data) {
       $(document).ready(function () {
         //https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
-        var aDemoItems = data;
-        if (data.length > 0) {
-          document.getElementById("playlistHeader").innerHTML = "Playlist Songs"
-          document.getElementById("playlists").innerHTML = "Last Updated: " + data[0]["lastUpdated"]
+        for (let i = 0; i < data.length; i++) {
 
-          //Load  data table
-          var oTblReport = $("#playlist")
 
-          oTblReport.DataTable({
-            data: aDemoItems,
-            "order": [[2, "desc"]],
-            "pageLength": 10,
-            "columns": [
-              { "data": "name", "title": "Song Name" },
-              { "data": "artists", "title": "Artists" },
-              { "data": "songStatus", "title": "Status" },
-              { "data": "playCount", "title": "Count" },
-            ]
-          });
+          var aDemoItems = data[i]["tracks"];
+
+          if (aDemoItems.length > 0) {
+
+            lt = new Date(aDemoItems[0]["lastUpdated"] + ' UTC');
+            localDateTime = (lt.getFullYear() + '-' +
+              ('0' + (lt.getMonth() + 1)).slice(-2) + '-' +
+              ('0' + lt.getDate()).slice(-2) + " " +
+              ('0' + lt.getHours()).slice(-2) + ":" +
+              ('0' + lt.getMinutes()).slice(-2) + ":" +
+              ('0' + lt.getSeconds()).slice(-2));
+
+
+            tableName = data[i]["name"].replace(/ /g, "_");
+            document.getElementById("playlists").innerHTML +=
+              '  <div class="playlistDIV"><br><h2>Playlist: ' + data[i]["name"] +
+              ' </h2> <h3>Last Updated: '
+              + localDateTime + '</h3> <button onclick=deletePlaylist("' + data[i]["hash"] + '") style="color: black" class="btn">Delete</button><table id="playlist_' + tableName + '" class="display" width="100%"></table></div>';
+
+
+            //Load  data table
+            var oTblReport = $('#playlist_' + tableName)
+
+            oTblReport.DataTable({
+              data: aDemoItems,
+              "order": [[2, "desc"]],
+              "pageLength": 10,
+              "columns": [
+                { "data": "name", "title": "Song Name" },
+                { "data": "artists", "title": "Artists" },
+                { "data": "songStatus", "title": "Status" },
+                { "data": "playCount", "title": "Count" },
+              ]
+            });
+          }
+
         }
+
       });
     }
   })
