@@ -173,7 +173,6 @@ window.onload = function () {
     success: function (data) {
 
 
-      //var songs = ["06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
       var songs = [
         "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
         "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
@@ -220,10 +219,8 @@ window.onload = function () {
       $("#orders_4").click(function () {
         var chartData = hourlyLineChart.data;
         var date = new Date(document.getElementById("datePicker").value);
-        //var last = new Date(date.getTime() - (days * 24 * 60 * 60 * 1000));
         var newDay = (date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2));
 
-        //var dailySongs = ["06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
         var dailySongs = [
           "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
           "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
@@ -233,8 +230,7 @@ window.onload = function () {
           localTime = new Date(data[i].timePlayed + ' UTC');
           day = (localTime.getFullYear() + '-' + ('0' + (localTime.getMonth() + 1)).slice(-2) + '-' + ('0' + localTime.getDate()).slice(-2));
           hour = ('0' + String(localTime.getHours())).slice(-2);
-          //day1 = data[i].timePlayed.slice(0, 10);
-          //hour1 = data[i].timePlayed.slice(11, 13);
+
           for (let j = 0; j < dailySongs.length; j++) {
             if (day === newDay) {
               if (hour === dailySongs[j]) {
@@ -341,13 +337,16 @@ window.onload = function () {
             document.getElementById("playlists").innerHTML +=
               '  <div class="playlistDIV"><br><h2>Playlist: ' + data[i]["name"] +
               ' </h2> <h3>Last Updated: '
-              + localDateTime + '</h3> <button onclick=deletePlaylist("' + data[i]["hash"] + '") style="color: black" class="btn">Delete</button><table id="playlist_' + tableName + '" class="display" width="100%"></table></div>';
+              + localDateTime + '</h3> <button onclick=deletePlaylist("' + data[i]["hash"] + '") style="color: black" class="btn">Delete</button><table id="playlist_' + i + '" class="display" width="100%"></table></div>';
+          }
+        }
+        for (let i = 0; i < data.length; i++) {
+          var aDemoItems = data[i]["tracks"];
 
+          if (aDemoItems.length > 0) {
 
             //Load  data table
-            var oTblReport = $('#playlist_' + tableName)
-
-            oTblReport.DataTable({
+            $('#playlist_' + i).DataTable({
               data: aDemoItems,
               "order": [[2, "desc"]],
               "pageLength": 10,
@@ -359,9 +358,7 @@ window.onload = function () {
               ]
             });
           }
-
         }
-
       });
     }
   })

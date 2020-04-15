@@ -23,9 +23,9 @@ def update_status(user, status, value):
                        str(value) + " where user ='" + user + "'")
 
 
-def playlistSongsChecker(user):
+def playlistSongsChecker(user, once=0):
     update_status(user, "statusPlaylist", 0)
-    # time.sleep(30)
+    time.sleep(15)
     previousDay = ""
     status = database.user_status(user)
     while(status):
@@ -43,6 +43,9 @@ def playlistSongsChecker(user):
                 if(count == 0):
                     update_status(user, "statusPlaylist", 0)
                     return
+                if(once == 1):
+                    update_status(user, "statusPlaylist", 1)
+                    return
             previousDay = lastUpdated
             update_status(user, "statusPlaylist", 1)
             time.sleep(3600)
@@ -52,11 +55,11 @@ def playlistSongsChecker(user):
     update_status(user, "statusPlaylist", 0)
 
 
-def playlistSongThread(user):
+def playlistSongThread(user, once=0):
     try:
         print("playlistSongThread: " + user)
         USC = threading.Thread(
-            target=playlistSongsChecker, args=(user,))
+            target=playlistSongsChecker, args=(user, once,))
         USC.start()
     except Exception as e:
         print(e)

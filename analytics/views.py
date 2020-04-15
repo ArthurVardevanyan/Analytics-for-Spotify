@@ -195,12 +195,6 @@ def deleteUser(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def playlistSubmission(request):
-
-    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
-    return HttpResponse(url, content_type="text/html")
-
-
 def start(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
@@ -252,7 +246,11 @@ def playlistSubmission(request):
     )
     cursor = connection.cursor()
     cursor.execute(add, data)
-    spotify.playlistSongThread(spotifyID)
+    status = database.user_status(spotifyID, 1)
+    if(status[3] > 0):
+        spotify.playlistSongThread(spotifyID, 1)
+    else:
+        spotify.playlistSongThread(spotifyID)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
