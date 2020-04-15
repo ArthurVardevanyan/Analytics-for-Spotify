@@ -1,13 +1,62 @@
+function deleteCookies() {
+  var allCookies = document.cookie.split(';');
+  //https://www.geeksforgeeks.org/how-to-clear-all-cookies-using-javascript/
+  // The "expire" attribute of every cookie is  
+  // Set to "Thu, 01 Jan 1970 00:00:00 GMT" 
+  for (var i = 0; i < allCookies.length; i++) {
+    document.cookie = allCookies[i] + "=;expires="
+      + new Date(0).toUTCString();
+  }
+}
+
+function playlist() {
+  window.location.href = "http://localhost:80/analytics/playlistSubmission?playlist=" + document.getElementById("playlist").value
+}
+
+
+function deletePlaylist(id) {
+  window.location.href = "http://localhost:80/analytics/deletePlaylist?playlist=" + id
+}
+
 window.onload = function () {
+
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:80/analytics/authenticated/",
+    method: "GET",
+    success: function (data) {
+      if (data === "False") {
+        window.location.href = "http://localhost:80/spotify";
+      }
+    }
+
+  });
+
+  $.ajax({
+    url: "http://localhost:80/analytics/status/",
+    method: "GET",
+    success: function (data) {
+      data = data.split(':')
+      if (data[0] === "1") { document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:green'>Service is Running</h3>"; }
+      else {
+        if (data[1] === "1") {
+          document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:yellow'>Service is being Stopped</h3>";
+        } else if (data[1] === "0") {
+          document.getElementById("status").innerHTML = "<h3 style='margin: 0px; color:red'>Service is not Running</h3>";
+        }
+      }
+
+    }
+  });
+  $.ajax({
+    url: "http://localhost:80/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       var songs = [];
       var plays = [];
 
       for (var i in data) {
-        day = data[i].timePlayed.slice(0, 10);
+        localTime = new Date(data[i].timePlayed + ' UTC');
+        day = (localTime.getFullYear() + '-' + ('0' + (localTime.getMonth() + 1)).slice(-2) + '-' + ('0' + localTime.getDate()).slice(-2));
         if (songs.includes(day)) {
           for (let j = 0; j < songs.length; j++) {
             if (day === songs[j]) {
@@ -119,16 +168,19 @@ window.onload = function () {
     }
   });
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:80/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
-      //"01", "02", "03", "04", "05", "06", 
-      //0, 0, 0, 0, 0, 0, 
-      var songs = ["06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
-      var plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
+
+      var songs = [
+        "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
+        "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
+      var plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       for (var i in data) {
-        hour = data[i].timePlayed.slice(11, 13);
+        localTime = new Date(data[i].timePlayed + ' UTC');
+        hour = ('0' + String(localTime.getHours())).slice(-2);
+        //hour = data[i].timePlayed.slice(11, 13);
         for (let j = 0; j < songs.length; j++) {
           if (hour === songs[j]) {
             plays[j] = plays[j] + 1;
@@ -167,15 +219,18 @@ window.onload = function () {
       $("#orders_4").click(function () {
         var chartData = hourlyLineChart.data;
         var date = new Date(document.getElementById("datePicker").value);
-        //var last = new Date(date.getTime() - (days * 24 * 60 * 60 * 1000));
         var newDay = (date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2));
 
-        var dailySongs = ["06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
-        var dailyPlays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        var dailySongs = [
+          "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
+          "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
+        var dailyPlays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
         for (var i in data) {
-          day = data[i].timePlayed.slice(0, 10);
-          hour = data[i].timePlayed.slice(11, 13);
+          localTime = new Date(data[i].timePlayed + ' UTC');
+          day = (localTime.getFullYear() + '-' + ('0' + (localTime.getMonth() + 1)).slice(-2) + '-' + ('0' + localTime.getDate()).slice(-2));
+          hour = ('0' + String(localTime.getHours())).slice(-2);
+
           for (let j = 0; j < dailySongs.length; j++) {
             if (day === newDay) {
               if (hour === dailySongs[j]) {
@@ -197,11 +252,24 @@ window.onload = function () {
   })
 
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:80/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
         //https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
+
+        for (let i = 0; i < data.length; i++) {
+          lt = new Date(data[i].timePlayed + ' UTC');
+          localDateTime = (lt.getFullYear() + '-' +
+            ('0' + (lt.getMonth() + 1)).slice(-2) + '-' +
+            ('0' + lt.getDate()).slice(-2) + " " +
+            ('0' + lt.getHours()).slice(-2) + ":" +
+            ('0' + lt.getMinutes()).slice(-2) + ":" +
+            ('0' + lt.getSeconds()).slice(-2));
+          data[i].timePlayed = localDateTime;
+        }
+
+
         var aDemoItems = data;
 
         //Load  data table
@@ -220,7 +288,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "/spotify/songs.php",
+    url: "http://localhost:80/analytics/songs",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -244,36 +312,58 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "/spotify/playlistSongs.php",
+    url: "http://localhost:80/analytics/playlistSongs/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
         //https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
-        var aDemoItems = data;
-        if (data.length > 0) {
-          document.getElementById("playlistHeader").innerHTML = "Playlist Songs"
-          document.getElementById("playlists").innerHTML = "Last Updated: " + data[0]["lastUpdated"]
+        for (let i = 0; i < data.length; i++) {
 
-          //Load  data table
-          var oTblReport = $("#playlist")
 
-          oTblReport.DataTable({
-            data: aDemoItems,
-            "order": [[2, "desc"]],
-            "pageLength": 10,
-            "columns": [
-              { "data": "name", "title": "Song Name" },
-              { "data": "artists", "title": "Artists" },
-              { "data": "songStatus", "title": "Status" },
-              { "data": "playCount", "title": "Count" },
-            ]
-          });
+          var aDemoItems = data[i]["tracks"];
+
+          if (aDemoItems.length > 0) {
+
+            lt = new Date(aDemoItems[0]["lastUpdated"] + ' UTC');
+            localDateTime = (lt.getFullYear() + '-' +
+              ('0' + (lt.getMonth() + 1)).slice(-2) + '-' +
+              ('0' + lt.getDate()).slice(-2) + " " +
+              ('0' + lt.getHours()).slice(-2) + ":" +
+              ('0' + lt.getMinutes()).slice(-2) + ":" +
+              ('0' + lt.getSeconds()).slice(-2));
+
+
+            tableName = data[i]["name"].replace(/ /g, "_");
+            document.getElementById("playlists").innerHTML +=
+              '  <div class="playlistDIV"><br><h2>Playlist: ' + data[i]["name"] +
+              ' </h2> <h3>Last Updated: '
+              + localDateTime + '</h3> <button onclick=deletePlaylist("' + data[i]["hash"] + '") style="color: black" class="btn">Delete</button><table id="playlist_' + i + '" class="display" width="100%"></table></div>';
+          }
+        }
+        for (let i = 0; i < data.length; i++) {
+          var aDemoItems = data[i]["tracks"];
+
+          if (aDemoItems.length > 0) {
+
+            //Load  data table
+            $('#playlist_' + i).DataTable({
+              data: aDemoItems,
+              "order": [[2, "desc"]],
+              "pageLength": 10,
+              "columns": [
+                { "data": "name", "title": "Song Name" },
+                { "data": "artists", "title": "Artists" },
+                { "data": "songStatus", "title": "Status" },
+                { "data": "playCount", "title": "Count" },
+              ]
+            });
+          }
         }
       });
     }
   })
   $.ajax({
-    url: "/spotify/listeningHistory.php",
+    url: "http://localhost:80/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       timeListened = 0;
@@ -286,4 +376,5 @@ window.onload = function () {
       document.getElementById("statsMobile").innerHTML = "Songs Listened To: " + SongsListenedTo + "<br>Hours Listened To: " + timeListened
     }
   })
+
 };
