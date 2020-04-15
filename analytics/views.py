@@ -19,8 +19,10 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 @csrf_exempt
-def boot(request):
-    t = (request.POST.get("code")).encode()
+def boot(request, localKey=0):
+    t = request
+    if(not localKey):
+        t = (request.POST.get("code")).encode()
     try:
         cred.f = Fernet(t)
         cred.API = cred.apiDecrypt()
