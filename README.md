@@ -1,6 +1,9 @@
 # Analytics for Spotify
+### Not Currently Setup For Deployment
+
 
 Self Hosted Last.FM Alternative to keeping track of your Spotify History
+
 
 Current Features:
 * Keeps Track of Listening History
@@ -18,4 +21,4 @@ Notes:
 * If you play one song consecutively only the first play is counted (Currently)
 * Requires Spotify Developer App to be Created
 
-Not Currently Setup For Deployment
+
