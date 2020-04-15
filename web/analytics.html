@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Analytics for Spotify</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="node_modules/chart.js/dist/Chart.js"></script>
+    <script type="text/javascript" src="chart.js"></script>
+    <link rel="stylesheet" type="text/css" href="main.css">
+
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        $(function () {
+            $("#datePicker").datepicker();
+        });
+    </script>
+
+</head>
+
+<body>
+    <div style="float:right; display:block;">
+        <!--<button style="color: black" class="btn">DA Place Holder</button>-->
+        <button onclick="window.location.href = '/analytics/delete/';" style="color: black" class="btn">Delete
+            User</button>
+        <button id="status" class="btn "></button>
+        <button onclick="window.location.href = '/analytics/start/';" class="btn btn-green">Start Service</button>
+        <button onclick="window.location.href = '/analytics/stop/';" class="btn btn-red">Stop Service</button>
+        <button onclick='deleteCookies();window.location.href = "/analytics/logout/";' class="btn btn-spotify">Log
+            Out</button>
+    </div>
+    <div style="clear: right; float:center; display:block;">
+        <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
+        <h2 id="statsDesktop"></h2>
+        <h2 id="statsMobile"></h2>
+        <h3>Thier may be up to a 20 minute delay in song history</h3>
+    </div>
+    <div id="lineChartDIV">
+        <div id="nav-bar">
+            <ul class="nav">
+                <li class="nav">
+                    <a class="nav-link" id="orders_3">1W</a>
+                    <br> </li>
+                <li class="nav">
+                    <a class="nav-link active" id="orders_2">1M</a>
+                </li>
+                <li class="nav">
+                    <a class="nav-link" id="orders_1">1Y</a>
+                </li>
+            </ul>
+
+        </div>
+        <script>
+            var btnContainer = document.getElementById("nav-bar");
+
+            // Get all buttons with class="btn" inside the container
+            var btns = btnContainer.getElementsByClassName("nav-link");
+
+            // Loop through the buttons and add the active class to the current/clicked button
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].addEventListener("click", function () {
+                    var current = document.getElementsByClassName("nav-link active");
+                    current[0].className = current[0].className.replace("nav-link active", "nav-link");
+                    this.className += " active";
+                });
+            }
+        </script>
+        <canvas id="line-chart" width="800" height="450"></canvas>
+    </div>
+    <div id="hourlyLineChartDIV">
+        <div id="h_nav-bar">
+            <ul class="h_nav">
+                <li class="h_nav">
+                    <a class="h_nav-link" id="orders_4">1 Day</a><input type="text" id="datePicker"
+                        value="Pick a Day, 1D To Update">
+                </li>
+                <!--
+                <li class="h_nav">
+                    <a class="h_nav-link" id="orders_">1W</a>
+                </li>
+                <li class="h_nav">
+                    <a class="h_nav-link " id="orders_6">1M</a>
+                </li>
+                <li class="h_nav">
+                    <a class="h_nav-link " id="orders_7">1Y</a>
+                </li>-->
+                <li class="h_nav">
+                    <a class="h_nav-link active" id="orders_8">LifeTime</a>
+                </li>
+            </ul>
+        </div>
+        <script>
+            var btnContainer_1 = document.getElementById("h_nav-bar");
+
+            // Get all buttons with class="btn" inside the container
+            var btns_1 = btnContainer_1.getElementsByClassName("h_nav-link");
+
+            // Loop through the buttons and add the active class to the current/clicked button
+            for (var i = 0; i < btns_1.length; i++) {
+                btns_1[i].addEventListener("click", function () {
+                    var current = document.getElementsByClassName("h_nav-link active");
+                    current[0].className = current[0].className.replace("h_nav-link active", "h_nav-link");
+                    this.className += " active";
+                });
+            }
+        </script>
+        <canvas id="hourlyLine-chart" width="800" height="450"></canvas>
+    </div>
+
+    <div id="listeningHistoryDIV">
+        <h2>Listening History</h2>
+
+        <table id="listeningHistory" class="display" width="100%"></table>
+    </div>
+    <div id="playCountDIV">
+        <h2>Song Play Counts</h2>
+        <table id="songs" class="display" width="100%">
+        </table>
+    </div>
+
+    <div style="clear:both; text-align:center; margin: auto;  width: 100%; display: block;">
+        <br>
+        <h3>Input Playlist URL to Track:</h3>
+        <input type="text" id="playlist" value=""> <button onclick=playlist() style="color: black" class="btn">Submit
+            Playlist</button>
+    </div>
+    <div id="playlists"></div>
+
+</body>
+
+</html>

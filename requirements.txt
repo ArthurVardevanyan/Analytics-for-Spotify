@@ -1,3 +1,7 @@
-mysql-connector-python==8.0.19
-spotipy==2.10.0
-
+libmysqlclient-dev
+libapache2-mod-wsgi-py3
+libapache2-mod-wsgi
+django
+django-cors-headers
+mysql-connector-python
+mysqlclient

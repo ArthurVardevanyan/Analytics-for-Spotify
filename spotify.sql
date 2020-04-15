@@ -25,6 +25,7 @@ CREATE TABLE `artists` (
 --
 
 CREATE TABLE `listeningHistory` (
+  `user` char(128) NOT NULL,
   `timestamp` bigint NOT NULL,
   `timePlayed` text NOT NULL,
   `songID` varchar(22) NOT NULL,
@@ -34,13 +35,27 @@ CREATE TABLE `listeningHistory` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `playcount`
+--
+
+CREATE TABLE `playcount` (
+  `user` char(128) NOT NULL,
+  `songID` varchar(22) NOT NULL,
+  `playCount` int NOT NULL DEFAULT '1'
+) ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `playlists`
 --
 
 CREATE TABLE `playlists` (
-  `id` varchar(22) NOT NULL,
-  `name` text NOT NULL,
-  `lastUpdated` datetime NOT NULL
+  `user` char(128) NOT NULL,
+  `id` char(128) NOT NULL,
+  `name` longblob NOT NULL,
+  `lastUpdated` text NOT NULL,
+  `idEncrypt` longblob NOT NULL
 ) ;
 
 -- --------------------------------------------------------
@@ -50,19 +65,20 @@ CREATE TABLE `playlists` (
 --
 
 CREATE TABLE `playlistSongs` (
-  `playlistID` varchar(22) NOT NULL,
+  `playlistID` char(128) NOT NULL,
   `songID` varchar(22) NOT NULL,
   `songStatus` text NOT NULL
 ) ;
 
 -- --------------------------------------------------------
+
 --
 -- Table structure for table `songArtists`
 --
 
 CREATE TABLE `songArtists` (
-  `songID` varchar(22) ,
-  `artistID` varchar(22) 
+  `songID` varchar(22) NOT NULL,
+  `artistID` varchar(22) NOT NULL
 ) ;
 
 -- --------------------------------------------------------
@@ -72,10 +88,34 @@ CREATE TABLE `songArtists` (
 --
 
 CREATE TABLE `songs` (
-  `id` varchar(22) ,
+  `id` varchar(22) NOT NULL,
   `name` text NOT NULL,
-  `playCount` int DEFAULT '1',
   `trackLength` bigint NOT NULL
+) ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `spotifyAPI`
+--
+
+CREATE TABLE `spotifyAPI` (
+  `api` longblob NOT NULL
+) ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `user` char(128) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `statusSong` mediumint NOT NULL DEFAULT '0',
+  `statusPlaylist` mediumint NOT NULL DEFAULT '0',
+  `cache` longblob NOT NULL,
+  `realTime` int NOT NULL
 ) ;
 
 --
@@ -92,21 +132,30 @@ ALTER TABLE `artists`
 -- Indexes for table `listeningHistory`
 --
 ALTER TABLE `listeningHistory`
-  ADD PRIMARY KEY (`timestamp`),
-  ADD KEY `songID` (`songID`);
+  ADD PRIMARY KEY (`timestamp`,`user`) USING BTREE,
+  ADD KEY `songID` (`songID`),
+  ADD KEY `user` (`user`);
+
+--
+-- Indexes for table `playcount`
+--
+ALTER TABLE `playcount`
+  ADD PRIMARY KEY (`user`,`songID`),
+  ADD KEY `song` (`songID`);
 
 --
 -- Indexes for table `playlists`
 --
 ALTER TABLE `playlists`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`,`user`) USING BTREE,
+  ADD KEY `user` (`user`);
 
 --
 -- Indexes for table `playlistSongs`
 --
 ALTER TABLE `playlistSongs`
-  ADD UNIQUE KEY `songID` (`songID`),
-  ADD KEY `playlistID` (`playlistID`);
+  ADD PRIMARY KEY (`playlistID`,`songID`),
+  ADD KEY `songID` (`songID`);
 
 --
 -- Indexes for table `songArtists`
@@ -123,6 +172,12 @@ ALTER TABLE `songs`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`user`);
+
+--
 -- Constraints for dumped tables
 --
 
@@ -130,19 +185,33 @@ ALTER TABLE `songs`
 -- Constraints for table `listeningHistory`
 --
 ALTER TABLE `listeningHistory`
-  ADD CONSTRAINT `listeningHistory_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `listeningHistory_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `listeningHistory_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `playcount`
+--
+ALTER TABLE `playcount`
+  ADD CONSTRAINT `playcount_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `playcount_ibfk_3` FOREIGN KEY (`user`) REFERENCES `users` (`user`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `playlists`
+--
+ALTER TABLE `playlists`
+  ADD CONSTRAINT `playlists_ibfk_1` FOREIGN KEY (`user`) REFERENCES `users` (`user`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `playlistSongs`
 --
 ALTER TABLE `playlistSongs`
-  ADD CONSTRAINT `playlistSongs_ibfk_1` FOREIGN KEY (`playlistID`) REFERENCES `playlists` (`id`),
-  ADD CONSTRAINT `playlistSongs_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`);
+  ADD CONSTRAINT `playlistSongs_ibfk_1` FOREIGN KEY (`playlistID`) REFERENCES `playlists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `playlistSongs_ibfk_2` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `songArtists`
 --
 ALTER TABLE `songArtists`
-  ADD CONSTRAINT `songArtists_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `songArtists_ibfk_2` FOREIGN KEY (`artistID`) REFERENCES `artists` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `songArtists_ibfk_1` FOREIGN KEY (`songID`) REFERENCES `songs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `songArtists_ibfk_2` FOREIGN KEY (`artistID`) REFERENCES `artists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
