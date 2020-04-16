@@ -11,6 +11,7 @@ import hashlib
 import cryptography
 from cryptography.fernet import Fernet
 import ast
+from SpotifyAnalytics.env import ENCRYPTION
 key = []
 API = ""
 f = ""
@@ -22,7 +23,10 @@ def decryptPlaylist(e):
 
 def encryptContent(e):
     # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
-    return (f.encrypt(str(e).encode())).decode("utf-8")
+    if(ENCRYPTION):
+        return (f.encrypt(str(e).encode())).decode("utf-8")
+    else:
+        return str(e)
 
 
 def decryptUserJson(userID):
@@ -31,14 +35,20 @@ def decryptUserJson(userID):
         cursor.execute("SELECT * from users  WHERE user = '" + userID + "'")
         for user in cursor:
             userData = user
-    return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
+    if(ENCRYPTION):
+        return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
+    else:
+        return ast.literal_eval(userData[4])
 
 
 def apiDecrypt():
     with connection.cursor() as cursor:
         cursor.execute("SELECT * from spotifyAPI")
         for api in cursor:
-            return ast.literal_eval((f.decrypt(api[0]).decode("utf-8")))
+            if(ENCRYPTION):
+                return ast.literal_eval((f.decrypt(api[1]).decode("utf-8")))
+            else:
+                return ast.literal_eval((api[1]))
 
 
 def refresh_token(userID):

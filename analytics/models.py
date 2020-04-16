@@ -6,7 +6,7 @@ class Artists(models.Model):
     name = models.TextField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'artists'
 
 
@@ -21,7 +21,7 @@ class Listeninghistory(models.Model):
     json = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'listeningHistory'
         unique_together = (('timestamp', 'user'),)
 
@@ -35,7 +35,7 @@ class Playcount(models.Model):
     playcount = models.IntegerField(db_column='playCount')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'playcount'
         unique_together = (('user', 'songid'),)
 
@@ -50,7 +50,7 @@ class Playlistsongs(models.Model):
     songstatus = models.TextField(db_column='songStatus')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'playlistSongs'
         unique_together = (('playlistid', 'songid'),)
 
@@ -65,7 +65,7 @@ class Playlists(models.Model):
     idencrypt = models.TextField(db_column='idEncrypt')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'playlists'
         unique_together = (('id', 'user'),)
 
@@ -79,7 +79,7 @@ class Songartists(models.Model):
         Artists, models.DO_NOTHING, db_column='artistID')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'songArtists'
         unique_together = (('songid', 'artistid'),)
 
@@ -91,15 +91,16 @@ class Songs(models.Model):
     tracklength = models.BigIntegerField(db_column='trackLength')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'songs'
 
 
 class Spotifyapi(models.Model):
+    clientID = models.CharField(primary_key=True, max_length=128)
     api = models.TextField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'spotifyAPI'
 
 
@@ -115,5 +116,5 @@ class Users(models.Model):
     realtime = models.IntegerField(db_column='realTime')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'users'

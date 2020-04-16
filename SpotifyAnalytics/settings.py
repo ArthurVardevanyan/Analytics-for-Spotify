@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import mysql.connector
 import os
-from SpotifyAnalytics.credentials import C_DEBUG, C_SECERT
+from SpotifyAnalytics.env import D_DEBUG, D_SECRET
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,10 +21,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = C_SECERT
+SECRET_KEY = D_SECRET
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = C_DEBUG
+DEBUG = D_DEBUG
 
 ALLOWED_HOSTS = []
 
@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     'analytics.apps.AnalyticsConfig',
 ]
 
@@ -73,21 +72,11 @@ TEMPLATES = [
     },
 ]
 
-
-# Database
-# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
-# DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#   }
-# }
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
-            'read_default_file':  BASE_DIR + '/credentials/my.cnf',
+            'read_default_file':  BASE_DIR + '/SpotifyAnalytics/my.cnf',
         },
     }
 }
@@ -127,9 +116,3 @@ USE_TZ = True
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 86400
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
-
-STATIC_URL = BASE_DIR + '/web/'

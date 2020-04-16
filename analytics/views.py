@@ -13,15 +13,21 @@ import cryptography
 from cryptography.fernet import Fernet
 import ast
 import analytics.credentials as cred
-import SpotifyAnalytics.settings as SET
+from SpotifyAnalytics.env import ENCRYPTION, PRIVATE
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 @csrf_exempt
-def boot(request, localKey=0):
-    t = request
-    if(not localKey):
+def boot(request=0):
+    t = 0
+    if(ENCRYPTION == 0):
+        spotify.main()
+        cred.API = cred.apiDecrypt()
+        return HttpResponse("", content_type="text/html")
+    if(ENCRYPTION == 1):
+        t = PRIVATE
+    if(ENCRYPTION == 2):
         t = (request.POST.get("code")).encode()
     try:
         cred.f = Fernet(t)
@@ -112,9 +118,13 @@ def userHash(auth):
     url = "https://api.spotify.com/v1/me"
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
-    result = hashlib.sha512(str.encode(cred.API.get("salt") +
-                                       requests.get(url, headers=header).json().get("id")))
-    return result.hexdigest()
+    result = requests.get(url,
+                          headers=header).json().get("id")
+    if(ENCRYPTION):
+        result = hashlib.sha512(str.encode(cred.API.get("salt") + result))
+        return result.hexdigest()
+    else:
+        return result
 
 
 def accessToken(request, CODE):
@@ -122,7 +132,7 @@ def accessToken(request, CODE):
     data = {
         "grant_type": "authorization_code",
         "code": CODE,
-        "redirect_uri": "http://localhost/analytics/loginResponce"}
+        "redirect_uri": cred.API.get("redirect_url")}
     response = requests.post(
         'https://accounts.spotify.com/api/token', headers=header, data=data)
     auth = response.json()
@@ -133,11 +143,11 @@ def accessToken(request, CODE):
     userID = userHash(auth)
     request.session['spotify'] = userID  # SESSION
     cache = cred.encryptContent(auth)
-    query = "INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ('" + \
-        userID + "', 0, 0, 0, '"+cache+"') "
+    query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ("' + \
+        userID + '", 0, 0, 0, "'+cache+'") '
     cursor = connection.cursor()
     cursor.execute(query)
-    query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
+    query = 'UPDATE users SET cache = "'+cache+'" WHERE user = "' + userID + '"'
     cursor.execute(query)
     return True
 
@@ -152,8 +162,8 @@ def login(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def loginResponce(request):
-    # http://localhost:8000/analytics/loginResponce
+def loginResponse(request):
+    # http://localhost:8000/analytics/loginResponse
     CODE = request.GET.get("code")
     accessToken(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'

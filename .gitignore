@@ -3,4 +3,5 @@ __pycache__
 web/node_modules/*
 logs/*
 .vscode/*
-SpotifyAnalytics/credentials.py
+env.py
+my.cnf

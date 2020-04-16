@@ -7,7 +7,7 @@ urlpatterns = [
     path('songs/', views.songs, name='songs'),
     path('playlistSongs/', views.playlistSongs, name='playlistSongs'),
     path('login/', views.login, name='login'),
-    path('loginResponce', views.loginResponce, name='loginResponce'),
+    path('loginResponse', views.loginResponse, name='loginResponse'),
     path('authenticated/', views.authenticated),
     path('status/', views.status),
     path('stop/', views.stop),
