@@ -36,6 +36,8 @@ def main():
         "0: None (Recommended for Self Hosted Internal Systems)\n1: Locally Stored Private Key\n3: Private Key Entered On WebServer Boot\nSet Encryption Level:")
     DJANGO_PRIVATE = str(binascii.hexlify(os.urandom(24)), "utf-8")
     PRIVATE = None
+    if(ENCRYPTION):
+        PRIVATE = str(binascii.hexlify(os.urandom(24)), "utf-8")
     ENV = [
         "D_DEBUG = " + str(DEBUG),
         "D_SECRET = '" + str(DJANGO_PRIVATE) + "'",
