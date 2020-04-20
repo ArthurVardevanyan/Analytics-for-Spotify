@@ -11,7 +11,7 @@ li.h_nav {
 li.nav,
 li.h_nav,
 a {
-  font-family: roboto;
+  font-family: Roboto;
   display: block;
   color: black;
   text-align: center;
@@ -48,7 +48,7 @@ a:active {
 }
 
 .dataTables_wrapper {
-  font-family: roboto;
+  font-family: Roboto;
 }
 
 table {
@@ -162,7 +162,7 @@ h3 {
   min-width: 160px;
   text-transform: uppercase;
   white-space: normal;
-  font-family: roboto;
+  font-family: Roboto;
   font-weight: 700;
   text-align: center;
   vertical-align: middle;
