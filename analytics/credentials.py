@@ -62,7 +62,7 @@ def refresh_token(userID):
         header = {"Authorization": "Basic " + API.get("B64CS")}
         data = {"grant_type": "refresh_token",
                 "refresh_token": access.get("refresh_token"),
-                "redirect_uri": "http://localhost/analytics/loginResponce"}
+                "redirect_uri": "http://localhost/analytics/loginResponse"}
         auth = requests.post(
             'https://accounts.spotify.com/api/token', headers=header, data=data).json()
         expire = auth.get("expires_in")
@@ -71,7 +71,7 @@ def refresh_token(userID):
             "refresh_token", access.get("refresh_token"))
         cache = encryptContent(auth)
         cursor = connection.cursor()
-        query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
+        query = 'UPDATE users SET cache = "'+cache+'" WHERE user = "' + userID + '"'
         cursor.execute(query)
         return auth.get("access_token")
     else:

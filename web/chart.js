@@ -10,29 +10,29 @@ function deleteCookies() {
 }
 
 function playlist() {
-  window.location.href = "http://localhost:8000/analytics/playlistSubmission?playlist=" + document.getElementById("playlist").value
+  window.location.href = "/analytics/playlistSubmission?playlist=" + document.getElementById("playlist").value
 }
 
 
 function deletePlaylist(id) {
-  window.location.href = "http://localhost:8000/analytics/deletePlaylist?playlist=" + id
+  window.location.href = "/analytics/deletePlaylist?playlist=" + id
 }
 
 window.onload = function () {
 
   $.ajax({
-    url: "http://localhost:8000/analytics/authenticated/",
+    url: "/analytics/authenticated/",
     method: "GET",
     success: function (data) {
       if (data === "False") {
-        window.location.href = "http://localhost:8000/spotify";
+        window.location.href = "/spotify";
       }
     }
 
   });
 
   $.ajax({
-    url: "http://localhost:8000/analytics/status/",
+    url: "/analytics/status/",
     method: "GET",
     success: function (data) {
       data = data.split(':')
@@ -48,7 +48,7 @@ window.onload = function () {
     }
   });
   $.ajax({
-    url: "http://localhost:8000/analytics/listeningHistory/",
+    url: "/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       var songs = [];
@@ -168,7 +168,7 @@ window.onload = function () {
     }
   });
   $.ajax({
-    url: "http://localhost:8000/analytics/listeningHistory/",
+    url: "/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
 
@@ -252,7 +252,7 @@ window.onload = function () {
   })
 
   $.ajax({
-    url: "http://localhost:8000/analytics/listeningHistory/",
+    url: "/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -288,7 +288,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "http://localhost:8000/analytics/songs",
+    url: "/analytics/songs",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -312,7 +312,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "http://localhost:8000/analytics/playlistSongs/",
+    url: "/analytics/playlistSongs/",
     method: "GET",
     success: function (data) {
       $(document).ready(function () {
@@ -363,7 +363,7 @@ window.onload = function () {
     }
   })
   $.ajax({
-    url: "http://localhost:8000/analytics/listeningHistory/",
+    url: "/analytics/listeningHistory/",
     method: "GET",
     success: function (data) {
       timeListened = 0;
