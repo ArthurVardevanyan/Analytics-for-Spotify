@@ -242,8 +242,11 @@ def playlistSubmission(request):
             return HttpResponse(status=400)
     except:
         return HttpResponse(status=401)
-    playlistHash = hashlib.sha512(str.encode(
+    if(ENCRYPTION):
+        playlistHash = hashlib.sha512(str.encode(
         cred.API.get("salt") + playlist)).hexdigest()
+    else:   
+        playlistHash = playlist
     playlistEncrypt = cred.encryptContent(playlist)
 
     add = ("INSERT IGNORE INTO playlists"
