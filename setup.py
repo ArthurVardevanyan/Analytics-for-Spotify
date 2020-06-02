@@ -69,11 +69,13 @@ def main():
         auth_plugin='mysql_native_password'
     )
     cursor = db.cursor()
+    #"(clientID,api)"
+    #"VALUES (%s, %s)")
     add = ("INSERT IGNORE INTO spotifyAPI"
-           "(clientID,api)"
-           "VALUES (%s, %s)")
+           "(api)"
+           "VALUES (%s)")
     data = (
-        CLIENT,
+       # CLIENT,
         str(API),
     )
     cursor.execute(add, data)

@@ -18,7 +18,10 @@ f = ""
 
 
 def decryptPlaylist(e):
-    return str(f.decrypt(e).decode("utf-8"))
+    if(ENCRYPTION):
+        return str(f.decrypt(e).decode("utf-8"))
+    else:
+        return str(e.decode("utf-8"))
 
 
 def encryptContent(e):
@@ -38,7 +41,7 @@ def decryptUserJson(userID):
     if(ENCRYPTION):
         return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
     else:
-        return ast.literal_eval(userData[4])
+        return ast.literal_eval(userData[4].decode("utf-8"))
 
 
 def apiDecrypt():
@@ -46,9 +49,9 @@ def apiDecrypt():
         cursor.execute("SELECT * from spotifyAPI")
         for api in cursor:
             if(ENCRYPTION):
-                return ast.literal_eval((f.decrypt(api[1]).decode("utf-8")))
+                return ast.literal_eval((f.decrypt(api[0]).decode("utf-8")))
             else:
-                return ast.literal_eval((api[1]))
+                return ast.literal_eval((api[0]).decode("utf-8"))
 
 
 def refresh_token(userID):
@@ -59,7 +62,7 @@ def refresh_token(userID):
         header = {"Authorization": "Basic " + API.get("B64CS")}
         data = {"grant_type": "refresh_token",
                 "refresh_token": access.get("refresh_token"),
-                "redirect_uri": "http://localhost/analytics/loginResponce"}
+                "redirect_uri": "http://localhost/analytics/loginResponse"}
         auth = requests.post(
             'https://accounts.spotify.com/api/token', headers=header, data=data).json()
         expire = auth.get("expires_in")
@@ -68,7 +71,7 @@ def refresh_token(userID):
             "refresh_token", access.get("refresh_token"))
         cache = encryptContent(auth)
         cursor = connection.cursor()
-        query = "UPDATE users SET cache = '"+cache+"' WHERE user = '" + userID + "'"
+        query = 'UPDATE users SET cache = "'+cache+'" WHERE user = "' + userID + '"'
         cursor.execute(query)
         return auth.get("access_token")
     else:
