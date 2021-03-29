@@ -21,5 +21,5 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('analytics/', include('webBackend.urls')),
     path('admin/', admin.site.urls),
-    
-]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) # Remove for Production?
+
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

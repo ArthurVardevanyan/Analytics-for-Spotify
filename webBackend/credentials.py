@@ -49,7 +49,9 @@ def refresh_token(userID):
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
         cursor = connection.cursor()
-        query = 'UPDATE users SET cache = "'+json.dumps(auth) +'" WHERE user = "' + userID + '"'
+        query = """UPDATE users SET cache = '""" + \
+            json.dumps(auth) + """' WHERE user = '""" + userID + "'"
+        query = query.replace("\\", "")
         cursor.execute(query)
         return auth.get("access_token")
     else:
@@ -72,9 +74,10 @@ def accessToken(request, CODE):
     userID = getUser(auth)
     request.session['spotify'] = userID  # SESSION
     query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ("' + \
-        userID + '", 0, 0, 0, "'+json.dumps(auth) +'") '
+        userID + '", 0, 0, 0, ' + "'" + json.dumps(auth) + "')"
     cursor = connection.cursor()
     cursor.execute(query)
-    query = 'UPDATE users SET cache = "'+json.dumps(auth) +'" WHERE user = "' + userID + '"'
+    query = "UPDATE users SET cache = '" + \
+        json.dumps(auth) + "' WHERE user = '" + userID + "'"
     cursor.execute(query)
     return True
