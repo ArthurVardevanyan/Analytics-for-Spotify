@@ -50,6 +50,31 @@ def listeningHistory(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
+    query = "SELECT timePlayed FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
+    WHERE listeningHistory.user = '"+spotifyID + "'\
+    ORDER BY timePlayed"
+    cursor = connection.cursor()
+    cursor.execute(query)
+    return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
+
+
+def listeningHistoryShort(request):
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
+    WHERE listeningHistory.user = '"+spotifyID + "'\
+    and CAST(timePlayed AS DATE)  BETWEEN CURDATE() - INTERVAL 7 DAY AND CURDATE() \
+    ORDER BY timePlayed"  # DESC LIMIT 350"
+    cursor = connection.cursor()
+    cursor.execute(query)
+    return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
+
+
+def listeningHistoryAll(request):
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
     query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
     WHERE listeningHistory.user = '"+spotifyID + "' \
     ORDER BY timePlayed"

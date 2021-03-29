@@ -54,7 +54,25 @@ window.onload = function () {
       stats(data);
       summaryLineChart(data);
       hourlyLineChart(data);
-      listeningHistory(data);
+
+      $.ajax({
+        url: "/analytics/listeningHistoryShort/",
+        method: "GET",
+        success: function (data) {
+          listeningHistory(data);
+        }
+      });
+
+      setTimeout(function () {
+        $.ajax({
+          url: "/analytics/listeningHistoryAll/",
+          method: "GET",
+          success: function (data) {
+            stats(data);
+            listeningHistory(data);
+          }
+        });
+      }, 500)
     }
   });
   $.ajax({
@@ -197,8 +215,23 @@ function summaryLineChart(data) {
       }
     }
 
-    data.labels = yearSongs;
-    data.datasets[0].data = yearPlays;
+    var weekSongs = [];
+    var weekPlays = [];
+    var count = 0;
+    var temp = 0;
+    for (let index = 0; index < songs.length; index++) {
+      if (count === 7) {
+        weekSongs.push(songs[index]);
+        weekPlays.push(temp);
+        temp = 0;
+        count = 0;
+      }
+      temp += plays[index];
+      count += 1;
+
+    }
+    data.labels = weekSongs;
+    data.datasets[0].data = weekPlays;
 
 
     lineChart.update();
@@ -347,8 +380,10 @@ function listeningHistory(data) {
     var aDemoItems = data;
 
     //Load  data table
+    if ($.fn.DataTable.isDataTable('#listeningHistory')) {
+      $('#listeningHistory').DataTable().destroy();
+    }
     var oTblReport = $("#listeningHistory")
-
     oTblReport.DataTable({
       data: aDemoItems,
       "order": [[0, "desc"]],
