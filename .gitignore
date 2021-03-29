@@ -1,6 +1,6 @@
 __pycache__
 .cache*
-web/node_modules/*
+*/node_modules/*
 logs/*
 .vscode/*
 env.py

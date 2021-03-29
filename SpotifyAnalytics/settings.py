@@ -119,4 +119,4 @@ SESSION_COOKIE_AGE = 86400
 
 STATIC_URL = '/spotify/' # Remove for Production?
 
-STATIC_ROOT = os.path.join(BASE_DIR, "web")  # Remove for Production?
+STATIC_ROOT = os.path.join(BASE_DIR, "webFrontend")  # Remove for Production?
