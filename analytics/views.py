@@ -6,8 +6,8 @@ from django.db import connection
 import json
 import requests
 import time
-import database
-import spotify
+import songMonitoringBackend.database as database
+import songMonitoringBackend.spotify as spotify
 import hashlib
 import cryptography
 from cryptography.fernet import Fernet

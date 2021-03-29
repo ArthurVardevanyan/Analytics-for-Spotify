@@ -1,15 +1,17 @@
 import requests
-from analytics.credentials import refresh_token as authorize
 import time
-import database
-import log
-import playlistSongs
 import _thread
 import threading
 from datetime import datetime, timezone
 import os
 from django.db import connection
 from _datetime import timedelta
+import sys
+sys.path.append("..")
+from analytics.credentials import refresh_token as authorize
+import songMonitoringBackend.database as database
+import songMonitoringBackend.log as log
+import songMonitoringBackend.playlistSongs as playlistSongs
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 log.logInit("spotify")
