@@ -249,6 +249,7 @@ function summaryLineChart(data) {
 
     lineChart.update();
   });
+  document.getElementById('orders_2').click();
 }
 
 function hourlyLineChart(data) {
