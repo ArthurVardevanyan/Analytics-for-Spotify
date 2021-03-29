@@ -12,7 +12,7 @@ import hashlib
 import cryptography
 from cryptography.fernet import Fernet
 import ast
-import analytics.credentials as cred
+import webBackend.credentials as cred
 from AnalyticsforSpotify.env import ENCRYPTION, PRIVATE
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

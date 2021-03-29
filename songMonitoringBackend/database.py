@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from django.db import connection
 import sys
 sys.path.append("..")
-from analytics.credentials import decryptPlaylist
+from webBackend.credentials import decryptPlaylist
 
 
 def user_status(user, detailed=0):

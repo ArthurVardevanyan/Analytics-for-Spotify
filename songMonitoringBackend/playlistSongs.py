@@ -1,7 +1,7 @@
 import requests
 import sys
 sys.path.append("..")
-from analytics.credentials import refresh_token as authorize
+from webBackend.credentials import refresh_token as authorize
 import songMonitoringBackend.database as database
 
 
