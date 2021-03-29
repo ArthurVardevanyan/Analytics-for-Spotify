@@ -20,7 +20,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('analytics/', include('analytics.urls')),
-    path('analytics/', include('analytics.urls')),
     path('admin/', admin.site.urls),
     
-]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) # Remove for Production?

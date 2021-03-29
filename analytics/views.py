@@ -158,12 +158,11 @@ def login(request):
         url = '<meta http-equiv="Refresh" content="0; url=' + \
             cred.API.get("url")+'" />'
     else:
-        url = '<meta http-equiv="Refresh" content="0; url=/spotify/" />'
+        url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
 def loginResponse(request):
-    # http://localhost:8000/analytics/loginResponse
     CODE = request.GET.get("code")
     accessToken(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
@@ -244,8 +243,8 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
     if(ENCRYPTION):
         playlistHash = hashlib.sha512(str.encode(
-        cred.API.get("salt") + playlist)).hexdigest()
-    else:   
+            cred.API.get("salt") + playlist)).hexdigest()
+    else:
         playlistHash = playlist
     playlistEncrypt = cred.encryptContent(playlist)
 

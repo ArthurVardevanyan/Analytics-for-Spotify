@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import mysql.connector
 import os
-from SpotifyAnalytics.env import D_DEBUG, D_SECRET
+from SpotifyAnalytics.env import D_DEBUG, D_SECRET, HOSTS
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +26,7 @@ SECRET_KEY = D_SECRET
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = D_DEBUG
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = HOSTS
 
 
 # Application definition
@@ -117,6 +117,6 @@ USE_TZ = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 86400
 
-STATIC_URL = '/spotify/'
+STATIC_URL = '/spotify/' # Remove for Production?
 
-STATIC_ROOT = os.path.join(BASE_DIR, "web")
+STATIC_ROOT = os.path.join(BASE_DIR, "web")  # Remove for Production?
