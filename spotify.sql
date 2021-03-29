@@ -16,7 +16,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `artists` (
   `id` varchar(22) NOT NULL,
   `name` text NOT NULL
-) ;
+);
 
 -- --------------------------------------------------------
 
@@ -30,7 +30,7 @@ CREATE TABLE `listeningHistory` (
   `timePlayed` text NOT NULL,
   `songID` varchar(22) NOT NULL,
   `json` json DEFAULT NULL
-) ;
+);
 
 -- --------------------------------------------------------
 
@@ -42,7 +42,7 @@ CREATE TABLE `playcount` (
   `user` char(128) NOT NULL,
   `songID` varchar(22) NOT NULL,
   `playCount` int NOT NULL DEFAULT '1'
-) ;
+);
 
 -- --------------------------------------------------------
 
@@ -53,10 +53,9 @@ CREATE TABLE `playcount` (
 CREATE TABLE `playlists` (
   `user` char(128) NOT NULL,
   `id` char(128) NOT NULL,
-  `name` longblob NOT NULL,
-  `lastUpdated` text NOT NULL,
-  `idEncrypt` longblob NOT NULL
-) ;
+  `name` char(128) NOT NULL,
+  `lastUpdated` text NOT NULL
+);
 
 -- --------------------------------------------------------
 
@@ -68,7 +67,7 @@ CREATE TABLE `playlistSongs` (
   `playlistID` char(128) NOT NULL,
   `songID` varchar(22) NOT NULL,
   `songStatus` text NOT NULL
-) ;
+);
 
 -- --------------------------------------------------------
 
@@ -79,7 +78,7 @@ CREATE TABLE `playlistSongs` (
 CREATE TABLE `songArtists` (
   `songID` varchar(22) NOT NULL,
   `artistID` varchar(22) NOT NULL
-) ;
+);
 
 -- --------------------------------------------------------
 
@@ -91,7 +90,7 @@ CREATE TABLE `songs` (
   `id` varchar(22) NOT NULL,
   `name` text NOT NULL,
   `trackLength` bigint NOT NULL
-) ;
+);
 
 -- --------------------------------------------------------
 
@@ -100,8 +99,8 @@ CREATE TABLE `songs` (
 --
 
 CREATE TABLE `spotifyAPI` (
-  `api` longblob NOT NULL
-) ;
+  `api` json NOT NULL
+);
 
 -- --------------------------------------------------------
 
@@ -114,9 +113,9 @@ CREATE TABLE `users` (
   `enabled` tinyint(1) NOT NULL DEFAULT '0',
   `statusSong` mediumint NOT NULL DEFAULT '0',
   `statusPlaylist` mediumint NOT NULL DEFAULT '0',
-  `cache` longblob NOT NULL,
+  `cache` json NOT NULL,
   `realTime` int NOT NULL
-) ;
+);
 
 --
 -- Indexes for dumped tables

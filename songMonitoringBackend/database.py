@@ -3,8 +3,6 @@ import json
 from datetime import datetime, timezone
 from django.db import connection
 import sys
-sys.path.append("..")
-from webBackend.credentials import decryptPlaylist
 
 
 def user_status(user, detailed=0):
@@ -115,12 +113,11 @@ def listenting_history(user, spotify, cursor):
 
 def get_playlists(user):
     with connection.cursor() as cursor:
-        query = "SELECT id, idEncrypt, name from playlists where user = '"+user+"'"
+        query = "SELECT id, name from playlists where user = '"+user+"'"
         cursor.execute(query)
         playlists = []
         for playlist in cursor:
-            playlists.append((playlist[0], decryptPlaylist(
-                playlist[1]), decryptPlaylist(playlist[2])))
+            playlists.append((playlist[0], playlist[1]))
         return playlists
 
 

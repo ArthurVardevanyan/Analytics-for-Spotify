@@ -8,30 +8,16 @@ import requests
 import time
 import songMonitoringBackend.database as database
 import songMonitoringBackend.spotify as spotify
-import hashlib
-import cryptography
-from cryptography.fernet import Fernet
-import ast
-import webBackend.credentials as cred
-from AnalyticsforSpotify.env import ENCRYPTION, PRIVATE
-
+import webBackend
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+API = ""
 
 
 @csrf_exempt
 def boot(request=0):
-    t = 0
-    if(ENCRYPTION == 0):
-        spotify.main()
-        cred.API = cred.apiDecrypt()
-        return HttpResponse("", content_type="text/html")
-    if(ENCRYPTION == 1):
-        t = PRIVATE
-    if(ENCRYPTION == 2):
-        t = (request.POST.get("code")).encode()
+
     try:
-        cred.f = Fernet(t)
-        cred.API = cred.apiDecrypt()
+        API = webBackend.getAPI()
         spotify.main()
     except Exception as e:
         e = e
@@ -107,56 +93,18 @@ def playlistSongs(request):
         cursor = connection.cursor()
         cursor.execute(query)
         json_data = dictfetchall(cursor)
-        playlistDict["name"] = playlist[2]
-        playlistDict["hash"] = playlist[0]
+        playlistDict["id"] = playlist[0]
+        playlistDict["name"] = playlist[1]
         playlistDict["tracks"] = json_data
         playlistsData.append(playlistDict)
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")
 
 
-def userHash(auth):
-    url = "https://api.spotify.com/v1/me"
-    header = {"Accept": "application/json",
-              "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
-    result = requests.get(url,
-                          headers=header).json().get("id")
-    if(ENCRYPTION):
-        result = hashlib.sha512(str.encode(cred.API.get("salt") + result))
-        return result.hexdigest()
-    else:
-        return result
-
-
-def accessToken(request, CODE):
-    header = {"Authorization": "Basic " + cred.API.get("B64CS")}
-    data = {
-        "grant_type": "authorization_code",
-        "code": CODE,
-        "redirect_uri": cred.API.get("redirect_url")}
-    response = requests.post(
-        'https://accounts.spotify.com/api/token', headers=header, data=data)
-    auth = response.json()
-    currentTime = int(time.time())
-    expire = auth.get("expires_in")
-    auth["expires_at"] = currentTime + expire
-    userID = ""
-    userID = userHash(auth)
-    request.session['spotify'] = userID  # SESSION
-    cache = cred.encryptContent(auth)
-    query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ("' + \
-        userID + '", 0, 0, 0, "'+cache+'") '
-    cursor = connection.cursor()
-    cursor.execute(query)
-    query = 'UPDATE users SET cache = "'+cache+'" WHERE user = "' + userID + '"'
-    cursor.execute(query)
-    return True
-
-
 def login(request):
     url = ""
-    if(isinstance(cred.API, dict)):
+    if(isinstance(API, dict)):
         url = '<meta http-equiv="Refresh" content="0; url=' + \
-            cred.API.get("url")+'" />'
+            API.get("url")+'" />'
     else:
         url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
@@ -164,7 +112,7 @@ def login(request):
 
 def loginResponse(request):
     CODE = request.GET.get("code")
-    accessToken(request, CODE)
+    webBackend.accessToken(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
@@ -224,7 +172,7 @@ def start(request):
 
 
 def playlistSubmission(request):
-    from analytics.credentials import refresh_token as authorize
+    from webBackend.credentials import refresh_token as authorize
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -241,22 +189,15 @@ def playlistSubmission(request):
             return HttpResponse(status=400)
     except:
         return HttpResponse(status=401)
-    if(ENCRYPTION):
-        playlistHash = hashlib.sha512(str.encode(
-            cred.API.get("salt") + playlist)).hexdigest()
-    else:
-        playlistHash = playlist
-    playlistEncrypt = cred.encryptContent(playlist)
 
     add = ("INSERT IGNORE INTO playlists"
            "(user, id,name, lastUpdated,idEncrypt)"
            "VALUES (%s, %s, %s, %s, %s)")
     data = (
         spotifyID,
-        playlistHash,
-        cred.encryptContent(response.get('name')),
+        playlist,
+        response.get('name'),
         "N/A",
-        playlistEncrypt,
     )
     cursor = connection.cursor()
     cursor.execute(add, data)

@@ -107,7 +107,7 @@ window.onload = function () {
             document.getElementById("playlists").innerHTML +=
               '  <div class="playlistDIV"><br><h2>Playlist: ' + data[i]["name"] +
               ' </h2> <h3>Last Updated: '
-              + localDateTime + '</h3> <button onclick=deletePlaylist("' + data[i]["hash"] + '") style="color: black" class="btn">Delete</button><table id="playlist_' + i + '" class="display" width="100%"></table></div>';
+              + localDateTime + '</h3> <button onclick=deletePlaylist("' + data[i]["id"] + '") style="color: black" class="btn">Delete</button><table id="playlist_' + i + '" class="display" width="100%"></table></div>';
           }
         }
         for (let i = 0; i < data.length; i++) {
