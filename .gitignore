@@ -4,4 +4,3 @@ __pycache__
 */logs/*
 .vscode/*
 env.py
-my.cnf
