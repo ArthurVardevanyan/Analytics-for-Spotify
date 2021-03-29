@@ -8,19 +8,16 @@ import requests
 import time
 import songMonitoringBackend.database as database
 import songMonitoringBackend.spotify as spotify
-import webBackend
+import webBackend.credentials as CRED
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-API = ""
 
 
 @csrf_exempt
 def boot(request=0):
 
     try:
-        API = webBackend.getAPI()
         spotify.main()
     except Exception as e:
-        e = e
         return HttpResponse("", content_type="text/html")
     return HttpResponse("", content_type="text/html")
 
@@ -127,9 +124,9 @@ def playlistSongs(request):
 
 def login(request):
     url = ""
-    if(isinstance(API, dict)):
+    if(isinstance(CRED.getAPI(), dict)):
         url = '<meta http-equiv="Refresh" content="0; url=' + \
-            API.get("url")+'" />'
+            CRED.getAPI().get("url")+'" />'
     else:
         url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
@@ -137,7 +134,7 @@ def login(request):
 
 def loginResponse(request):
     CODE = request.GET.get("code")
-    webBackend.accessToken(request, CODE)
+    CRED.accessToken(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
@@ -197,7 +194,6 @@ def start(request):
 
 
 def playlistSubmission(request):
-    from webBackend.credentials import refresh_token as authorize
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -208,7 +204,7 @@ def playlistSubmission(request):
         url = 'https://api.spotify.com/v1/playlists/' + \
             playlist + "?market=US"
         header = {"Accept": "application/json",
-                  "Content-Type": "application/json", "Authorization": "Bearer " + authorize(spotifyID)}
+                  "Content-Type": "application/json", "Authorization": "Bearer " + CRED.authorize(spotifyID)}
         response = requests.get(url, headers=header).json()
         if (not response.get("href", False)):
             return HttpResponse(status=400)
