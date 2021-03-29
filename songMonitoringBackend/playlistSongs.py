@@ -7,10 +7,11 @@ import songMonitoringBackend.database as database
 
 def main(user, playlist):
     print("Checking for Playlist Songs")
+    playlist = playlist[0]
     url = ""
     try:
         url = 'https://api.spotify.com/v1/playlists/' + \
-            playlist[1] + "/tracks?offset=0&limit=100&market=US"
+            playlist + "/tracks?offset=0&limit=100&market=US"
     except:
         print("Playlist Reterival Failure")
         return False
@@ -19,7 +20,6 @@ def main(user, playlist):
               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
     playlistSections = []
     loop = True
-    playlist = playlist[0]
     response = requests.get(url, headers=header).json()
     database.add_playlist(user, playlist)
     playlistSections.append(response.get("items"))

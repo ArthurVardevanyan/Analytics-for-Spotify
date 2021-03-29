@@ -14,7 +14,7 @@ def getUserJson(userID):
         cursor.execute("SELECT * from users  WHERE user = '" + userID + "'")
         for user in cursor:
             userData = user
-    return userData[4]
+    return json.loads(userData[4])
 
 
 def getUser(auth):
@@ -30,7 +30,7 @@ def getAPI():
     with connection.cursor() as cursor:
         cursor.execute("SELECT * from spotifyAPI")
         for api in cursor:
-            return api[0]
+            return json.loads(api[0])
 
 
 def refresh_token(userID):
@@ -38,7 +38,7 @@ def refresh_token(userID):
     access = ''
     access = getUserJson(userID)
     if(int(time.time()) >= access["expires_at"]):
-        header = {"Authorization": "Basic " + API.get("B64CS")}
+        header = {"Authorization": "Basic " + getAPI().get("B64CS")}
         data = {"grant_type": "refresh_token",
                 "refresh_token": access.get("refresh_token"),
                 "redirect_uri": "http://localhost/analytics/loginResponse"}
@@ -49,7 +49,9 @@ def refresh_token(userID):
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
         cursor = connection.cursor()
-        query = 'UPDATE users SET cache = "'+auth+'" WHERE user = "' + userID + '"'
+        query = """UPDATE users SET cache = '""" + \
+            json.dumps(auth) + """' WHERE user = '""" + userID + "'"
+        query = query.replace("\\", "")
         cursor.execute(query)
         return auth.get("access_token")
     else:
@@ -57,11 +59,11 @@ def refresh_token(userID):
 
 
 def accessToken(request, CODE):
-    header = {"Authorization": "Basic " + API.get("B64CS")}
+    header = {"Authorization": "Basic " + getAPI().get("B64CS")}
     data = {
         "grant_type": "authorization_code",
         "code": CODE,
-        "redirect_uri": API.get("redirect_url")}
+        "redirect_uri": getAPI().get("redirect_url")}
     response = requests.post(
         'https://accounts.spotify.com/api/token', headers=header, data=data)
     auth = response.json()
@@ -72,9 +74,10 @@ def accessToken(request, CODE):
     userID = getUser(auth)
     request.session['spotify'] = userID  # SESSION
     query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ("' + \
-        userID + '", 0, 0, 0, "'+auth+'") '
+        userID + '", 0, 0, 0, ' + "'" + json.dumps(auth) + "')"
     cursor = connection.cursor()
     cursor.execute(query)
-    query = 'UPDATE users SET cache = "'+auth+'" WHERE user = "' + userID + '"'
+    query = "UPDATE users SET cache = '" + \
+        json.dumps(auth) + "' WHERE user = '" + userID + "'"
     cursor.execute(query)
     return True
