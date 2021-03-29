@@ -6,58 +6,37 @@ from django.db import connection
 import json
 import requests
 import time
-import songMonitoringBackend.database as database
-import hashlib
-import cryptography
-from cryptography.fernet import Fernet
-import ast
-from AnalyticsforSpotify.env import ENCRYPTION
-key = []
-API = ""
-f = ""
 
 
-def decryptPlaylist(e):
-    if(ENCRYPTION):
-        return str(f.decrypt(e).decode("utf-8"))
-    else:
-        return str(e.decode("utf-8"))
-
-
-def encryptContent(e):
-    # thepythoncode.com/article/encrypt-decrypt-files-symmetric-python
-    if(ENCRYPTION):
-        return (f.encrypt(str(e).encode())).decode("utf-8")
-    else:
-        return str(e)
-
-
-def decryptUserJson(userID):
+def getUserJson(userID):
     userData = ""
     with connection.cursor() as cursor:
         cursor.execute("SELECT * from users  WHERE user = '" + userID + "'")
         for user in cursor:
             userData = user
-    if(ENCRYPTION):
-        return ast.literal_eval((f.decrypt(userData[4]).decode("utf-8")))
-    else:
-        return ast.literal_eval(userData[4].decode("utf-8"))
+    return userData[4]
 
 
-def apiDecrypt():
+def getUser(auth):
+    url = "https://api.spotify.com/v1/me"
+    header = {"Accept": "application/json",
+              "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
+    result = requests.get(url,
+                          headers=header).json().get("id")
+    return result
+
+
+def getAPI():
     with connection.cursor() as cursor:
         cursor.execute("SELECT * from spotifyAPI")
         for api in cursor:
-            if(ENCRYPTION):
-                return ast.literal_eval((f.decrypt(api[0]).decode("utf-8")))
-            else:
-                return ast.literal_eval((api[0]).decode("utf-8"))
+            return api[0]
 
 
 def refresh_token(userID):
     # Checks For and Provides Refresh Token
     access = ''
-    access = decryptUserJson(userID)
+    access = getUserJson(userID)
     if(int(time.time()) >= access["expires_at"]):
         header = {"Authorization": "Basic " + API.get("B64CS")}
         data = {"grant_type": "refresh_token",
@@ -69,10 +48,33 @@ def refresh_token(userID):
         auth["expires_at"] = int(time.time()) + expire
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
-        cache = encryptContent(auth)
         cursor = connection.cursor()
-        query = 'UPDATE users SET cache = "'+cache+'" WHERE user = "' + userID + '"'
+        query = 'UPDATE users SET cache = "'+auth+'" WHERE user = "' + userID + '"'
         cursor.execute(query)
         return auth.get("access_token")
     else:
         return access.get("access_token")
+
+
+def accessToken(request, CODE):
+    header = {"Authorization": "Basic " + API.get("B64CS")}
+    data = {
+        "grant_type": "authorization_code",
+        "code": CODE,
+        "redirect_uri": API.get("redirect_url")}
+    response = requests.post(
+        'https://accounts.spotify.com/api/token', headers=header, data=data)
+    auth = response.json()
+    currentTime = int(time.time())
+    expire = auth.get("expires_in")
+    auth["expires_at"] = currentTime + expire
+    userID = ""
+    userID = getUser(auth)
+    request.session['spotify'] = userID  # SESSION
+    query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ("' + \
+        userID + '", 0, 0, 0, "'+auth+'") '
+    cursor = connection.cursor()
+    cursor.execute(query)
+    query = 'UPDATE users SET cache = "'+auth+'" WHERE user = "' + userID + '"'
+    cursor.execute(query)
+    return True
