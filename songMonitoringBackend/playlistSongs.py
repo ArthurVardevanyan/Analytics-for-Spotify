@@ -1,6 +1,8 @@
 import requests
-from analytics.credentials import refresh_token as authorize
-import database
+import sys
+sys.path.append("..")
+from webBackend.credentials import refresh_token as authorize
+import songMonitoringBackend.database as database
 
 
 def main(user, playlist):

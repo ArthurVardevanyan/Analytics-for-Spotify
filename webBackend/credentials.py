@@ -6,12 +6,12 @@ from django.db import connection
 import json
 import requests
 import time
-import database
+import songMonitoringBackend.database as database
 import hashlib
 import cryptography
 from cryptography.fernet import Fernet
 import ast
-from SpotifyAnalytics.env import ENCRYPTION
+from AnalyticsforSpotify.env import ENCRYPTION
 key = []
 API = ""
 f = ""

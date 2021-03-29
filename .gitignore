@@ -1,7 +1,6 @@
 __pycache__
 .cache*
-web/node_modules/*
-logs/*
+*/node_modules/*
+*/logs/*
 .vscode/*
 env.py
-my.cnf

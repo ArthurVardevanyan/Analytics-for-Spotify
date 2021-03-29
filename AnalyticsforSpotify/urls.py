@@ -1,4 +1,4 @@
-"""SpotifyAnalytics URL Configuration
+"""AnalyticsforSpotify URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -19,8 +19,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('analytics/', include('analytics.urls')),
-    path('analytics/', include('analytics.urls')),
+    path('analytics/', include('webBackend.urls')),
     path('admin/', admin.site.urls),
     
-]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) # Remove for Production?

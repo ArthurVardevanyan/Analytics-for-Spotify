@@ -1,9 +1,10 @@
 import mysql.connector
 import json
 from datetime import datetime, timezone
-import analytics.models as D
 from django.db import connection
-import analytics.credentials as cred
+import sys
+sys.path.append("..")
+from webBackend.credentials import decryptPlaylist
 
 
 def user_status(user, detailed=0):
@@ -118,8 +119,8 @@ def get_playlists(user):
         cursor.execute(query)
         playlists = []
         for playlist in cursor:
-            playlists.append((playlist[0], cred.decryptPlaylist(
-                playlist[1]), cred.decryptPlaylist(playlist[2])))
+            playlists.append((playlist[0], decryptPlaylist(
+                playlist[1]), decryptPlaylist(playlist[2])))
         return playlists
 
 
