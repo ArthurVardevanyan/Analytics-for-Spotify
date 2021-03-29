@@ -11,7 +11,7 @@ import hashlib
 import cryptography
 from cryptography.fernet import Fernet
 import ast
-from SpotifyAnalytics.env import ENCRYPTION
+from AnalyticsforSpotify.env import ENCRYPTION
 key = []
 API = ""
 f = ""

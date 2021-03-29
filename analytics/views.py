@@ -13,7 +13,7 @@ import cryptography
 from cryptography.fernet import Fernet
 import ast
 import analytics.credentials as cred
-from SpotifyAnalytics.env import ENCRYPTION, PRIVATE
+from AnalyticsforSpotify.env import ENCRYPTION, PRIVATE
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

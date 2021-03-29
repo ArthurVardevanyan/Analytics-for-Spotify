@@ -1,5 +1,5 @@
 """
-WSGI config for SpotifyAnalytics project.
+WSGI config for AnalyticsforSpotify project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,5 +11,5 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SpotifyAnalytics.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'AnalyticsforSpotify.settings')
 application = get_wsgi_application()
