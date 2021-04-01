@@ -8,7 +8,7 @@ import requests
 import time
 import songMonitoringBackend.database as database
 import songMonitoringBackend.spotify as spotify
-import webBackend.credentials as CRED
+import webBackend.credentials as credentials
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -124,9 +124,9 @@ def playlistSongs(request):
 
 def login(request):
     url = ""
-    if(isinstance(CRED.getAPI(), dict)):
+    if(isinstance(credentials.getAPI(), dict)):
         url = '<meta http-equiv="Refresh" content="0; url=' + \
-            CRED.getAPI().get("url")+'" />'
+            credentials.getAPI().get("url")+'" />'
     else:
         url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
@@ -134,7 +134,7 @@ def login(request):
 
 def loginResponse(request):
     CODE = request.GET.get("code")
-    CRED.accessToken(request, CODE)
+    credentials.accessToken(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
@@ -204,7 +204,7 @@ def playlistSubmission(request):
         url = 'https://api.spotify.com/v1/playlists/' + \
             playlist + "?market=US"
         header = {"Accept": "application/json",
-                  "Content-Type": "application/json", "Authorization": "Bearer " + CRED.authorize(spotifyID)}
+                  "Content-Type": "application/json", "Authorization": "Bearer " + credentials.refresh_token(spotifyID)}
         response = requests.get(url, headers=header).json()
         if (not response.get("href", False)):
             return HttpResponse(status=400)
@@ -212,8 +212,8 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
 
     add = ("INSERT IGNORE INTO playlists"
-           "(user, id,name, lastUpdated,idEncrypt)"
-           "VALUES (%s, %s, %s, %s, %s)")
+           "(user, id,name, lastUpdated)"
+           "VALUES (%s, %s, %s, %s)")
     data = (
         spotifyID,
         playlist,

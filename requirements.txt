@@ -1,13 +1,5 @@
-# Install These First, 
-# otherwise mysqlclient will not install.
-libmariadb-dev-compat
-libmariadb-dev
- 
- django
- django-cors-headers
- mysql-connector-python
- mysqlclient
-
-# For use with apache web server.
-# apache2
-# libapache2-mod-wsgi-py3
+django
+django-cors-headers
+requests
+mysql-connector-python
+mysqlclient

@@ -114,7 +114,7 @@ CREATE TABLE `users` (
   `statusSong` mediumint NOT NULL DEFAULT '0',
   `statusPlaylist` mediumint NOT NULL DEFAULT '0',
   `cache` json NOT NULL,
-  `realTime` int NOT NULL
+  `realTime` int(11) NOT NULL DEFAULT 1
 );
 
 --
