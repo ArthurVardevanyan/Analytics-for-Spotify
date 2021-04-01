@@ -36,6 +36,9 @@ def logout(request):
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
+def redirect(request):    
+    url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
+    return HttpResponse(url, content_type="text/html")
 
 def dictfetchall(cursor):
     # https://stackoverflow.com/a/58969129
