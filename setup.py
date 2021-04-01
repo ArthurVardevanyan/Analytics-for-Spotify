@@ -9,7 +9,7 @@ import zipfile
 
 def unzip():
     with zipfile.ZipFile("webFrontend/node_modules.zip", 'r') as zip_ref:
-        zip_ref.extractall("webFrontend/node_modules")
+        zip_ref.extractall("webFrontend/")
 
 
 def executeScriptsFromFile(c, filename):
@@ -34,11 +34,7 @@ def executeScriptsFromFile(c, filename):
 
 
 def main():
-    print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")
-    print("Installing OS Dependencies")
-    os.system("sudo apt-get install python3-pip libmariadb-dev")
-    print("Installing Python Dependencies")
-    os.system("pip install -r requirements.txt")
+    print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")  
     unzip()
     CLIENT = input("Enter Spotify Client Key:")
     SECRET = input("Enter Spotify Secret Key:")
@@ -60,7 +56,7 @@ def main():
     ENV = [
         "D_DEBUG = True",
         "D_SECRET = '" + str(DJANGO_PRIVATE) + "'",
-        "HOSTS = []",
+        "HOSTS = ['*']",
     ]
     with open("AnalyticsforSpotify/env.py",  'w+') as f:
         f.writelines('\n'.join(ENV))

@@ -1,3 +1,6 @@
+import songMonitoringBackend.playlistSongs as playlistSongs
+import songMonitoringBackend.database as database
+from webBackend.credentials import refresh_token as authorize
 import requests
 import time
 import _thread
@@ -8,15 +11,6 @@ from django.db import connection
 from _datetime import timedelta
 import sys
 sys.path.append("..")
-from webBackend.credentials import refresh_token as authorize
-import songMonitoringBackend.database as database
-import songMonitoringBackend.log as log
-import songMonitoringBackend.playlistSongs as playlistSongs
-
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
-log.logInit("spotify")
-print = log.Print
-input = log.Input
 
 
 def update_status(user, status, value):
