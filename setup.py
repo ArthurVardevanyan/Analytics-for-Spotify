@@ -4,6 +4,12 @@ import binascii
 import urllib.parse
 import mysql.connector
 import json
+import zipfile
+
+
+def unzip():
+    with zipfile.ZipFile("webFrontend/node_modules.zip", 'r') as zip_ref:
+        zip_ref.extractall("webFrontend/node_modules")
 
 
 def executeScriptsFromFile(c, filename):
@@ -33,6 +39,7 @@ def main():
     os.system("sudo apt-get install python3-pip libmariadb-dev")
     print("Installing Python Dependencies")
     os.system("pip install -r requirements.txt")
+    unzip()
     CLIENT = input("Enter Spotify Client Key:")
     SECRET = input("Enter Spotify Secret Key:")
     R_URL = input("Enter Spotify Redirect URL Key:")
@@ -97,7 +104,6 @@ def main():
 
     print("Finalizing Django Setup")
     os.system("python3 manage.py migrate")
-    
 
 
 if __name__ == "__main__":
