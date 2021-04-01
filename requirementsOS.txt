@@ -1,0 +1,6 @@
+# Install These First, otherwise mysqlclient will not install.
+    python3-pip
+    libmariadb-dev
+# For use with apache web server.
+    apache2
+    libapache2-mod-wsgi-py3
