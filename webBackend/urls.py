@@ -3,6 +3,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('', views.redirect),
+    path('spotify/', views.redirect),
     path('listeningHistory/', views.listeningHistory, name='listeningHistory'),
     path('listeningHistoryAll/', views.listeningHistoryAll, name='listeningHistoryAll'),
     path('listeningHistoryShort/', views.listeningHistoryShort, name='listeningHistoryShort'),
