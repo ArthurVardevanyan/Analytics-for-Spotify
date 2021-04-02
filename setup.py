@@ -52,15 +52,7 @@ def main():
         "url": URL,
         "redirect_url": R_URL,
     }
-    DJANGO_PRIVATE = str(binascii.hexlify(os.urandom(24)), "utf-8")
-    ENV = [
-        "D_DEBUG = True",
-        "D_SECRET = '" + str(DJANGO_PRIVATE) + "'",
-        "HOSTS = ['*']",
-    ]
-    with open("AnalyticsforSpotify/env.py",  'w+') as f:
-        f.writelines('\n'.join(ENV))
-
+    
     print("MySql / MariaDB Integration")
     IP = input("Enter Database IP or (localhost):")
     DB = input("Enter Database Name:")
