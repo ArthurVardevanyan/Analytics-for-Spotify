@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import mysql.connector
 import os
-from AnalyticsforSpotify.env import D_DEBUG, D_SECRET, HOSTS
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,12 +20,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = D_SECRET
+SECRET_KEY = 'LocalAcessOnly'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = D_DEBUG
+DEBUG = True
 
-ALLOWED_HOSTS = HOSTS
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
