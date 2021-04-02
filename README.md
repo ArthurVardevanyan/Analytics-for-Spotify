@@ -1,4 +1,5 @@
-# Analytics for Spotify
+# Analytics for Spotify ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg)
+
 ### WIP
 
 
