@@ -136,7 +136,7 @@ def add_playlist(user, playlist):
 
 
 def add_playlist_songs(cursor, song, playlist, status):
-    addPlaylist = ("INSERT INTO  playlistSongs"
+    addPlaylist = ("INSERT IGNORE INTO  playlistSongs"
                    "(playlistID, songID, songStatus)"
                    "VALUES (%s, %s, %s)")
     dataPlaylist = (
