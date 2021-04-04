@@ -204,7 +204,7 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
     response = ""
     try:
-        playlist = request.GET.get("playlist")
+        playlist = request.POST.get("playlist")
         playlist = playlist.split("playlist/")[1].split("?")[0]
         url = 'https://api.spotify.com/v1/playlists/' + \
             playlist + "?market=US"
@@ -240,7 +240,7 @@ def deletePlaylist(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    playlist = request.GET.get("playlist")
+    playlist = request.POST.get("playlist")
     cursor = connection.cursor()
     query = "DELETE FROM `playlistSongs` WHERE playlistID = '" + playlist + "'"
     cursor.execute(query)
