@@ -36,9 +36,11 @@ def logout(request):
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
-def redirect(request):    
+
+def redirect(request):
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
+
 
 def dictfetchall(cursor):
     # https://stackoverflow.com/a/58969129
@@ -107,13 +109,14 @@ def playlistSongs(request):
     for playlist in playlists:
         playlistDict = {}
         query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR", ") \
-        as "artists" FROM playlistSongs\
+        as "artists" FROM playlistSongs \
         INNER JOIN songs ON songs.id =playlistSongs.songID \
         INNER JOIN songArtists ON songs.id=songArtists.songID \
         INNER JOIN artists ON artists.id=songArtists.artistID \
-        INNER JOIN playlists ON playlists.id=playlistSongs.playlistID \
-        INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user  = "'+spotifyID + '" and playlists.user =  "'+spotifyID + '"\
-        and playlists.id =  "'+playlist[0] + '"\
+        INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID \
+        INNER JOIN playcount ON playcount.songID = songs.id \
+        WHERE playcount.user  = "'+spotifyID + '"\
+        and playlists.playlistID =  "'+playlist[0] + '"\
         GROUP BY songs.id'
         cursor = connection.cursor()
         cursor.execute(query)
@@ -202,7 +205,7 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
     response = ""
     try:
-        playlist = request.GET.get("playlist")
+        playlist = request.POST.get("playlist")
         playlist = playlist.split("playlist/")[1].split("?")[0]
         url = 'https://api.spotify.com/v1/playlists/' + \
             playlist + "?market=US"
@@ -215,15 +218,22 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
 
     add = ("INSERT IGNORE INTO playlists"
-           "(user, id,name, lastUpdated)"
-           "VALUES (%s, %s, %s, %s)")
+           "(playlistID, name, lastUpdated)"
+           "VALUES (%s, %s, %s)")
     data = (
-        spotifyID,
         playlist,
         response.get('name'),
         "N/A",
     )
     cursor = connection.cursor()
+    cursor.execute(add, data)
+    add = ("INSERT IGNORE INTO playlistsUsers"
+           "(user, playlistID)"
+           "VALUES (%s, %s)")
+    data = (
+        spotifyID,
+        playlist,
+    )
     cursor.execute(add, data)
     status = database.user_status(spotifyID, 1)
     if(status[3] > 0):
@@ -238,10 +248,12 @@ def deletePlaylist(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    playlist = request.GET.get("playlist")
+    playlist = request.POST.get("playlist")
     cursor = connection.cursor()
+    query = "DELETE FROM `playlistSongs` WHERE playlistID = '" + playlist + "'"
+    cursor.execute(query)
     query = "DELETE FROM `playlists`  WHERE user = '" + \
-        spotifyID + "' and  id = '" + playlist + "'"
+        spotifyID + "' and  playlistID = '" + playlist + "'"
     cursor.execute(query)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")

@@ -1,4 +1,5 @@
-# Analytics for Spotify
+# Analytics for Spotify ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg)
+
 ### WIP
 
 
@@ -19,8 +20,6 @@ Notes:
 * A play is counted after the 30 second mark
 * If you play one song consecutively only the first play is counted (Currently)* 
 * Requires Spotify Developer App to be Created
-
-
 
 ![Alt text](img/SpotifyAnalyticsSample.png?raw=true "Sample Output")
 

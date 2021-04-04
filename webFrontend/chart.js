@@ -6,15 +6,26 @@ function deleteCookies() {
   for (let i = 0; i < allCookies.length; i++) {
     document.cookie = `${allCookies[i]}=;expires=${new Date(0).toUTCString()}`;
   }
+  $.post('/analytics/logout/')
+  window.location.href = '/spotify';
 }
+
+function start() { $.post('/analytics/start/'); window.location.href = '/spotify/analytics.html'; };
+
+function stop() { $.post('/analytics/stop/'); window.location.href = '/spotify/analytics.html'; };
 
 function playlist() {
-  window.location.href = `/analytics/playlistSubmission?playlist=${document.getElementById('playlist').value}`;
-}
+  $.post('/analytics/playlistSubmission/', { playlist: document.getElementById('playlist').value });
+  window.location.href = '/spotify/analytics.html';
+
+};
 
 function deletePlaylist(id) {
-  window.location.href = `/analytics/deletePlaylist?playlist=${id}`;
-}
+  $.post('/analytics/deletePlaylist/', { playlist: id });
+  window.location.href = '/spotify/analytics.html';
+
+
+};
 
 window.onload = function () {
   $.ajax({
@@ -56,7 +67,7 @@ window.onload = function () {
 
       summaryLineChart(data);
       hourlyLineChart(data);
-      
+
       setTimeout(() => {
         $.ajax({
           url: '/analytics/listeningHistoryAll/',

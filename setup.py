@@ -52,15 +52,7 @@ def main():
         "url": URL,
         "redirect_url": R_URL,
     }
-    DJANGO_PRIVATE = str(binascii.hexlify(os.urandom(24)), "utf-8")
-    ENV = [
-        "D_DEBUG = True",
-        "D_SECRET = '" + str(DJANGO_PRIVATE) + "'",
-        "HOSTS = ['*']",
-    ]
-    with open("AnalyticsforSpotify/env.py",  'w+') as f:
-        f.writelines('\n'.join(ENV))
-
+    
     print("MySql / MariaDB Integration")
     IP = input("Enter Database IP or (localhost):")
     DB = input("Enter Database Name:")
@@ -76,7 +68,8 @@ def main():
     ]
     with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
         f.writelines('\n'.join(MYSQL))
-
+ 
+    os.system("python3 manage.py migrate")
     db = mysql.connector.connect(
         host=IP,
         user=USER,
@@ -85,7 +78,6 @@ def main():
         auth_plugin='mysql_native_password'
     )
     cursor = db.cursor()
-    executeScriptsFromFile(cursor, "spotify.sql")
     delete = "DELETE FROM `spotifyAPI` WHERE 1"
     cursor.execute(delete)
     add = ("INSERT IGNORE INTO spotifyAPI"
@@ -98,8 +90,6 @@ def main():
     db.commit()
     db.close
 
-    print("Finalizing Django Setup")
-    os.system("python3 manage.py migrate")
 
 
 if __name__ == "__main__":
