@@ -52,7 +52,7 @@ Local Server http://IPV4ADDRESS:PORT/analytics/loginResponse <br>
 (Replace with the Local IPv4 Address of your server)<br />
 
 #### For Django Test Server (Option 1) 
-Use Port 8080 if you plan to test manually and not integrate it with Apache Web Server
+Use Port 8000 if you plan to test manually and not integrate it with Apache Web Server
 
 
 #### For Apache (Option 2) (Recommended For Long Term)
@@ -117,7 +117,7 @@ The setup will ask for Spotify API Credentials and Database Credentials.
 ```
 python3 manage.py runserver --noreload
 ```
-After Navigating to the IP:PORT, Click "Start Service" (Django Default is port 8080)
+After Navigating to the IP:PORT, Click "Start Service" (Django Default is port 8000)
 
 ### Option 2: WSGI Apache WebServer Setup (Recommended For Long Term):
 If you have an existing webserver you will need to modify the below to run on a different port / virtual host.<br>
