@@ -8,7 +8,7 @@
 from django.db import models
 
 
-class Spotifyapi(models.Model):
+class SpotifyAPI(models.Model):
     api = models.TextField()
 
     class Meta:
@@ -19,12 +19,9 @@ class Spotifyapi(models.Model):
 class Users(models.Model):
     user = models.CharField(primary_key=True, max_length=128)
     enabled = models.IntegerField()
-
     statussong = models.IntegerField(db_column='statusSong')
-
     statusplaylist = models.IntegerField(db_column='statusPlaylist')
     cache = models.TextField()
-
     realtime = models.IntegerField(db_column='realTime')
 
     class Meta:
@@ -44,7 +41,6 @@ class Artists(models.Model):
 class Songs(models.Model):
     id = models.CharField(primary_key=True, max_length=22)
     name = models.TextField()
-
     tracklength = models.BigIntegerField(db_column='trackLength')
 
     class Meta:
@@ -56,7 +52,6 @@ class Songartists(models.Model):
 
     songID = models.OneToOneField(
         'Songs', models.DO_NOTHING, db_column='songID', primary_key=True)
-
     artistID = models.ForeignKey(
         Artists, models.DO_NOTHING, db_column='artistID')
 
@@ -70,7 +65,6 @@ class Playcount(models.Model):
     user = models.ForeignKey(
         'Users', models.DO_NOTHING, db_column='user')
     songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
-
     playcount = models.IntegerField(db_column='playCount', default=1)
 
     class Meta:
@@ -82,9 +76,7 @@ class Playcount(models.Model):
 class Listeninghistory(models.Model):
     user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
     timestamp = models.BigIntegerField(primary_key=True)
-
     timeplayed = models.TextField(db_column='timePlayed')
-
     songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
     json = models.TextField(blank=True, null=True)
 
@@ -95,19 +87,15 @@ class Listeninghistory(models.Model):
 
 
 class Playlists(models.Model):
-    user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
     playlistID = models.CharField(max_length=128, primary_key=True)
     name = models.CharField(max_length=128)
-
     lastupdated = models.TextField(db_column='lastUpdated')
 
     class Meta:
         managed = True
         db_table = 'playlists'
-        unique_together = (('playlistID', 'user'),)
 
 
-''' Need to add & fix for multi-user playlist support
 class Playlistsusers(models.Model):
     user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
     playlistID = models.ForeignKey(
@@ -117,7 +105,7 @@ class Playlistsusers(models.Model):
         managed = True
         db_table = 'playlistsUsers'
         unique_together = (('playlistID', 'user'),)
-'''
+
 
 
 class Playlistsongs(models.Model):

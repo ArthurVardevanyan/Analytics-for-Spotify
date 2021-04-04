@@ -109,12 +109,13 @@ def playlistSongs(request):
     for playlist in playlists:
         playlistDict = {}
         query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR", ") \
-        as "artists" FROM playlistSongs\
+        as "artists" FROM playlistSongs \
         INNER JOIN songs ON songs.id =playlistSongs.songID \
         INNER JOIN songArtists ON songs.id=songArtists.songID \
         INNER JOIN artists ON artists.id=songArtists.artistID \
         INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID \
-        INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user  = "'+spotifyID + '" and playlists.user =  "'+spotifyID + '"\
+        INNER JOIN playcount ON playcount.songID = songs.id \
+        WHERE playcount.user  = "'+spotifyID + '"\
         and playlists.playlistID =  "'+playlist[0] + '"\
         GROUP BY songs.id'
         cursor = connection.cursor()
@@ -217,15 +218,22 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
 
     add = ("INSERT IGNORE INTO playlists"
-           "(user, playlistID, name, lastUpdated)"
-           "VALUES (%s, %s, %s, %s)")
+           "(playlistID, name, lastUpdated)"
+           "VALUES (%s, %s, %s)")
     data = (
-        spotifyID,
         playlist,
         response.get('name'),
         "N/A",
     )
     cursor = connection.cursor()
+    cursor.execute(add, data)
+    add = ("INSERT IGNORE INTO playlistsUsers"
+           "(user, playlistID)"
+           "VALUES (%s, %s)")
+    data = (
+        spotifyID,
+        playlist,
+    )
     cursor.execute(add, data)
     status = database.user_status(spotifyID, 1)
     if(status[3] > 0):
