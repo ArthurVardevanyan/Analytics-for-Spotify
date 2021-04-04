@@ -68,7 +68,8 @@ def main():
     ]
     with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
         f.writelines('\n'.join(MYSQL))
-
+ 
+    os.system("python3 manage.py migrate")
     db = mysql.connector.connect(
         host=IP,
         user=USER,
@@ -89,8 +90,6 @@ def main():
     db.commit()
     db.close
 
-    print("Finalizing Django Setup")
-    os.system("python3 manage.py migrate")
 
 
 if __name__ == "__main__":
