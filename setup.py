@@ -77,7 +77,6 @@ def main():
         auth_plugin='mysql_native_password'
     )
     cursor = db.cursor()
-    executeScriptsFromFile(cursor, "spotify.sql")
     delete = "DELETE FROM `spotifyAPI` WHERE 1"
     cursor.execute(delete)
     add = ("INSERT IGNORE INTO spotifyAPI"

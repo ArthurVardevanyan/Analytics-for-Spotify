@@ -36,9 +36,11 @@ def logout(request):
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
-def redirect(request):    
+
+def redirect(request):
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
+
 
 def dictfetchall(cursor):
     # https://stackoverflow.com/a/58969129
@@ -111,9 +113,9 @@ def playlistSongs(request):
         INNER JOIN songs ON songs.id =playlistSongs.songID \
         INNER JOIN songArtists ON songs.id=songArtists.songID \
         INNER JOIN artists ON artists.id=songArtists.artistID \
-        INNER JOIN playlists ON playlists.id=playlistSongs.playlistID \
+        INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID \
         INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user  = "'+spotifyID + '" and playlists.user =  "'+spotifyID + '"\
-        and playlists.id =  "'+playlist[0] + '"\
+        and playlists.playlistID =  "'+playlist[0] + '"\
         GROUP BY songs.id'
         cursor = connection.cursor()
         cursor.execute(query)
@@ -215,7 +217,7 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
 
     add = ("INSERT IGNORE INTO playlists"
-           "(user, id,name, lastUpdated)"
+           "(user, playlistID, name, lastUpdated)"
            "VALUES (%s, %s, %s, %s)")
     data = (
         spotifyID,
@@ -240,8 +242,10 @@ def deletePlaylist(request):
         return HttpResponse(status=401)
     playlist = request.GET.get("playlist")
     cursor = connection.cursor()
+    query = "DELETE FROM `playlistSongs` WHERE playlistID = '" + playlist + "'"
+    cursor.execute(query)
     query = "DELETE FROM `playlists`  WHERE user = '" + \
-        spotifyID + "' and  id = '" + playlist + "'"
+        spotifyID + "' and  playlistID = '" + playlist + "'"
     cursor.execute(query)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")

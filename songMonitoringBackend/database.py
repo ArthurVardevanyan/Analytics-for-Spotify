@@ -113,7 +113,7 @@ def listenting_history(user, spotify, cursor):
 
 def get_playlists(user):
     with connection.cursor() as cursor:
-        query = "SELECT id, name from playlists where user = '"+user+"'"
+        query = "SELECT playlistID, name from playlists where user = '"+user+"'"
         cursor.execute(query)
         playlists = []
         for playlist in cursor:
@@ -130,7 +130,7 @@ def add_playlist(user, playlist):
             playlist+"'"
         cursor.execute(sql)
 
-        addPlaylist = " UPDATE playlists SET lastUpdated = '"+lastUpdated+"' WHERE id = '" + \
+        addPlaylist = " UPDATE playlists SET lastUpdated = '"+lastUpdated+"' WHERE playlistID = '" + \
             playlist+"'"
         cursor.execute(addPlaylist)
 

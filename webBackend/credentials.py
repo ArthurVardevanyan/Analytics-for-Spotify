@@ -28,7 +28,7 @@ def getUser(auth):
 
 def getAPI():
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * from spotifyAPI")
+        cursor.execute("SELECT `api` from spotifyAPI")
         for api in cursor:
             return json.loads(api[0])
 
@@ -73,8 +73,8 @@ def accessToken(request, CODE):
     userID = ""
     userID = getUser(auth)
     request.session['spotify'] = userID  # SESSION
-    query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `cache`) VALUES ("' + \
-        userID + '", 0, 0, 0, ' + "'" + json.dumps(auth) + "')"
+    query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `realTime`, `cache`) VALUES ("' + \
+        userID + '", 0, 0, 0, 1,' + "'" + json.dumps(auth) + "')"
     cursor = connection.cursor()
     cursor.execute(query)
     query = "UPDATE users SET cache = '" + \

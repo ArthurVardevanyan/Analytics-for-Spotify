@@ -21,7 +21,9 @@ Notes:
 * If you play one song consecutively only the first play is counted (Currently)* 
 * Requires Spotify Developer App to be Created
 
+Known Bugs:
 
+* Transition to Django Models broke multiple users having the same playlist. Currently a playlist can only be tied to one user. Database structure needs to be updated to fix this.
 
 ![Alt text](img/SpotifyAnalyticsSample.png?raw=true "Sample Output")
 
