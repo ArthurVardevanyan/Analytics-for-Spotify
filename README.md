@@ -47,8 +47,8 @@ Default Installation are as follows. <br />
 Create a Non-Commercial Spotify App: https://developer.spotify.com/dashboard
 
 For API Redirect URL Box<br />
-Same Machine: http://localhost:PORT<br />
-Local Server http://IPV4ADDRESS:PORT <br>
+Same Machine: http://localhost:PORT/analytics/loginResponse<br />
+Local Server http://IPV4ADDRESS:PORT/analytics/loginResponse <br>
 (Replace with the Local IPv4 Address of your server)<br />
 Port 80 is recommended. However if you already using port 80 for another service, you will need to use a different port. 
 
