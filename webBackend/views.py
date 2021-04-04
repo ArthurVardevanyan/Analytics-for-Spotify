@@ -250,10 +250,17 @@ def deletePlaylist(request):
         return HttpResponse(status=401)
     playlist = request.POST.get("playlist")
     cursor = connection.cursor()
-    query = "DELETE FROM `playlistSongs` WHERE playlistID = '" + playlist + "'"
-    cursor.execute(query)
-    query = "DELETE FROM `playlists`  WHERE user = '" + \
-        spotifyID + "' and  playlistID = '" + playlist + "'"
-    cursor.execute(query)
+    cursor.execute(
+        "DELETE FROM `playlistSongs` WHERE playlistID = %s",  (playlist, ))
+    cursor.execute(
+        "DELETE FROM `playlistsUsers` WHERE user = %s and  playlistID = %s", (spotifyID, playlist, ))
+    cursor.execute(
+        "SELECT * from playlistsUsers WHERE playlistID = %s",  (playlist, ))
+    playlists = 0
+    for p in cursor:
+        playlist += 1
+    if playlists == 0:
+        cursor.execute(
+            "DELETE FROM `playlists` WHERE playlistID = %s",  (playlist, ))
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
