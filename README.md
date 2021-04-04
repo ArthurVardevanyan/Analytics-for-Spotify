@@ -47,15 +47,24 @@ Default Installation are as follows. <br />
 Create a Non-Commercial Spotify App: https://developer.spotify.com/dashboard
 
 For API Redirect URL Box<br />
-Same Machine: http://localhost:PORT<br />
-Local Server http://IPV4ADDRESS:PORT <br>
+Same Machine: http://localhost:PORT/analytics/loginResponse<br />
+Local Server http://IPV4ADDRESS:PORT/analytics/loginResponse <br>
 (Replace with the Local IPv4 Address of your server)<br />
+
+#### For Django Test Server (Option 1) 
+Use Port 8080 if you plan to test manually and not integrate it with Apache Web Server
+
+
+#### For Apache (Option 2) (Recommended For Long Term)
 Port 80 is recommended. However if you already using port 80 for another service, you will need to use a different port. 
 
+#### Note:
 Keep Track of your Client ID, Secret Key, and Redirect Url<br />
 
+The port number doesn't matter as long your consistent.<br>
+For Apache, for not using port 80, you will need to change the default port or make another virtual host.
 
-### Code:
+### Source Code:
 SSH into Local Server or run on local machine.<br />
 Default Installation is ~/.
 
@@ -65,8 +74,8 @@ git clone https://github.com/ArthurVardevanyan/Analytics-for-Spotify.git
 ```
 
 
-### Database Setup :
-If you have a mariaDB or mySQL database setup with proper credentials, ou may skip this section.
+### Local Database Setup:
+If you have a mariaDB or mySQL database setup with proper credentials, you may skip this section.
 ```
 sudo apt-get install mariadb-server
 ```
@@ -99,17 +108,23 @@ sudo apt-get install python3-pip libmariadb-dev
 ```
 ```
 cd Analytics-for-Spotify
-pip3 install -r requirements.txt && sudo pip3 install -r requirements.txt
+pip3 install -r requirements.txt
 python3 setup.py
 ```
+The setup will ask for Spotify API Credentials and Database Credentials. 
 
+### Option 1: Django Test Server Command Line
+```
+python3 manage.py runserver --noreload
+```
+After Navigating to the IP:PORT, Click "Start Service" (Django Default is port 8080)
 
-
-### WSGI Apache WebServer Setup:
+### Option 2: WSGI Apache WebServer Setup (Recommended For Long Term):
 If you have an existing webserver you will need to modify the below to run on a different port / virtual host.<br>
 Otherwise just delete everything in the file below and replace with this.<br>
 You must change "PATH_TO_PROGRAM" with your path. 
 ```
+sudo pip3 install -r requirements.txt
 sudo apt-get install apache2 libapache2-mod-wsgi-py3
 sudo nano /etc/apache2/sites-available/000-default.conf 
 ```
@@ -139,4 +154,18 @@ sudo nano /etc/apache2/sites-available/000-default.conf
 ```
 sudo systemctl restart apache2
 ```
-After Navigating to the IP, Click "Start Service"
+After Navigating to the IP:PORT, Click "Start Service"
+
+
+### Final Notes
+
+For either option, the server needs to be running to keep track of songs.
+
+
+To update the API if you want to change the IP and/or PORT for the Redirect URIs. <br>
+
+Make a backup of the database first.<br>
+
+Click "Stop Service" in the Web API, and wait for the Service to Stop. (Manually Refresh The Page)<br>
+
+Then Run setup.py again.<br><br>
