@@ -21,6 +21,7 @@ Notes:
 * If you play one song consecutively only the first play is counted (Currently)* 
 * Requires Spotify Developer App to be Created
 
+#### Internal Site / Local Network Use Only, <br>Not Designed to be Public / Internet Facing.
 ![Alt text](img/SpotifyAnalyticsSample.png?raw=true "Sample Output")
 
 

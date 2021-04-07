@@ -135,6 +135,7 @@ window.onload = function () {
               columns: [
                 { data: 'name', title: 'Song Name' },
                 { data: 'artists', title: 'Artists' },
+                { data: 'timePlayed', title: 'LastPlayed' },
                 { data: 'songStatus', title: 'Status' },
                 { data: 'playCount', title: 'Count' },
               ],
