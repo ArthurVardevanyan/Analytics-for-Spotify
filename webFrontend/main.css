@@ -103,6 +103,16 @@ h3 {
   float: left
 }
 
+
+.songSpread {
+  width: 75%;
+  text-align: center;
+  height: auto;
+  margin: 0 auto;
+  padding: 10px;
+  position: relative;
+}
+
 #playCountDIV {
   width: 60%;
   text-align: right;
@@ -210,5 +220,14 @@ h3 {
     width: 100%;
     text-align: center;
     float: center;
+  }
+
+  .songSpread {
+    width: 100%;
+    text-align: center;
+    height: auto;
+    margin: 0 auto;
+    padding: 10px;
+    position: relative;
   }
 }
