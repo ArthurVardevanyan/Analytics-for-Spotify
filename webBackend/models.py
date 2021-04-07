@@ -75,9 +75,9 @@ class Playcount(models.Model):
 
 class Listeninghistory(models.Model):
     user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
-    timestamp = models.BigIntegerField(primary_key=True)
-    timeplayed = models.TextField(db_column='timePlayed')
     songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
+    timestamp = models.BigIntegerField()
+    timeplayed = models.TextField(db_column='timePlayed')
     json = models.TextField(blank=True, null=True)
 
     class Meta:

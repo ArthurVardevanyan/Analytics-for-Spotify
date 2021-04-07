@@ -181,7 +181,6 @@ window.onload = function () {
               temp += plays[index];
               count += 1;
             }
-            console.log(weekPlays.reduce((a, b) => a + b, 0));
             id = `songSpread_${data[i].id}`;
             const barChart = new Chart(document.getElementById(id), {
               type: 'bar',
