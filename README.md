@@ -23,6 +23,7 @@ Notes:
 
 #### Internal Site / Local Network Use Only, <br>Not Designed to be Public / Internet Facing.
 ![Alt text](img/SpotifyAnalyticsSample.png?raw=true "Sample Output")
+![Alt text](img/SonyPlayPlaylistDistribution.png?raw=true "Sample Output")
 
 
 

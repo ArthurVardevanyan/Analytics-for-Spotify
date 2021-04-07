@@ -119,8 +119,9 @@ window.onload = function () {
 
             tableName = data[i].name.replace(/ /g, '_');
             document.getElementById('playlists').innerHTML
-              += `  <div class="playlistDIV"><br><h2>Playlist: ${data[i].name
-              } </h2> <h3>Last Updated: ${localDateTime}</h3> <button onclick=deletePlaylist("${data[i].id}") style="color: black" class="btn">Delete</button><table id="playlist_${i}" class="display" width="100%"></table></div>`;
+              += `<div class="playlistDIV"><br><h2>Playlist: ${data[i].name
+              } </h2> <h3>Last Updated: ${localDateTime}</h3> <button onclick=deletePlaylist("${data[i].id}") style="color: black" class="btn">Delete</button><table id="playlist_${i}" class="display" width="100%"></table>
+              <div class="songSpread"><canvas id="songSpread_${data[i].id}" width="800" height="450"></canvas></div></div>`;
           }
         }
         for (let i = 0; i < data.length; i++) {
@@ -130,7 +131,7 @@ window.onload = function () {
             // Load  data table
             $(`#playlist_${i}`).DataTable({
               data: aDemoItems,
-              order: [[2, 'desc']],
+              order: [[3, 'desc']],
               pageLength: 10,
               columns: [
                 { data: 'name', title: 'Song Name' },
@@ -140,6 +141,76 @@ window.onload = function () {
                 { data: 'playCount', title: 'Count' },
               ],
             });
+          }
+        }
+
+
+        for (let i = 0; i < data.length; i++) {
+          var aDemoItems = data[i].tracks;
+
+          if (aDemoItems.length > 0) {
+
+            const songs = [];
+            const plays = [];
+
+            for (const i in aDemoItems) {
+              localTime = new Date(`${aDemoItems[i].timePlayed} UTC`);
+              day = (`${localTime.getFullYear()}-${(`0${localTime.getMonth() + 1}`).slice(-2)}-${(`0${localTime.getDate()}`).slice(-2)}`);
+              if (songs.includes(day)) {
+                for (let j = 0; j < songs.length; j++) {
+                  if (day === songs[j]) {
+                    plays[j] = plays[j] + 1;
+                  }
+                }
+              } else {
+                songs.push(day);
+                plays.push(1);
+              }
+            }
+            const weekSongs = [];
+            const weekPlays = [];
+            let count = 0;
+            let temp = 0;
+            for (let index = 0; index < songs.length; index++) {
+              if (count === 7) {
+                weekSongs.push(songs[index - 7]);
+                weekPlays.push(temp);
+                temp = 0;
+                count = 0;
+              }
+              temp += plays[index];
+              count += 1;
+            }
+            console.log(weekPlays.reduce((a, b) => a + b, 0));
+            id = `songSpread_${data[i].id}`;
+            const barChart = new Chart(document.getElementById(id), {
+              type: 'bar',
+              data: {
+                labels: weekSongs,
+                datasets: [{
+                  data: weekPlays,
+                  label: 'Amount of Songs By The Week',
+                  backgroundColor: '#3e95cd',
+                  fill: false,
+                },
+                ],
+              },
+              options: {
+                title: {
+                  display: true,
+                  text: 'When Songs Where Last Played',
+                },
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true,
+                    },
+                  }],
+                },
+              },
+            });
+            barChart.update();
+
           }
         }
       });
