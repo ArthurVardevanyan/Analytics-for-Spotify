@@ -181,6 +181,12 @@ window.onload = function () {
               temp += plays[index];
               count += 1;
             }
+            if (count !== 7) {
+              weekSongs.push(songs[songs.length - count]);
+              weekPlays.push(temp);
+              temp = 0;
+              count = 0;
+            }
             id = `songSpread_${data[i].id}`;
             const barChart = new Chart(document.getElementById(id), {
               type: 'bar',
