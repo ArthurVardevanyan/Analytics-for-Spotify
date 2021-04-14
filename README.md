@@ -1,4 +1,7 @@
-# Analytics for Spotify ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg)[![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify)
+# Analytics for Spotify
+#### Production:  ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg?branch=production)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg?branch=production) [![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg?branch=production)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify?branch=production)
+
+#### Develop: ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg?branch=develop)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg?branch=develop)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify?branch=develop)
 
 ### WIP
 
