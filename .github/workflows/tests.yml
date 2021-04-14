@@ -44,3 +44,5 @@ jobs:
     - name: Test with Django
       run: |
         python3 manage.py test
+    - name: Coveralls Python
+      uses: AndreMiras/coveralls-python-action@master

@@ -4,3 +4,5 @@ __pycache__
 */logs/*
 .vscode/*
 env.py
+cover/*
+.coverage
