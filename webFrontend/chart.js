@@ -181,7 +181,7 @@ window.onload = function () {
               temp += plays[index];
               count += 1;
             }
-            if (count !== 7) {
+            if (count !== 0) {
               weekSongs.push(songs[songs.length - count]);
               weekPlays.push(temp);
               temp = 0;
