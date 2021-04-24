@@ -289,13 +289,19 @@ function summaryLineChart(data) {
     let temp = 0;
     for (let index = 0; index < songs.length; index++) {
       if (count === 7) {
-        weekSongs.push(songs[index]);
+        weekSongs.push(songs[index - 7]);
         weekPlays.push(temp);
         temp = 0;
         count = 0;
       }
       temp += plays[index];
       count += 1;
+    }
+    if (count !== 0) {
+      weekSongs.push(songs[songs.length - count]);
+      weekPlays.push(temp);
+      temp = 0;
+      count = 0;
     }
     data.labels = weekSongs;
     data.datasets[0].data = weekPlays;
