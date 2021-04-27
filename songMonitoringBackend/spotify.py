@@ -1,5 +1,6 @@
 import songMonitoringBackend.playlistSongs as playlistSongs
 import songMonitoringBackend.database as database
+from songMonitoringBackend.scripts import songIdUpdater
 from webBackend.credentials import refresh_token as authorize
 import requests
 import time
@@ -208,6 +209,32 @@ def realTimeSpotify(user):
     update_status(user, "statusSong", 0)
 
 
+def songIdUpdaterThread(once=0):
+    try:
+        time.sleep(30)
+        print("songIdUpdaterThread")
+        USC = threading.Thread(
+            target=songIdUpdaterChecker, args=(once,))
+        USC.start()
+    except Exception as e:
+        print(e)
+        print("songIdUpdaterThread Thread Failure")
+
+def songIdUpdaterChecker(once=0):
+    time.sleep(300)
+    previousDay = ""
+    while(True):
+        utc_time = datetime.now()
+        local_time = utc_time.astimezone()
+        lastUpdated = local_time.strftime("%Y-%m-%d")
+        if previousDay != lastUpdated:
+            print(songIdUpdater())
+            if(once == 1):
+                return
+            previousDay = lastUpdated
+            time.sleep(5000)
+        time.sleep(500)
+
 def main():
     with connection.cursor() as cursor:
         users = "SELECT * from users"
@@ -216,6 +243,8 @@ def main():
             playlistSongThread(user[0])
             SpotifyThread(user)
             time.sleep(1)
+    # WARNING, DO NOT RUN IN MULTI USER ENVIRONMENTS, THIS SCRIPT CURRENTLY ONLY WORKS FOR SINGLE USER ENVIRONMENTS.
+    songIdUpdaterThread()
     return 1
 
 

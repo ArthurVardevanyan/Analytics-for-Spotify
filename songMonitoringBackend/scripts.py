@@ -48,7 +48,7 @@ def getHistory(connection):
         history = []
         for song in cursor:
             history.append(song)
-        print(len(history))
+        print("Total Songs: " + str(len(history)))
         songHistory = []
         for song in history:
             songL = list(song)
@@ -82,14 +82,14 @@ def duplicateFinder(history):
         if (dup == 1):
             temp.append(tuple(history[i]))
             newHistory.append(temp)
-    print(len(newHistory))
+    print("Songs with new ID's: " + str(len(newHistory)))
     newHistory2 = []
     for item in newHistory:
         temp = item
         temp.sort(key=lambda i: i[0])
         newHistory2.append(tuple(temp))
     newHistory2 = set(newHistory2)
-    print(len(newHistory2))
+    print("Songs with duplicate new ID's: " + str(len(newHistory2)))
     return newHistory2
 
 
@@ -121,8 +121,8 @@ def databaseUpdate(history, connection):
 
 
 def main():
-    # This Script is WIP, use at own risk. Ensure proper backups.
-    # songIdUpdater()
+    # WARNING, DO NOT RUN IN MULTI USER ENVIRONMENTS, THIS SCRIPT CURRENTLY ONLY WORKS FOR SINGLE USER ENVIRONMENTS.
+    #print(songIdUpdater())
     return 1
 
 
