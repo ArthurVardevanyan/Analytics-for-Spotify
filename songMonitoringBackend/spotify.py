@@ -220,6 +220,7 @@ def songIdUpdaterThread(once=0):
         print(e)
         print("songIdUpdaterThread Thread Failure")
 
+
 def songIdUpdaterChecker(once=0):
     time.sleep(300)
     previousDay = ""
@@ -235,6 +236,7 @@ def songIdUpdaterChecker(once=0):
             time.sleep(5000)
         time.sleep(500)
 
+
 def main():
     with connection.cursor() as cursor:
         users = "SELECT * from users"
@@ -244,7 +246,7 @@ def main():
             SpotifyThread(user)
             time.sleep(1)
     # WARNING, DO NOT RUN IN MULTI USER ENVIRONMENTS, THIS SCRIPT CURRENTLY ONLY WORKS FOR SINGLE USER ENVIRONMENTS.
-    songIdUpdaterThread()
+    # songIdUpdaterThread() # Currently Causes Infinite Loop in Github Action Testing.
     return 1
 
 
