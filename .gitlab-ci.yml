@@ -1,22 +1,42 @@
 # WIP, TESTING ONLY, DO NOT DEPLOY
-image: docker:latest
-
-services:
-  - name: docker:dind
-    entrypoint: ["sh", "-c", "dockerd-entrypoint.sh $DOCKER_DAEMON_OPTIONS"]
-
-variables:
-  DOCKER_DAEMON_OPTIONS: "--insecure-registry=${CI_REGISTRY}"
-
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-
 stages:
+  - test
   - build
 
-Build:
-  stage: build
+PythonTests:
+  stage: test
+  image: python:3.9
+  services:
+    - mariadb:latest
+  variables:
+    MARIADB_ROOT_PASSWORD: root
+    MARIADB_DATABASE: $database
+  before_script:
+    - |
+      echo "[client]
+      host = mariadb
+      database = $database
+      user = root
+      password = root
+      default-character-set = utf8"> AnalyticsforSpotify/my.cnf
+    - apt-get update
+    - apt-get install -y python3-pip libmariadb-dev mariadb-client
+    - python -m pip install --upgrade pip
+    - pip3 install -r requirements.txt
   script:
+    - python3 manage.py test
+
+DockerBuild:
+  stage: build
+  image: docker:latest
+  services:
+    - name: docker:dind
+      entrypoint: ["sh", "-c", "dockerd-entrypoint.sh $DOCKER_DAEMON_OPTIONS"]
+
+  variables:
+    DOCKER_DAEMON_OPTIONS: "--insecure-registry=${CI_REGISTRY}"
+
+  before_script:
     - |
       echo "[client]
       host = $host
@@ -24,6 +44,9 @@ Build:
       user = $username
       password = $password
       default-character-set = utf8"> AnalyticsforSpotify/my.cnf
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+  script:
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA . -t $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest
