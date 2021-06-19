@@ -96,7 +96,7 @@ def add_song(spotify, cursor):
     add_song_artists(spotify, cursor)  # Function
 
 
-def listenting_history(user, spotify, cursor):
+def listening_history(user, spotify, cursor):
 
     add_play = ("INSERT  INTO listeningHistory"
                 "(user, timestamp,timePlayed, songID,json)"
@@ -152,7 +152,7 @@ def database_input(user, spotify):
         add_artists(spotify, cursor)
         add_song(spotify, cursor)
         add_song_count(user, spotify, cursor)
-        listenting_history(user, spotify, cursor)
+        listening_history(user, spotify, cursor)
     return spotify
 
 

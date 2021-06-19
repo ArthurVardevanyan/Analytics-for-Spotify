@@ -43,6 +43,12 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with Django
       run: |
+        echo "[client]
+        host = localhost
+        database = spotifyTest
+        user = spotifyTest
+        password = spotifyTest
+        default-character-set = utf8"> AnalyticsforSpotify/my.cnf
         python3 manage.py test
     - name: Coveralls Python
       uses: AndreMiras/coveralls-python-action@master

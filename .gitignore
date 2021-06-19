@@ -6,3 +6,4 @@ __pycache__
 env.py
 cover/*
 .coverage
+*/my.cnf
