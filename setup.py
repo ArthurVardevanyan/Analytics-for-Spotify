@@ -4,12 +4,12 @@ import binascii
 import urllib.parse
 import mysql.connector
 import json
-import zipfile
+import tarfile
 
 
-def unzip():
-    with zipfile.ZipFile("webFrontend/node_modules.zip", 'r') as zip_ref:
-        zip_ref.extractall("webFrontend/")
+def extractNode():
+    with tarfile.open("webFrontend/node_modules.tar.xz", 'r') as tar:
+        tar.extractall("webFrontend/")
 
 
 def executeScriptsFromFile(c, filename):
@@ -34,8 +34,8 @@ def executeScriptsFromFile(c, filename):
 
 
 def main():
-    print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")  
-    unzip()
+    print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")
+    extractNode()
     CLIENT = input("Enter Spotify Client Key:")
     SECRET = input("Enter Spotify Secret Key:")
     R_URL = input("Enter Spotify Redirect URL Key:")
@@ -52,7 +52,7 @@ def main():
         "url": URL,
         "redirect_url": R_URL,
     }
-    
+
     print("MySql / MariaDB Integration")
     IP = input("Enter Database IP or (localhost):")
     DB = input("Enter Database Name:")
@@ -68,7 +68,7 @@ def main():
     ]
     with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
         f.writelines('\n'.join(MYSQL))
- 
+
     os.system("python3 manage.py migrate")
     db = mysql.connector.connect(
         host=IP,
@@ -89,7 +89,6 @@ def main():
     cursor.execute(add, data)
     db.commit()
     db.close
-
 
 
 if __name__ == "__main__":
