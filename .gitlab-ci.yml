@@ -1,0 +1,29 @@
+# WIP, TESTING ONLY, DO NOT DEPLOY
+image: docker:latest
+
+services:
+  - name: docker:dind
+    entrypoint: ["sh", "-c", "dockerd-entrypoint.sh $DOCKER_DAEMON_OPTIONS"]
+
+variables:
+  DOCKER_DAEMON_OPTIONS: "--insecure-registry=${CI_REGISTRY}"
+
+before_script:
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+stages:
+  - build
+
+Build:
+  stage: build
+  script:
+    - |
+      echo "[client]
+      host = $host
+      database = $database
+      user = $username
+      password = $password
+      default-character-set = utf8"> AnalyticsforSpotify/my.cnf
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA . -t $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
