@@ -25,7 +25,7 @@ def playlistSongsChecker(user, once=0):
     time.sleep(15)
     previousDay = ""
     status = database.user_status(user)
-    while(status):
+    while(status == 1):
         update_status(user, "statusPlaylist", 2)
         utc_time = datetime.now()
         local_time = utc_time.astimezone()
@@ -81,12 +81,12 @@ def historySpotify(user):
         update_status(user, "statusSong", 0)
         time.sleep(10)
         status = database.user_status(user)
-        if (not status):
+        if (status != 1):
             return
         url = "https://api.spotify.com/v1/me/player/recently-played?limit=50"
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
-        while(status):
+        while(status == 1):
             update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
@@ -149,13 +149,13 @@ def realTimeSpotify(user):
         update_status(user, "statusSong", 0)
         time.sleep(10)
         status = database.user_status(user)
-        if (not status):
+        if (status != 1):
             return
         url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
-        while(status):
+        while(status == 1):
             update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
