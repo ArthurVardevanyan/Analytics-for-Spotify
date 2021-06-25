@@ -26,6 +26,8 @@ def dockerSetup():
     db = myCNF(IP, DB, USER, PASS)
     setup(db, API)
 
+    # Check if thier are users in the database, mark as disabled, run manage, then re-enable.
+
 
 def myCNF(IP, DB, USER, PASS):
     MYSQL = [
@@ -66,9 +68,16 @@ def spotifyAPI(CLIENT, SECRET, R_URL):
 
 
 def setup(db, API):
-    os.system("python3 manage.py migrate")
-
     cursor = db.cursor()
+    users = 'show tables like "users"'
+    cursor.execute(users)
+    count = 0
+    for user in cursor:
+        count += 1
+
+    if(not count):
+        os.system("python3 manage.py migrate")
+
     delete = "DELETE FROM `spotifyAPI` WHERE 1"
     cursor.execute(delete)
     add = ("INSERT IGNORE INTO spotifyAPI"
@@ -88,9 +97,9 @@ def main():
         dockerSetup()
     else:
         extractNode()
-        CLIENT = input("Enter Spotify Client Key:")
-        SECRET = input("Enter Spotify Secret Key:")
-        R_URL = input("Enter Spotify Redirect URL Key:")
+        CLIENT = input("Enter Spotify Client ID    :")
+        SECRET = input("Enter Spotify Client Secret:")
+        R_URL = input("Enter Spotify Redirect URL :")
         API = spotifyAPI(CLIENT, SECRET, R_URL)
 
         print("MySql / MariaDB Integration")
