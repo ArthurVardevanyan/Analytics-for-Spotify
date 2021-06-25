@@ -2,6 +2,7 @@
 stages:
   - test
   - build
+  - push
 
 PythonTests:
   stage: test
@@ -26,20 +27,42 @@ PythonTests:
   script:
     - python3 manage.py test
 
+image: docker:latest
+
+before_script:
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+services:
+  - name: docker:dind
+    entrypoint: ["sh", "-c", "dockerd-entrypoint.sh $DOCKER_DAEMON_OPTIONS"]
+variables:
+  DOCKER_DAEMON_OPTIONS: "--insecure-registry=${CI_REGISTRY}"
+
 DockerBuild:
   stage: build
-  image: docker:latest
-  services:
-    - name: docker:dind
-      entrypoint: ["sh", "-c", "dockerd-entrypoint.sh $DOCKER_DAEMON_OPTIONS"]
-
-  variables:
-    DOCKER_DAEMON_OPTIONS: "--insecure-registry=${CI_REGISTRY}"
-
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
   script:
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA . -t $CI_REGISTRY_IMAGE:latest
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+PushLatest:
+  variables:
+    GIT_STRATEGY: none
+  stage: push
+  only:
+    - production
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:latest
+
+PushDevelop:
+  variables:
+    GIT_STRATEGY: none
+  stage: push
+  only:
+    - develop
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:develop
+    - docker push $CI_REGISTRY_IMAGE:develop
