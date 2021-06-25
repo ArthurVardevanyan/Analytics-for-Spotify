@@ -12,33 +12,45 @@ def extractNode():
         tar.extractall("webFrontend/")
 
 
-def executeScriptsFromFile(c, filename):
-    # https://stackoverflow.com/a/19473206
-    # Open and read the file as a single buffer
-    fd = open(filename, 'r')
-    sqlFile = fd.read()
-    fd.close()
+def dockerSetup():
+    CLIENT = os.environ.get('CLIENT_ID')
+    SECRET = os.environ.get('CLIENT_SECERT')
+    R_URL = os.environ.get('REDIRECT_URL')
+    API = spotifyAPI(CLIENT, SECRET, R_URL)
 
-    # all SQL commands (split on ';')
-    sqlCommands = sqlFile.split(';')
+    IP = os.environ.get('HOST')
+    DB = os.environ.get('DATABASE')
+    USER = os.environ.get('USER')
+    PASS = os.environ.get('PASSWORD')
 
-    # Execute every command from the input file
-    for command in sqlCommands:
-        # This will skip and report errors
-        # For example, if the tables do not yet exist, this will skip over
-        # the DROP TABLE commands
-        try:
-            c.execute(command)
-        except:
-            continue
+    db = myCNF(IP, DB, USER, PASS)
+    setup(db, API)
+
+    # Check if thier are users in the database, mark as disabled, run manage, then re-enable.
 
 
-def main():
-    print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")
-    extractNode()
-    CLIENT = input("Enter Spotify Client Key:")
-    SECRET = input("Enter Spotify Secret Key:")
-    R_URL = input("Enter Spotify Redirect URL Key:")
+def myCNF(IP, DB, USER, PASS):
+    MYSQL = [
+        "[client]",
+        "host = " + IP,
+        "database = " + DB,
+        "user = "+USER,
+        "password = "+PASS,
+        "default-character-set = utf8",
+    ]
+    with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
+        f.writelines('\n'.join(MYSQL))
+    db = mysql.connector.connect(
+        host=IP,
+        user=USER,
+        passwd=PASS,
+        database=DB,
+        auth_plugin='mysql_native_password'
+    )
+    return db
+
+
+def spotifyAPI(CLIENT, SECRET, R_URL):
     B64CS = str(base64.b64encode(
         ":".join([CLIENT, SECRET]).encode("utf-8")), "utf-8")
     SCOPES = "&scope=user-read-currently-playing+user-read-recently-played"
@@ -52,32 +64,20 @@ def main():
         "url": URL,
         "redirect_url": R_URL,
     }
+    return API
 
-    print("MySql / MariaDB Integration")
-    IP = input("Enter Database IP or (localhost):")
-    DB = input("Enter Database Name:")
-    USER = input("Enter Username:")
-    PASS = input("Enter Password:")
-    MYSQL = [
-        "[client]",
-        "host = " + IP,
-        "database = " + DB,
-        "user = "+USER,
-        "password = "+PASS,
-        "default-character-set = utf8",
-    ]
-    with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
-        f.writelines('\n'.join(MYSQL))
 
-    os.system("python3 manage.py migrate")
-    db = mysql.connector.connect(
-        host=IP,
-        user=USER,
-        passwd=PASS,
-        database=DB,
-        auth_plugin='mysql_native_password'
-    )
+def setup(db, API):
     cursor = db.cursor()
+    users = 'show tables like "users"'
+    cursor.execute(users)
+    count = 0
+    for user in cursor:
+        count += 1
+
+    if(not count):
+        os.system("python3 manage.py migrate")
+
     delete = "DELETE FROM `spotifyAPI` WHERE 1"
     cursor.execute(delete)
     add = ("INSERT IGNORE INTO spotifyAPI"
@@ -89,6 +89,26 @@ def main():
     cursor.execute(add, data)
     db.commit()
     db.close
+
+
+def main():
+    print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")
+    if(os.environ.get('DOCKER')):
+        dockerSetup()
+    else:
+        extractNode()
+        CLIENT = input("Enter Spotify Client ID    :")
+        SECRET = input("Enter Spotify Client Secret:")
+        R_URL = input("Enter Spotify Redirect URL :")
+        API = spotifyAPI(CLIENT, SECRET, R_URL)
+
+        print("MySql / MariaDB Integration")
+        IP = input("Enter Database IP or (localhost):")
+        DB = input("Enter Database Name:")
+        USER = input("Enter Username:")
+        PASS = input("Enter Password:")
+        db = myCNF(IP, DB, USER, PASS)
+        setup(db, API)
 
 
 if __name__ == "__main__":
