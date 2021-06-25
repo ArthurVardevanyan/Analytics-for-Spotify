@@ -10,12 +10,12 @@ PythonTests:
     - mariadb:latest
   variables:
     MARIADB_ROOT_PASSWORD: root
-    MARIADB_DATABASE: $database
+    MARIADB_DATABASE: spotify
   before_script:
     - |
       echo "[client]
       host = mariadb
-      database = $database
+      database = spotify
       user = root
       password = root
       default-character-set = utf8"> AnalyticsforSpotify/my.cnf
@@ -37,16 +37,9 @@ DockerBuild:
     DOCKER_DAEMON_OPTIONS: "--insecure-registry=${CI_REGISTRY}"
 
   before_script:
-    - |
-      echo "[client]
-      host = $host
-      database = $database
-      user = $username
-      password = $password
-      default-character-set = utf8"> AnalyticsforSpotify/my.cnf
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
   script:
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA . -t $CI_REGISTRY_IMAGE:latest
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA . -t $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest

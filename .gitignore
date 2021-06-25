@@ -7,3 +7,4 @@ env.py
 cover/*
 .coverage
 */my.cnf
+*.env

@@ -1,0 +1,24 @@
+# rm docker-compose.yaml && nano docker-compose.yaml
+# docker-compose down
+# docker-compose pull
+# docker-compose --compatibility up --detach  --remove-orphans
+version: "3.7"
+
+services:
+  analytics-for-spotify:
+    container_name: analytics-for-spotify
+    hostname: analytics-for-spotify
+    ports: 
+      - "8000:80"
+    env_file: .env
+    image: ${REPOSITORY}
+    environment:
+        - DOCKER=YES
+        - CLIENT_ID=${CLIENT_ID}
+        - CLIENT_SECERT=${CLIENT_SECERT}
+        - REDIRECT_URL=${REDIRECT_URL}
+        - HOST=${HOST}
+        - DATABASE=${DATABASE}
+        - USER=${USERNAME}
+        - PASSWORD=${PASSWORD}
+   
