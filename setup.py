@@ -14,7 +14,7 @@ def extractNode():
 
 def dockerSetup():
     CLIENT = os.environ.get('CLIENT_ID')
-    SECRET = os.environ.get('CLIENT_SECERT')
+    SECRET = os.environ.get('CLIENT_SECRET')
     R_URL = os.environ.get('REDIRECT_URL')
     API = spotifyAPI(CLIENT, SECRET, R_URL)
 
