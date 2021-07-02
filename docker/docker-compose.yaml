@@ -15,7 +15,7 @@ services:
     environment:
         - DOCKER=YES
         - CLIENT_ID=${CLIENT_ID}
-        - CLIENT_SECERT=${CLIENT_SECERT}
+        - CLIENT_SECRET=${CLIENT_SECRET}
         - REDIRECT_URL=${REDIRECT_URL}
         - HOST=${HOST}
         - DATABASE=${DATABASE}

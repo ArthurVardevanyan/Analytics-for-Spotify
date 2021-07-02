@@ -3,10 +3,8 @@ import json
 from datetime import datetime, timezone
 import sys
 
-# WARNING, DO NOT RUN IN MULTI USER ENVIRONMENTS, THIS SCRIPT CURRENTLY ONLY WORKS FOR SINGLE USER ENVIRONMENTS.
 
-
-def songIdUpdater():
+def songIdUpdater(user):
     db = {}
     with open("AnalyticsforSpotify/my.cnf") as f:
         count = 0
@@ -25,15 +23,15 @@ def songIdUpdater():
         auth_plugin='mysql_native_password'
     )
 
-    history = getHistory(connection)
+    history = getHistory(connection, user)
     history = duplicateFinder(history)
-    databaseUpdate(history, connection)
+    databaseUpdate(history, connection, user)
 
 
-def getHistory(connection):
+def getHistory(connection, user):
 
     with connection.cursor() as cursor:
-        query = 'SELECT played1.timestamp, songs.ID, songs.name, playcount.playCount\
+        query = 'SELECT played1.timestamp, songs.ID, songs.name, playcount.playCount, user\
                 FROM songs\
                 INNER JOIN playcount ON playcount.songID = songs.id\
                 LEFT JOIN (\
@@ -47,11 +45,13 @@ def getHistory(connection):
 
         history = []
         for song in cursor:
-            history.append(song)
+            if(song[4] == user):
+                history.append(song)
         print("Total Songs: " + str(len(history)))
         songHistory = []
         for song in history:
             songL = list(song)
+            songL.pop(4)
             if songL[0] == None:
                 songL.pop(0)
                 songL.insert(0, 990200212040000)
@@ -93,7 +93,7 @@ def duplicateFinder(history):
     return newHistory2
 
 
-def databaseUpdate(history, connection):
+def databaseUpdate(history, connection, user):
     for song in history:
         newPlayCount = 0
         for item in song:
@@ -104,25 +104,26 @@ def databaseUpdate(history, connection):
             oldIDS.append(song[i][1])
         with connection.cursor() as cursor:
             query = "UPDATE `playcount` SET `playCount`=" + \
-                str(newPlayCount) + " WHERE `songID` ='" + newID + "'"
+                str(newPlayCount) + " WHERE `songID` ='" + \
+                newID + "' AND `user` ='" + user + "'"
             cursor.execute(query)
             for item in oldIDS:
                 query = "UPDATE `listeningHistory` SET `songID`='" + \
-                    newID + "' WHERE `songID` ='" + item + "'"
+                    newID + "' WHERE `songID` ='" + item + "' AND `user` ='" + user + "'"
                 cursor.execute(query)
-                query = "DELETE FROM `playcount` WHERE `songID` ='" + item + "'"
+                query = "DELETE FROM `playcount` WHERE `songID` ='" + \
+                    item + "' AND `user` ='" + user + "'"
                 cursor.execute(query)
-                query = "DELETE FROM `songArtists` WHERE `songID` ='" + item + "'"
+                query = "DELETE IGNORE FROM `songArtists` WHERE `songID` ='" + item + "'"
                 cursor.execute(query)
-                query = "DELETE FROM `songs` WHERE `id` ='" + item + "'"
+                query = "DELETE IGNORE FROM `songs` WHERE `id` ='" + item + "'"
                 cursor.execute(query)
     connection.commit()
     return history
 
 
 def main():
-    # WARNING, DO NOT RUN IN MULTI USER ENVIRONMENTS, THIS SCRIPT CURRENTLY ONLY WORKS FOR SINGLE USER ENVIRONMENTS.
-    #print(songIdUpdater())
+    #print(songIdUpdater(""))
     return 1
 
 
