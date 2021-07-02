@@ -51,9 +51,9 @@ class Songs(models.Model):
 class Songartists(models.Model):
 
     songID = models.OneToOneField(
-        'Songs', models.DO_NOTHING, db_column='songID', primary_key=True)
+        'Songs', models.RESTRICT, db_column='songID', primary_key=True)
     artistID = models.ForeignKey(
-        Artists, models.DO_NOTHING, db_column='artistID')
+        Artists, models.RESTRICT, db_column='artistID')
 
     class Meta:
         managed = True
@@ -63,8 +63,8 @@ class Songartists(models.Model):
 
 class Playcount(models.Model):
     user = models.ForeignKey(
-        'Users', models.DO_NOTHING, db_column='user')
-    songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
+        'Users', models.RESTRICT, db_column='user')
+    songid = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
     playcount = models.IntegerField(db_column='playCount', default=1)
 
     class Meta:
@@ -74,8 +74,8 @@ class Playcount(models.Model):
 
 
 class Listeninghistory(models.Model):
-    user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
-    songid = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
+    user = models.ForeignKey('Users', models.RESTRICT, db_column='user')
+    songid = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
     timestamp = models.BigIntegerField()
     timeplayed = models.TextField(db_column='timePlayed')
     json = models.TextField(blank=True, null=True)
@@ -97,9 +97,9 @@ class Playlists(models.Model):
 
 
 class Playlistsusers(models.Model):
-    user = models.ForeignKey('Users', models.DO_NOTHING, db_column='user')
+    user = models.ForeignKey('Users', models.RESTRICT, db_column='user')
     playlistID = models.ForeignKey(
-        'Playlists', models.DO_NOTHING, to_field='playlistID', db_column='playlistID')
+        'Playlists', models.RESTRICT, to_field='playlistID', db_column='playlistID')
 
     class Meta:
         managed = True
@@ -112,8 +112,8 @@ class Playlistsongs(models.Model):
 
     songstatus = models.TextField(db_column='songStatus')
     playlistID = models.ForeignKey(
-        'Playlists', models.CASCADE, to_field='playlistID', db_column='playlistID')
-    songID = models.ForeignKey('Songs', models.DO_NOTHING, db_column='songID')
+        'Playlists', models.RESTRICT, to_field='playlistID', db_column='playlistID')
+    songID = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
 
     class Meta:
         managed = True
