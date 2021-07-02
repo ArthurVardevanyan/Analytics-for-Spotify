@@ -203,6 +203,7 @@ def start(request):
         user = database.user_status(spotifyID, 1)
         if(user[2] == 0):
             spotify.SpotifyThread(user)
+            spotify.songIdUpdaterThread(user)
         if(user[3] == 0):
             spotify.playlistSongThread(spotifyID[0])
 

@@ -32,7 +32,7 @@ Notes:
 
 ## Installation Instructions
 ## This contains only installation instructions. Thier are currently no Update Instructions!!!
-### Instructions are for installing a VM / No Other Websites Hosted.
+### Instructions are for installing in a VM / No Other Websites Hosted.
 ### This Project is a work in progress.<br> The database structure could change in future versions.
 #### Installation Instructions are also a work in progress and were tested on Ubuntu Server 20.04.2.
 I currently run this virtualized on a Virtual Machine running Debian 10.

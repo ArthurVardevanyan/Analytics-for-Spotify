@@ -209,32 +209,33 @@ def realTimeSpotify(user):
     update_status(user, "statusSong", 0)
 
 
-def songIdUpdaterThread(once=0):
+def songIdUpdaterThread(user, once=0):
     try:
-        time.sleep(30)
-        print("songIdUpdaterThread")
+        print("songIdUpdaterThread: " + user[0])
         USC = threading.Thread(
-            target=songIdUpdaterChecker, args=(once,))
+            target=songIdUpdaterChecker, args=(user[0], once,))
         USC.start()
     except Exception as e:
         print(e)
         print("songIdUpdaterThread Thread Failure")
 
 
-def songIdUpdaterChecker(once=0):
-    time.sleep(300)
+def songIdUpdaterChecker(user, once=0):
     previousDay = ""
-    while(True):
+    status = database.user_status(user)
+    while(status == 1):
+        time.sleep(300)
         utc_time = datetime.now()
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
-            print(songIdUpdater())
+            print(songIdUpdater(user))
             if(once == 1):
                 return
             previousDay = lastUpdated
             time.sleep(5000)
         time.sleep(500)
+        status = database.user_status(user)
 
 
 def main():
@@ -244,9 +245,8 @@ def main():
         for user in cursor:
             playlistSongThread(user[0])
             SpotifyThread(user)
+            songIdUpdaterThread(user)
             time.sleep(1)
-    # WARNING, DO NOT RUN IN MULTI USER ENVIRONMENTS, THIS SCRIPT CURRENTLY ONLY WORKS FOR SINGLE USER ENVIRONMENTS.
-    # songIdUpdaterThread() # Currently Causes Infinite Loop in Github Action Testing.
     return 1
 
 
