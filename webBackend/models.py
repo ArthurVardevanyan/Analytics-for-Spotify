@@ -16,6 +16,15 @@ class SpotifyAPI(models.Model):
         db_table = 'spotifyAPI'
 
 
+class Workers(models.Model):
+    worker = models.IntegerField(primary_key=True)
+    lastUpdated = models.BigIntegerField()
+
+    class Meta:
+        managed = True
+        db_table = 'workers'
+
+
 class Users(models.Model):
     user = models.CharField(primary_key=True, max_length=128)
     enabled = models.IntegerField()
@@ -105,7 +114,6 @@ class Playlistsusers(models.Model):
         managed = True
         db_table = 'playlistsUsers'
         unique_together = (('playlistID', 'user'),)
-
 
 
 class Playlistsongs(models.Model):
