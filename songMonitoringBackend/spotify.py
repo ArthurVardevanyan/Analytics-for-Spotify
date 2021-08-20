@@ -39,6 +39,7 @@ def modifyThreads(workerCount, user=0):
     with connection.cursor() as cursor:
         global WORKER
         global KILL
+        global THREADS
         cursor.execute("SELECT COUNT(*) from users where enabled = 1")
         users = cursor.fetchone()[0]
         usersPerWorker = int(math.ceil(users/workerCount))
@@ -78,13 +79,19 @@ def modifyThreads(workerCount, user=0):
                     count += 1
         if len(usersOnThisWorker) > usersPerWorker:
             if user != 0:
+                newThread = []
                 for thread in THREADS:
                     if thread[0] == user:
                         print("Killing: " + str(user))
-                        KILL['user'] = 1
+                        KILL[str(user)+"playlistSongThread"] = 1
+                        KILL[str(user)+"SpotifyThread"] = 1
+                        KILL[str(user)+"songIdUpdaterThread"] = 1
                         sql = "UPDATE users SET worker = NULL WHERE user = '" + \
                             str(user) + "'"
                         cursor.execute(sql)
+                    else:
+                        newThread.append(thread)
+                THREADS = newThread
     return 1
 
 
@@ -100,7 +107,8 @@ def playlistSongsChecker(user, once=0):
     previousDay = ""
     status = database.user_status(user)
     while(status == 1):
-        if (KILL.get(user, 0) == 1):
+        if (KILL.get(user+"playlistSongThread", 0) == 1):
+            del KILL[str(user)+"playlistSongThread"]
             break
         update_status(user, "statusPlaylist", 2)
         utc_time = datetime.now()
@@ -174,7 +182,8 @@ def historySpotify(user):
             workerCount = database.scanWorkers(WORKER)
             modifyThreads(workerCount, user)
             global KILL
-            if (KILL.get(user, 0) == 1):
+            if (KILL.get(user+"SpotifyThread", 0) == 1):
+                del KILL[str(user)+"SpotifyThread"]
                 break
             update_status(user, "statusSong", 2)
             try:
@@ -247,7 +256,8 @@ def realTimeSpotify(user):
         while(status == 1):
             workerCount = database.scanWorkers(WORKER)
             modifyThreads(workerCount, user)
-            if (KILL.get(user, 0) == 1):
+            if (KILL.get(user+"SpotifyThread", 0) == 1):
+                del KILL[str(user)+"SpotifyThread"]
                 break
             update_status(user, "statusSong", 2)
             try:
@@ -322,7 +332,8 @@ def songIdUpdaterChecker(user, once=0):
     status = database.user_status(user)
     time.sleep(15)
     while(status == 1):
-        if (KILL.get(user[0], 0) == 1):
+        if (KILL.get(user+"songIdUpdaterThread", 0) == 1):
+            del KILL[str(user)+"songIdUpdaterThread"]
             break
         time.sleep(300)
         utc_time = datetime.now()
