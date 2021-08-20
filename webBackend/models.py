@@ -32,6 +32,8 @@ class Users(models.Model):
     statusplaylist = models.IntegerField(db_column='statusPlaylist')
     cache = models.TextField()
     realtime = models.IntegerField(db_column='realTime')
+    worker = models.ForeignKey(
+        Workers, models.SET_NULL, db_column='worker', blank=True, null=True)
 
     class Meta:
         managed = True
