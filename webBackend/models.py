@@ -19,6 +19,8 @@ class SpotifyAPI(models.Model):
 class Workers(models.Model):
     worker = models.IntegerField(primary_key=True)
     lastUpdated = models.BigIntegerField()
+    creationTime = models.TextField()
+    updatedTime = models.TextField()
 
     class Meta:
         managed = True
