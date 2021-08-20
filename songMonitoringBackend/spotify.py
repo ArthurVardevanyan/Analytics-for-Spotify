@@ -156,6 +156,7 @@ def realTimeSpotify(user):
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
         while(status == 1):
+            database.scanWorkers()
             update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
@@ -240,6 +241,7 @@ def songIdUpdaterChecker(user, once=0):
 
 def main():
     with connection.cursor() as cursor:
+        print("Worker ID: ", database.createWorker())
         users = "SELECT * from users"
         cursor.execute(users)
         for user in cursor:

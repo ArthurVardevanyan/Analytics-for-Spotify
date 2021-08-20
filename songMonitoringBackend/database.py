@@ -3,6 +3,39 @@ import json
 from datetime import datetime, timezone
 from django.db import connection
 import sys
+from random import randint
+
+
+def scanWorkers():
+    with connection.cursor() as cursor:
+        utc_time = datetime.now()
+        currentEpoch = int(utc_time.astimezone().timestamp())
+        cursor.execute("SELECT * from workers")
+        for worker in cursor:
+            if currentEpoch - worker[1] > 90:
+                sql = "DELETE FROM workers WHERE worker = " + str(worker[0])
+                cursor.execute(sql)
+
+
+def createWorker():
+    scanWorkers()
+
+    workerID = randint(10**(9-1), (10**9)-1)
+
+    utc_time = datetime.now()
+    currentEpoch = int(utc_time.astimezone().timestamp())
+
+    add_worker = ("INSERT INTO workers"
+                  "(worker,lastUpdated)"
+                  "VALUES (%s, %s)")
+    data_worker = (
+        workerID,
+        currentEpoch
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(add_worker, data_worker)
+
+    return workerID
 
 
 def user_status(user, detailed=0):
