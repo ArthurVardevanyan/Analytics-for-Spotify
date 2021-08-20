@@ -16,6 +16,43 @@ sys.path.append("..")
 
 WORKER = None
 THREADS = []
+KILL = {}
+
+
+def modifyThreads(workerCount, user=0):
+    with connection.cursor() as cursor:
+        # Change to only Enabled Users
+        cursor.execute("SELECT COUNT(*) from users where enabled = 1")
+        users = cursor.fetchone()[0]
+        usersPerWorker = int(math.ceil(users/workerCount))
+        usersOnThisWorker = []
+        for thread in THREADS:
+            usersOnThisWorker.append(thread[0])
+        usersOnThisWorker = set(usersOnThisWorker)
+        
+        if len(usersOnThisWorker) < usersPerWorker:
+            users = "SELECT * FROM `users` WHERE `worker` IS NULL and enabled = 1;"
+            cursor.execute(users)
+            count = len(usersOnThisWorker)
+            global WORKER
+            global KILL
+            for user in cursor:
+                if count < usersPerWorker:
+                    sql = "UPDATE users SET worker = " + \
+                        str(WORKER) + " WHERE user = '" + str(user[0]) + "'"
+                    cursor.execute(sql)
+                    playlistSongThread(user[0])
+                    SpotifyThread(user)
+                    songIdUpdaterThread(user)
+                    time.sleep(1)
+                    count += 1
+        else:
+            for thread in THREADS:
+                if thread[0] == user:
+                    KILL['user'] = 1
+                    sql = "UPDATE users SET worker = NULL WHERE user = '" + str(user[0]) + "'"
+                    cursor.execute(sql)
+    return 1
 
 
 def update_status(user, status, value):
@@ -30,6 +67,8 @@ def playlistSongsChecker(user, once=0):
     previousDay = ""
     status = database.user_status(user)
     while(status == 1):
+        if (KILL.get(user, 0) == 1):
+            break
         update_status(user, "statusPlaylist", 2)
         utc_time = datetime.now()
         local_time = utc_time.astimezone()
@@ -62,8 +101,8 @@ def playlistSongThread(user, once=0):
         USC = threading.Thread(
             target=playlistSongsChecker, args=(user, once,))
         USC.start()
-        thread = [[user]]
-        thread[0].append(USC)
+        thread = [user]
+        thread.append(USC)
         global THREADS
         THREADS.append(thread)
     except Exception as e:
@@ -80,8 +119,8 @@ def SpotifyThread(user):
             print("historySpotifyThread: " + user[0])
             S = threading.Thread(target=historySpotify, args=(user[0],))
         S.start()
-        thread = [[user[0]]]
-        thread[0].append(S)
+        thread = [user[0]]
+        thread.append(S)
         global THREADS
         THREADS.append(thread)
     except:
@@ -99,6 +138,11 @@ def historySpotify(user):
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         while(status == 1):
+            workerCount = database.scanWorkers(WORKER)
+            modifyThreads(workerCount, user)
+            global KILL
+            if (KILL.get(user, 0) == 1):
+                break
             update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
@@ -168,7 +212,10 @@ def realTimeSpotify(user):
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
         while(status == 1):
-            database.scanWorkers(WORKER)
+            workerCount = database.scanWorkers(WORKER)
+            modifyThreads(workerCount, user)
+            if (KILL.get(user, 0) == 1):
+                break
             update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
@@ -228,8 +275,8 @@ def songIdUpdaterThread(user, once=0):
         USC = threading.Thread(
             target=songIdUpdaterChecker, args=(user[0], once,))
         USC.start()
-        thread = [[user[0]]]
-        thread[0].append(USC)
+        thread = [user[0]]
+        thread.append(USC)
         global THREADS
         THREADS.append(thread)
     except Exception as e:
@@ -241,6 +288,8 @@ def songIdUpdaterChecker(user, once=0):
     previousDay = ""
     status = database.user_status(user)
     while(status == 1):
+        if (KILL.get(user[0], 0) == 1):
+            break
         time.sleep(300)
         utc_time = datetime.now()
         local_time = utc_time.astimezone()
@@ -262,19 +311,12 @@ def main():
         print("Worker ID: ", WORKER)
         print("Workers  : ", workerCount)
         # Change to only Enabled Users
-        cursor.execute("SELECT COUNT(*) from users")
+        cursor.execute("SELECT COUNT(*) from users where enabled = 1")
         users = cursor.fetchone()[0]
         print("Users : " + str(users))
         usersPerWorker = int(math.ceil(users/workerCount))
         print("Users Per Worker: " + str(usersPerWorker))
-        
-        users = "SELECT * from users"
-        cursor.execute(users)
-        for user in cursor:
-            playlistSongThread(user[0])
-            SpotifyThread(user)
-            songIdUpdaterThread(user)
-            time.sleep(1)
+        modifyThreads(workerCount)
     return 1
 
 
