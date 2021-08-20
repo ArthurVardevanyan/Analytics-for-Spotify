@@ -6,10 +6,13 @@ import sys
 from random import randint
 
 
-def scanWorkers():
+def scanWorkers(workerID):
     with connection.cursor() as cursor:
         utc_time = datetime.now()
         currentEpoch = int(utc_time.astimezone().timestamp())
+        sql = "UPDATE workers SET lastUpdated = " + \
+            str(currentEpoch) + " WHERE worker = " + str(workerID)
+        cursor.execute(sql)
         cursor.execute("SELECT * from workers")
         for worker in cursor:
             if currentEpoch - worker[1] > 90:
@@ -18,10 +21,8 @@ def scanWorkers():
 
 
 def createWorker():
-    scanWorkers()
 
     workerID = randint(10**(9-1), (10**9)-1)
-
     utc_time = datetime.now()
     currentEpoch = int(utc_time.astimezone().timestamp())
 
@@ -35,6 +36,7 @@ def createWorker():
     with connection.cursor() as cursor:
         cursor.execute(add_worker, data_worker)
 
+    scanWorkers(workerID)
     return workerID
 
 

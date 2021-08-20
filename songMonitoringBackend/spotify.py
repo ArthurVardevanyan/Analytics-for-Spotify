@@ -13,6 +13,8 @@ from _datetime import timedelta
 import sys
 sys.path.append("..")
 
+WORKER = None
+
 
 def update_status(user, status, value):
     with connection.cursor() as cursor:
@@ -156,7 +158,7 @@ def realTimeSpotify(user):
                   "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
         while(status == 1):
-            database.scanWorkers()
+            database.scanWorkers(WORKER)
             update_status(user, "statusSong", 2)
             try:
                 response = requests.get(url, headers=header)
@@ -241,7 +243,9 @@ def songIdUpdaterChecker(user, once=0):
 
 def main():
     with connection.cursor() as cursor:
-        print("Worker ID: ", database.createWorker())
+        global WORKER 
+        WORKER = database.createWorker()
+        print("Worker ID: ", WORKER)
         users = "SELECT * from users"
         cursor.execute(users)
         for user in cursor:
