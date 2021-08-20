@@ -10,10 +10,12 @@ from datetime import datetime, timezone
 import os
 from django.db import connection
 from _datetime import timedelta
+import math
 import sys
 sys.path.append("..")
 
 WORKER = None
+THREADS = []
 
 
 def update_status(user, status, value):
@@ -60,6 +62,10 @@ def playlistSongThread(user, once=0):
         USC = threading.Thread(
             target=playlistSongsChecker, args=(user, once,))
         USC.start()
+        thread = [[user]]
+        thread[0].append(USC)
+        global THREADS
+        THREADS.append(thread)
     except Exception as e:
         print(e)
         print("Playlist Thread Failure")
@@ -74,6 +80,10 @@ def SpotifyThread(user):
             print("historySpotifyThread: " + user[0])
             S = threading.Thread(target=historySpotify, args=(user[0],))
         S.start()
+        thread = [[user[0]]]
+        thread[0].append(S)
+        global THREADS
+        THREADS.append(thread)
     except:
         print("Song Thread Failure")
 
@@ -218,6 +228,10 @@ def songIdUpdaterThread(user, once=0):
         USC = threading.Thread(
             target=songIdUpdaterChecker, args=(user[0], once,))
         USC.start()
+        thread = [[user[0]]]
+        thread[0].append(USC)
+        global THREADS
+        THREADS.append(thread)
     except Exception as e:
         print(e)
         print("songIdUpdaterThread Thread Failure")
@@ -243,9 +257,17 @@ def songIdUpdaterChecker(user, once=0):
 
 def main():
     with connection.cursor() as cursor:
-        global WORKER 
-        WORKER = database.createWorker()
+        global WORKER
+        WORKER, workerCount = database.createWorker()
         print("Worker ID: ", WORKER)
+        print("Workers  : ", workerCount)
+        # Change to only Enabled Users
+        cursor.execute("SELECT COUNT(*) from users")
+        users = cursor.fetchone()[0]
+        print("Users : " + str(users))
+        usersPerWorker = int(math.ceil(users/workerCount))
+        print("Users Per Worker: " + str(usersPerWorker))
+        
         users = "SELECT * from users"
         cursor.execute(users)
         for user in cursor:

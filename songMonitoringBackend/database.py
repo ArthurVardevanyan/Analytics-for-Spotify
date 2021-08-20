@@ -14,10 +14,14 @@ def scanWorkers(workerID):
             str(currentEpoch) + " WHERE worker = " + str(workerID)
         cursor.execute(sql)
         cursor.execute("SELECT * from workers")
+        count = 0
         for worker in cursor:
             if currentEpoch - worker[1] > 90:
                 sql = "DELETE FROM workers WHERE worker = " + str(worker[0])
                 cursor.execute(sql)
+            else:
+                count += 1
+    return count
 
 
 def createWorker():
@@ -36,8 +40,8 @@ def createWorker():
     with connection.cursor() as cursor:
         cursor.execute(add_worker, data_worker)
 
-    scanWorkers(workerID)
-    return workerID
+    count = scanWorkers(workerID)
+    return workerID, count
 
 
 def user_status(user, detailed=0):
