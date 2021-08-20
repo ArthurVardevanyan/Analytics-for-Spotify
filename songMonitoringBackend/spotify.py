@@ -19,6 +19,21 @@ THREADS = []
 KILL = {}
 
 
+def keepAlive():
+    while(1 == 1):
+        time.sleep(75)
+        modifyThreads(database.scanWorkers())
+
+
+def keepAliveThread():
+    try:
+        print("keepAlive")
+        S = threading.Thread(target=keepAlive)
+        S.start()
+    except:
+        print("keepAlive Thread Failure")
+
+
 def modifyThreads(workerCount, user=0):
     with connection.cursor() as cursor:
         global WORKER
@@ -54,12 +69,13 @@ def modifyThreads(workerCount, user=0):
                     time.sleep(1)
                     count += 1
         else:
-            for thread in THREADS:
-                if thread[0] == user:
-                    KILL['user'] = 1
-                    sql = "UPDATE users SET worker = NULL WHERE user = '" + \
-                        str(user[0]) + "'"
-                    cursor.execute(sql)
+            if user != 0:
+                for thread in THREADS:
+                    if thread[0] == user:
+                        KILL['user'] = 1
+                        sql = "UPDATE users SET worker = NULL WHERE user = '" + \
+                            str(user[0]) + "'"
+                        cursor.execute(sql)
     return 1
 
 
@@ -324,6 +340,7 @@ def main():
         print("Users : " + str(users))
         usersPerWorker = int(math.ceil(users/workerCount))
         print("Users Per Worker: " + str(usersPerWorker))
+        keepAliveThread()
         modifyThreads(workerCount)
     return 1
 
