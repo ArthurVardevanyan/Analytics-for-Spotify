@@ -20,9 +20,10 @@ KILL = {}
 
 
 def keepAlive():
+    global WORKER
     while(1 == 1):
         time.sleep(75)
-        modifyThreads(database.scanWorkers())
+        modifyThreads(database.scanWorkers(WORKER))
 
 
 def keepAliveThread():
@@ -68,14 +69,16 @@ def modifyThreads(workerCount, user=0):
                     songIdUpdaterThread(user)
                     time.sleep(1)
                     count += 1
-        else:
+        if len(usersOnThisWorker) > usersPerWorker:
             if user != 0:
                 for thread in THREADS:
                     if thread[0] == user:
+                        print("Killing: " + str(user))
                         KILL['user'] = 1
                         sql = "UPDATE users SET worker = NULL WHERE user = '" + \
                             str(user[0]) + "'"
                         cursor.execute(sql)
+
     return 1
 
 
