@@ -52,8 +52,14 @@ def modifyThreads(workerCount, user=0):
                 str(user) + "'"
             cursor.execute(sql)
             userInfo = cursor.fetchone()[0]
-            if userInfo != WORKER:
+            if userInfo != WORKER and userInfo is not None:
+                print("User Doesn't Match Worker")
                 KILL['user'] = 1
+                return 1
+
+        print("Users On Worker : " + str(len(usersOnThisWorker)))
+        print("Users Per Worker: " + str(usersPerWorker))
+
         if len(usersOnThisWorker) < usersPerWorker:
             users = "SELECT * FROM `users` WHERE `worker` IS NULL and enabled = 1;"
             cursor.execute(users)
@@ -64,6 +70,7 @@ def modifyThreads(workerCount, user=0):
                     sql = "UPDATE users SET worker = " + \
                         str(WORKER) + " WHERE user = '" + str(user[0]) + "'"
                     cursor.execute(sql)
+                    print("Creating User: " + str(user[0]))
                     playlistSongThread(user[0])
                     SpotifyThread(user)
                     songIdUpdaterThread(user)
@@ -76,9 +83,8 @@ def modifyThreads(workerCount, user=0):
                         print("Killing: " + str(user))
                         KILL['user'] = 1
                         sql = "UPDATE users SET worker = NULL WHERE user = '" + \
-                            str(user[0]) + "'"
+                            str(user) + "'"
                         cursor.execute(sql)
-
     return 1
 
 
@@ -344,7 +350,6 @@ def main():
         usersPerWorker = int(math.ceil(users/workerCount))
         print("Users Per Worker: " + str(usersPerWorker))
         keepAliveThread()
-        modifyThreads(workerCount)
     return 1
 
 
