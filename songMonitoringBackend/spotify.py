@@ -21,7 +21,8 @@ KILL = {}
 
 def modifyThreads(workerCount, user=0):
     with connection.cursor() as cursor:
-        # Change to only Enabled Users
+        global WORKER
+        global KILL
         cursor.execute("SELECT COUNT(*) from users where enabled = 1")
         users = cursor.fetchone()[0]
         usersPerWorker = int(math.ceil(users/workerCount))
@@ -29,13 +30,19 @@ def modifyThreads(workerCount, user=0):
         for thread in THREADS:
             usersOnThisWorker.append(thread[0])
         usersOnThisWorker = set(usersOnThisWorker)
-        
+
+        if user != 0:
+            sql = "SELECT worker from users WHERE user = '" + \
+                str(user) + "'"
+            cursor.execute(sql)
+            userInfo = cursor.fetchone()[0]
+            if userInfo != WORKER:
+                KILL['user'] = 1
         if len(usersOnThisWorker) < usersPerWorker:
             users = "SELECT * FROM `users` WHERE `worker` IS NULL and enabled = 1;"
             cursor.execute(users)
             count = len(usersOnThisWorker)
-            global WORKER
-            global KILL
+
             for user in cursor:
                 if count < usersPerWorker:
                     sql = "UPDATE users SET worker = " + \
@@ -50,7 +57,8 @@ def modifyThreads(workerCount, user=0):
             for thread in THREADS:
                 if thread[0] == user:
                     KILL['user'] = 1
-                    sql = "UPDATE users SET worker = NULL WHERE user = '" + str(user[0]) + "'"
+                    sql = "UPDATE users SET worker = NULL WHERE user = '" + \
+                        str(user[0]) + "'"
                     cursor.execute(sql)
     return 1
 
@@ -287,6 +295,7 @@ def songIdUpdaterThread(user, once=0):
 def songIdUpdaterChecker(user, once=0):
     previousDay = ""
     status = database.user_status(user)
+    time.sleep(15)
     while(status == 1):
         if (KILL.get(user[0], 0) == 1):
             break
@@ -310,7 +319,6 @@ def main():
         WORKER, workerCount = database.createWorker()
         print("Worker ID: ", WORKER)
         print("Workers  : ", workerCount)
-        # Change to only Enabled Users
         cursor.execute("SELECT COUNT(*) from users where enabled = 1")
         users = cursor.fetchone()[0]
         print("Users : " + str(users))
