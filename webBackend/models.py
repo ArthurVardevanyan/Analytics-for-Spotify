@@ -16,6 +16,17 @@ class SpotifyAPI(models.Model):
         db_table = 'spotifyAPI'
 
 
+class Workers(models.Model):
+    worker = models.IntegerField(primary_key=True)
+    lastUpdated = models.BigIntegerField()
+    creationTime = models.TextField()
+    updatedTime = models.TextField()
+
+    class Meta:
+        managed = True
+        db_table = 'workers'
+
+
 class Users(models.Model):
     user = models.CharField(primary_key=True, max_length=128)
     enabled = models.IntegerField()
@@ -23,6 +34,8 @@ class Users(models.Model):
     statusplaylist = models.IntegerField(db_column='statusPlaylist')
     cache = models.TextField()
     realtime = models.IntegerField(db_column='realTime')
+    worker = models.ForeignKey(
+        Workers, models.SET_NULL, db_column='worker', blank=True, null=True)
 
     class Meta:
         managed = True
@@ -105,7 +118,6 @@ class Playlistsusers(models.Model):
         managed = True
         db_table = 'playlistsUsers'
         unique_together = (('playlistID', 'user'),)
-
 
 
 class Playlistsongs(models.Model):

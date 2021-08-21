@@ -3,6 +3,53 @@ import json
 from datetime import datetime, timezone
 from django.db import connection
 import sys
+from random import randint
+
+
+def scanWorkers(workerID):
+    with connection.cursor() as cursor:
+        utc_time = datetime.now()
+        currentEpoch = int(utc_time.astimezone().timestamp())
+        time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+        sql = "UPDATE workers SET lastUpdated = " + \
+            str(currentEpoch) + " WHERE worker = " + str(workerID)
+        cursor.execute(sql)
+        sql = "UPDATE workers SET updatedTime = '" + \
+            str(time) + "' WHERE worker = " + str(workerID)
+        cursor.execute(sql)
+        cursor.execute("SELECT * from workers")
+        count = 0
+        for worker in cursor:
+            if currentEpoch - worker[1] > 90:
+                from webBackend.models import Workers
+                Workers.objects.filter(worker=str(worker[0])).delete()
+
+            else:
+                count += 1
+    return count
+
+
+def createWorker():
+
+    workerID = randint(10**(9-1), (10**9)-1)
+    utc_time = datetime.now()
+    currentEpoch = int(utc_time.astimezone().timestamp())
+    time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    add_worker = ("INSERT INTO workers"
+                  "(worker,lastUpdated,creationTime,updatedTime)"
+                  "VALUES (%s, %s, %s, %s)")
+    data_worker = (
+        workerID,
+        currentEpoch,
+        time,
+        time
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(add_worker, data_worker)
+
+    count = scanWorkers(workerID)
+    return workerID, count
 
 
 def user_status(user, detailed=0):

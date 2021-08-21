@@ -18,6 +18,8 @@ def boot(request=0):
     try:
         spotify.main()
     except Exception as e:
+        print(e)
+        #exit()
         return HttpResponse("", content_type="text/html")
     return HttpResponse("", content_type="text/html")
 
