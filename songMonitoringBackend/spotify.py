@@ -48,10 +48,9 @@ def spawnThreads(workerCount):
             usersOnThisWorker.append(thread[0])
         usersOnThisWorker = set(usersOnThisWorker)
 
-        print("Users On Worker : " + str(len(usersOnThisWorker)))
-        print("Users Per Worker: " + str(usersPerWorker))
-
         if len(usersOnThisWorker) < usersPerWorker:
+            print("Users On Worker : " + str(len(usersOnThisWorker)))
+            print("Users Per Worker: " + str(usersPerWorker))
             users = "SELECT * FROM `users` WHERE `worker` IS NULL and enabled = 1;"
             cursor.execute(users)
             count = len(usersOnThisWorker)
@@ -100,10 +99,9 @@ def killThreads(workerCount, user):
             THREADS = newThread
             return 1
 
-        print("Users On Worker : " + str(len(usersOnThisWorker)))
-        print("Users Per Worker: " + str(usersPerWorker))
-
         if len(usersOnThisWorker) > usersPerWorker:
+            print("Users On Worker : " + str(len(usersOnThisWorker)))
+            print("Users Per Worker: " + str(usersPerWorker))
             newThread = []
             for thread in THREADS:
                 if thread[0] == user:
