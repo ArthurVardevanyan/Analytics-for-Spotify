@@ -29,7 +29,9 @@ Notes:
 ![Alt text](img/SonyPlayPlaylistDistribution.png?raw=true "Sample Output")
 
 
-
+<details>
+  <summary>Potentially Out of Date / Not Validated Installation Instructions</summary>
+  
 ## Installation Instructions
 ## This contains only installation instructions. Thier are currently no Update Instructions!!!
 ### Instructions are for installing in a VM / No Other Websites Hosted.
@@ -174,3 +176,4 @@ Make a backup of the database first.<br>
 Click "Stop Service" in the Web API, and wait for the Service to Stop. (Manually Refresh The Page)<br>
 
 Then Run setup.py again.<br><br>
+</details>
