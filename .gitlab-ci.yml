@@ -6,7 +6,7 @@ stages:
 
 PythonTests:
   stage: test
-  image: python:3.9
+  image: python:slim
   services:
     - mariadb:latest
   variables:
@@ -21,7 +21,7 @@ PythonTests:
       password = root
       default-character-set = utf8"> AnalyticsforSpotify/my.cnf
     - apt-get update
-    - apt-get install -y python3-pip libmariadb-dev mariadb-client
+    - apt-get install -y libmariadb-dev gcc
     - python -m pip install --upgrade pip
     - pip3 install -r requirements.txt
   script:
