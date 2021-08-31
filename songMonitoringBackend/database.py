@@ -193,6 +193,9 @@ def add_playlist_songs(cursor, song, playlist, status):
     )
     cursor.execute(addPlaylist, dataPlaylist)
 
+    if (int(cursor.rowcount) == 0):
+        print(dataPlaylist)
+
 
 def database_input(user, spotify):
     with connection.cursor() as cursor:
