@@ -51,35 +51,22 @@ window.onload = function () {
       }
     },
   });
+
+  topSongs();
+
   $.ajax({
     url: '/analytics/listeningHistory/',
     method: 'GET',
     success(data) {
+      playlistSongs()
       stats(data);
-
-      $.ajax({
-        url: '/analytics/listeningHistoryShort/',
-        method: 'GET',
-        success(data) {
-          listeningHistory(data);
-        },
-      });
-
       summaryLineChart(data);
       hourlyLineChart(data);
-
-      setTimeout(() => {
-        $.ajax({
-          url: '/analytics/listeningHistoryAll/',
-          method: 'GET',
-          success(data) {
-            stats(data);
-            listeningHistory(data);
-          },
-        });
-      }, 500);
+      listeningHistory(data);
     },
   });
+};
+function topSongs() {
   $.ajax({
     url: '/analytics/songs',
     method: 'GET',
@@ -104,6 +91,9 @@ window.onload = function () {
       });
     },
   });
+}
+function playlistSongs() {
+
   $.ajax({
     url: '/analytics/playlistSongs/',
     method: 'GET',
@@ -221,7 +211,8 @@ window.onload = function () {
       });
     },
   });
-};
+}
+
 function summaryLineChart(data) {
   const songs = [];
   const plays = [];

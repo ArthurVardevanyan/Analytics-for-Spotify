@@ -19,7 +19,7 @@ def boot(request=0):
         spotify.main()
     except Exception as e:
         print(e)
-        #exit()
+        # exit()
         return HttpResponse("", content_type="text/html")
     return HttpResponse("", content_type="text/html")
 
@@ -54,34 +54,8 @@ def listeningHistory(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    query = "SELECT timePlayed FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
-    WHERE listeningHistory.user = '"+spotifyID + "'\
-    ORDER BY timePlayed"
-    cursor = connection.cursor()
-    cursor.execute(query)
-    return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
-
-
-def listeningHistoryShort(request):
-    spotifyID = request.session.get('spotify', False)
-    if(spotifyID == False):
-        return HttpResponse(status=401)
-    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
-    WHERE listeningHistory.user = '"+spotifyID + "'\
-    and CAST(timePlayed AS DATE)  BETWEEN CURDATE() - INTERVAL 7 DAY AND CURDATE() \
-    ORDER BY timePlayed"  # DESC LIMIT 350"
-    cursor = connection.cursor()
-    cursor.execute(query)
-    return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
-
-
-def listeningHistoryAll(request):
-    spotifyID = request.session.get('spotify', False)
-    if(spotifyID == False):
-        return HttpResponse(status=401)
-    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` INNER JOIN songs ON songs.id =listeningHistory.songID  \
-    WHERE listeningHistory.user = '"+spotifyID + "' \
-    ORDER BY timePlayed"
+    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` LEFT JOIN songs ON songs.id =listeningHistory.songID  \
+    WHERE listeningHistory.user = '"+spotifyID + "' ORDER BY listeningHistory.id"
     cursor = connection.cursor()
     cursor.execute(query)
     return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
@@ -125,12 +99,11 @@ def playlistSongs(request):
                     SELECT `songID`, `timePlayed`,\
       					  (ROW_NUMBER() OVER (PARTITION BY songID ORDER BY timePlayed DESC)) as rn\
        				FROM `listeningHistory`  )\
-            		AS played0 WHERE `rn` = 1  ORDER BY `played0`.`timePlayed`  ASC )\
+            		AS played0 WHERE `rn` = 1)\
                     AS played1 ON played1.songID = songs.id\
         WHERE playcount.user  = "'+spotifyID + '"\
         and playlists.playlistID =  "'+playlist[0] + '"\
-        GROUP BY songs.id\
-        ORDER BY `timePlayed`  ASC'
+        GROUP BY songs.id'
         cursor = connection.cursor()
         cursor.execute(query)
         json_data = dictfetchall(cursor)
