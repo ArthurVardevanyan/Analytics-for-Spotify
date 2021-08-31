@@ -84,7 +84,7 @@ def playlistSongs(request):
     playlists = database.get_playlists(spotifyID)
     for playlist in playlists:
         playlistDict = {}
-        query = 'SELECT playlists.lastUpdated, playlistSongs.songStatus, songs.name as "name", playcount.playCount,\
+        query = 'SELECT playlistSongs.songStatus, songs.name as "name", playcount.playCount,\
         DATE_FORMAT(played1.timePlayed, "%Y-%m-%d") as timePlayed,\
 	    GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"\
         FROM playlistSongs\
@@ -109,6 +109,7 @@ def playlistSongs(request):
         json_data = dictfetchall(cursor)
         playlistDict["id"] = playlist[0]
         playlistDict["name"] = playlist[1]
+        playlistDict["lastUpdated"] = playlist[2]        
         playlistDict["tracks"] = json_data
         playlistsData.append(playlistDict)
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")

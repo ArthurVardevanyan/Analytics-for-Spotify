@@ -160,11 +160,11 @@ def listening_history(user, spotify, cursor):
 
 def get_playlists(user):
     with connection.cursor() as cursor:
-        query = "SELECT playlists.playlistID, name from playlists  INNER JOIN playlistsUsers ON playlistsUsers.playlistID = playlists.playlistID    where user = '"+user+"'"
+        query = "SELECT playlists.playlistID, name, playlists.lastUpdated from playlists  INNER JOIN playlistsUsers ON playlistsUsers.playlistID = playlists.playlistID    where user = '"+user+"'"
         cursor.execute(query)
         playlists = []
         for playlist in cursor:
-            playlists.append((playlist[0], playlist[1]))
+            playlists.append((playlist[0], playlist[1], playlist[2]))
         return playlists
 
 

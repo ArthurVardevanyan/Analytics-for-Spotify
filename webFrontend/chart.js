@@ -104,7 +104,7 @@ function playlistSongs() {
           var aDemoItems = data[i].tracks;
 
           if (aDemoItems.length > 0) {
-            lt = new Date(`${aDemoItems[0].lastUpdated} UTC`);
+            lt = new Date(`${data[i].lastUpdated} UTC`);
             localDateTime = (`${lt.getFullYear()}-${(`0${lt.getMonth() + 1}`).slice(-2)}-${(`0${lt.getDate()}`).slice(-2)} ${(`0${lt.getHours()}`).slice(-2)}:${(`0${lt.getMinutes()}`).slice(-2)}:${(`0${lt.getSeconds()}`).slice(-2)}`);
 
             tableName = data[i].name.replace(/ /g, '_');
