@@ -1,4 +1,4 @@
-import mysql.connector
+from django.db import connection
 import json
 from datetime import datetime, timezone
 import sys
@@ -14,14 +14,6 @@ def songIdUpdater(user):
                 (key, val) = line.split('=')
                 db[key] = val
             count += 1
-
-    connection = mysql.connector.connect(
-        host=db['host'],
-        user=db['user'],
-        passwd=db['password'],
-        database=db['database'],
-        auth_plugin='mysql_native_password'
-    )
 
     history = getHistory(connection, user)
     history = duplicateFinder(history)

@@ -2,9 +2,9 @@ import os
 import base64
 import binascii
 import urllib.parse
-import mysql.connector
 import json
 import tarfile
+import MySQLdb
 
 
 def extractNode():
@@ -40,7 +40,7 @@ def myCNF(IP, DB, USER, PASS):
     ]
     with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
         f.writelines('\n'.join(MYSQL))
-    db = mysql.connector.connect(
+    db = MySQLdb.connect(
         host=IP,
         user=USER,
         passwd=PASS,

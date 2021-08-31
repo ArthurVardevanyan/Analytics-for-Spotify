@@ -1,4 +1,3 @@
-import mysql.connector
 import json
 from datetime import datetime, timezone
 from django.db import connection
