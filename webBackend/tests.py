@@ -1,8 +1,8 @@
 from django.test import TestCase
 import webBackend.views as views
-import songMonitoringBackend.database as database
-import songMonitoringBackend.playlistSongs as playlistSongs
-import songMonitoringBackend.spotify as spotify
+import monitoringBackend.database as database
+import monitoringBackend.playlistSongs as playlistSongs
+import monitoringBackend.spotify as spotify
 
 
 class testObject(object):

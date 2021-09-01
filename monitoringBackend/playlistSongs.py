@@ -2,7 +2,7 @@ import requests
 import sys
 sys.path.append("..")
 from webBackend.credentials import refresh_token as authorize
-import songMonitoringBackend.database as database
+import monitoringBackend.database as database
 
 
 def main(user, playlist):

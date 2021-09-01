@@ -58,7 +58,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     '--with-coverage',
     '--cover-package=webBackend',
-    '--cover-package=songMonitoringBackend',
+    '--cover-package=monitoringBackend',
     '--cover-html',
 ]
 

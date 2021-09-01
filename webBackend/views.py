@@ -6,8 +6,8 @@ from django.db import connection
 import json
 import requests
 import time
-import songMonitoringBackend.database as database
-import songMonitoringBackend.spotify as spotify
+import monitoringBackend.database as database
+import monitoringBackend.spotify as spotify
 import webBackend.credentials as credentials
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
