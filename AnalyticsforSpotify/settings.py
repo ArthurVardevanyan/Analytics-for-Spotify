@@ -132,10 +132,10 @@ LOGGING = {
     },
     'formatters': {
         'default': {
-            'format': '%(filename_lineno)-50s %(levelname)-8s  %(message)s',
+            'format': '%(filename_lineno)-50s %(levelname)-8s %(message)s',
         },
         'file': {
-            'format': '%(asctime)-20s %(filename_lineno)-50s %(levelname)-8s  %(message)s',
+            'format': '%(asctime)-20s %(filename_lineno)-50s %(levelname)-8s %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },

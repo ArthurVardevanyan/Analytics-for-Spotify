@@ -1,7 +1,7 @@
 import logging
-import songMonitoringBackend.playlistSongs as playlistSongs
-import songMonitoringBackend.database as database
-from songMonitoringBackend.scripts import songIdUpdater
+import monitoringBackend.playlistSongs as playlistSongs
+import monitoringBackend.database as database
+from monitoringBackend.scripts import songIdUpdater
 from webBackend.credentials import refresh_token as authorize
 import requests
 import time
@@ -19,7 +19,7 @@ WORKER = None
 THREADS = []
 KILL = {}
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 def keepAlive():
@@ -31,11 +31,11 @@ def keepAlive():
 
 def keepAliveThread():
     try:
-        logger.info("keepAlive")
+        log.info("keepAlive")
         S = threading.Thread(target=keepAlive)
         S.start()
     except:
-        logger.exception("keepAlive Thread Failure")
+        log.exception("keepAlive Thread Failure")
 
 
 def spawnThreads(workerCount):
@@ -52,8 +52,8 @@ def spawnThreads(workerCount):
         usersOnThisWorker = set(usersOnThisWorker)
 
         if len(usersOnThisWorker) < usersPerWorker:
-            logger.info("Users On Worker : " + str(len(usersOnThisWorker)))
-            logger.info("Users Per Worker: " + str(usersPerWorker))
+            log.info("Users On Worker : " + str(len(usersOnThisWorker)))
+            log.info("Users Per Worker: " + str(usersPerWorker))
             users = "SELECT * FROM `users` WHERE `worker` IS NULL and enabled = 1;"
             cursor.execute(users)
             count = len(usersOnThisWorker)
@@ -63,7 +63,7 @@ def spawnThreads(workerCount):
                     sql = "UPDATE users SET worker = " + \
                         str(WORKER) + " WHERE user = '" + str(user[0]) + "'"
                     cursor.execute(sql)
-                    logger.info("Creating User: " + str(user[0]))
+                    log.info("Creating User: " + str(user[0]))
                     playlistSongThread(user[0])
                     SpotifyThread(user)
                     songIdUpdaterThread(user)
@@ -89,11 +89,11 @@ def killThreads(workerCount, user):
             "SELECT worker from users WHERE user = '" + str(user) + "'")
         userInfo = cursor.fetchone()[0]
         if userInfo != WORKER:
-            logger.info("User Doesn't Match Worker")
+            log.info("User Doesn't Match Worker")
             newThread = []
             for thread in THREADS:
                 if thread[0] == user:
-                    logger.info("Killing: " + str(user))
+                    log.info("Killing: " + str(user))
                     KILL[str(user)+"playlistSongThread"] = 1
                     KILL[str(user)+"SpotifyThread"] = 1
                     KILL[str(user)+"songIdUpdaterThread"] = 1
@@ -103,12 +103,12 @@ def killThreads(workerCount, user):
             return 1
 
         if len(usersOnThisWorker) > usersPerWorker:
-            logger.info("Users On Worker : " + str(len(usersOnThisWorker)))
-            logger.info("Users Per Worker: " + str(usersPerWorker))
+            log.info("Users On Worker : " + str(len(usersOnThisWorker)))
+            log.info("Users Per Worker: " + str(usersPerWorker))
             newThread = []
             for thread in THREADS:
                 if thread[0] == user:
-                    logger.info("Killing: " + str(user))
+                    log.info("Killing: " + str(user))
                     KILL[str(user)+"playlistSongThread"] = 1
                     KILL[str(user)+"SpotifyThread"] = 1
                     KILL[str(user)+"songIdUpdaterThread"] = 1
@@ -165,7 +165,7 @@ def playlistSongsChecker(user, once=0):
 
 def playlistSongThread(user, once=0):
     try:
-        logger.info("playlistSongThread: " + user)
+        log.info("playlistSongThread: " + user)
         USC = threading.Thread(
             target=playlistSongsChecker, args=(user, once,))
         USC.start()
@@ -174,16 +174,16 @@ def playlistSongThread(user, once=0):
         global THREADS
         THREADS.append(thread)
     except:
-        logger.exception("Playlist Thread Failure")
+        log.exception("Playlist Thread Failure")
 
 
 def SpotifyThread(user):
     try:
         if(user[5]):
-            logger.info("realTimeSpotifyThread: " + user[0])
+            log.info("realTimeSpotifyThread: " + user[0])
             S = threading.Thread(target=realTimeSpotify, args=(user[0],))
         else:
-            logger.info("historySpotifyThread: " + user[0])
+            log.info("historySpotifyThread: " + user[0])
             S = threading.Thread(target=historySpotify, args=(user[0],))
         S.start()
         thread = [user[0]]
@@ -191,7 +191,7 @@ def SpotifyThread(user):
         global THREADS
         THREADS.append(thread)
     except:
-        logger.exception("Song Thread Failure")
+        log.exception("Song Thread Failure")
 
 
 def historySpotify(user):
@@ -252,17 +252,17 @@ def historySpotify(user):
                                 listened["utc_timePlayed"] = utc_time.strftime(
                                     "%Y-%m-%d %H:%M:%S")
                                 listened["item"] = listened.get("track")
-                                logger.info(database.database_input(
+                                log.info(database.database_input(
                                     user, listened).get("track").get("name"))
                 update_status(user, "statusSong", 1)
                 time.sleep(1200)
             except:
-                logger.exception("Song Lookup Failure")
+                log.exception("Song Lookup Failure")
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)
     except:
-        logger.exception("History Song Failure")
+        log.exception("History Song Failure")
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
@@ -294,7 +294,7 @@ def realTimeSpotify(user):
                               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
                     response = requests.get(url, headers=header)
                 elif("no content" in str.lower(response.reason)):
-                    logger.info("Nothing is Playing")
+                    log.info("Nothing is Playing")
                     update_status(user, "statusSong", 1)
                     time.sleep(60)
                 else:
@@ -309,7 +309,7 @@ def realTimeSpotify(user):
                                     response["item"]["artists"][i]["id"] = (
                                         (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
                             if(int(response.get("progress_ms")) > 30000):
-                                logger.info(track)
+                                log.info(track)
                                 previous = track
                                 utc_time = datetime.fromtimestamp(
                                     response.get('timestamp')/1000, timezone.utc)
@@ -318,22 +318,22 @@ def realTimeSpotify(user):
                                 response["utc_timePlayed"] = utc_time.strftime(
                                     "%Y-%m-%d %H:%M:%S")
                                 database.database_input(user, response)
-                                logger.info("Song Counted as Played")
+                                log.info("Song Counted as Played")
                                 update_status(user, "statusSong", 1)
                                 time.sleep(25)
                     else:
-                        logger.info("Nothing is Playing")
+                        log.info("Nothing is Playing")
                         update_status(user, "statusSong", 1)
                         time.sleep(60)
                 update_status(user, "statusSong", 1)
                 time.sleep(3)
             except:
-                logger.exception("song Lookup Failure")
+                log.exception("song Lookup Failure")
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)
     except:
-        logger.exception("Realtime Song Failure")
+        log.exception("Realtime Song Failure")
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
@@ -341,7 +341,7 @@ def realTimeSpotify(user):
 
 def songIdUpdaterThread(user, once=0):
     try:
-        logger.info("songIdUpdaterThread: " + user[0])
+        log.info("songIdUpdaterThread: " + user[0])
         USC = threading.Thread(
             target=songIdUpdaterChecker, args=(user[0], once,))
         USC.start()
@@ -350,7 +350,7 @@ def songIdUpdaterThread(user, once=0):
         global THREADS
         THREADS.append(thread)
     except:
-        logger.exception("songIdUpdaterThread Thread Failure")
+        log.exception("songIdUpdaterThread Thread Failure")
 
 
 def songIdUpdaterChecker(user, once=0):
@@ -367,7 +367,7 @@ def songIdUpdaterChecker(user, once=0):
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
-            logger.info(songIdUpdater(user))
+            log.info(songIdUpdater(user))
             if(once == 1):
                 return
             previousDay = lastUpdated
@@ -380,13 +380,13 @@ def main():
     with connection.cursor() as cursor:
         global WORKER
         WORKER, workerCount = database.createWorker()
-        logger.info("Worker ID: " + str(WORKER))
-        logger.info("Workers  : " + str(workerCount))
+        log.info("Worker ID: " + str(WORKER))
+        log.info("Workers  : " + str(workerCount))
         cursor.execute("SELECT COUNT(*) from users where enabled = 1")
         users = cursor.fetchone()[0]
-        logger.info("Users : " + str(users))
+        log.info("Users : " + str(users))
         usersPerWorker = int(math.ceil(users/workerCount))
-        logger.info("Users Per Worker: " + str(usersPerWorker))
+        log.info("Users Per Worker: " + str(usersPerWorker))
         keepAliveThread()
     return 1
 
