@@ -12,16 +12,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 
 import os
-import logging
-
-
-class FilenameLinenoFilter(logging.Filter):
-    # https://stackoverflow.com/questions/35278607/how-to-set-width-of-combined-fields-in-python-logging
-    def filter(self, record):
-        record.filename_lineno = '{}.{}:{}'.format(
-            record.name, record.funcName, record.lineno)
-        return True
-
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -124,35 +114,19 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'filename_lineno_filter': {
-            '()': FilenameLinenoFilter,
-        },
-    },
     'formatters': {
         'default': {
-            'format': '%(filename_lineno)-50s %(levelname)-8s %(message)s',
-        },
-        'file': {
-            'format': '%(asctime)-20s %(filename_lineno)-50s %(levelname)-8s %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'format': '%(levelname)-8s %(message)s',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'filters': ['filename_lineno_filter'],
             'formatter': 'default'
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filters': ['filename_lineno_filter'],
-            'formatter': 'file',
-            'filename': os.path.join(BASE_DIR, "analytics-for-spotify.log"),
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'DEBUG',
     },
 }
