@@ -149,7 +149,7 @@ def add_song(spotify, cursor):
 
 def listening_history(user, spotify, cursor):
 
-    add_play = ("INSERT  INTO listeningHistory"
+    add_play = ("INSERT IGNORE INTO listeningHistory"
                 "(user, timestamp,timePlayed, songID,json)"
                 "VALUES (%s, %s, %s, %s, %s)")
     data_play = (
@@ -160,6 +160,9 @@ def listening_history(user, spotify, cursor):
         json.dumps(spotify)
     )
     cursor.execute(add_play, data_play)
+
+    if (int(cursor.rowcount) == 0):
+        logging.warning(str(data_play))
 
 
 def get_playlists(user):
@@ -198,7 +201,7 @@ def add_playlist_songs(cursor, song, playlist, status):
     cursor.execute(addPlaylist, dataPlaylist)
 
     if (int(cursor.rowcount) == 0):
-        logging.WARNING(str(dataPlaylist))
+        logging.warning(str(dataPlaylist))
 
 
 def database_input(user, spotify):

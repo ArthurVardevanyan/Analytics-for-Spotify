@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 def songIdUpdater(user):
     history = getHistory(connection, user)
     history = duplicateFinder(history)
-    databaseUpdate(history, connection, user)
+    return databaseUpdate(history, connection, user)
 
 
 def getHistory(connection, user):
