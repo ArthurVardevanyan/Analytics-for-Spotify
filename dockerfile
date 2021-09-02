@@ -9,6 +9,8 @@ ADD ./webFrontend/node_modules.tar.xz /home/root/analytics-for-spotify/webFronte
 RUN chown -R www-data:www-data /home/root/analytics-for-spotify/
 RUN chmod +x /home/root/analytics-for-spotify/docker/startup.sh
 RUN echo "ServerName 127.0.0.1" >> /etc/apache2/apache2.conf
+RUN echo 'LogFormat "%{%a %b %d %H:%M:%S %Y}t %H %m %U" customLog' >> /etc/apache2/apache2.conf
+RUN echo 'ErrorLogFormat "%t %M"' >> /etc/apache2/apache2.conf
 
 ENTRYPOINT ["/home/root/analytics-for-spotify/docker/startup.sh"]
 CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]

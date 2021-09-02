@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 
 import os
-import sys
 import logging
 
 
@@ -143,8 +142,7 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'filters': ['filename_lineno_filter'],
-            'formatter': 'default',
-            'stream': sys.stdout
+            'formatter': 'default'
         },
         'file': {
             'class': 'logging.FileHandler',
