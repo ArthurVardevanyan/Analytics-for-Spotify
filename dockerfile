@@ -3,6 +3,7 @@ FROM python:slim
 RUN apt-get update
 RUN apt-get install -y apache2 libapache2-mod-wsgi-py3 libmariadb-dev gcc
 COPY . /home/root/analytics-for-spotify/
+COPY ./webFrontend/favicon.ico /home/root/analytics-for-spotify/favicon.ico
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN pip3 install -r /home/root/analytics-for-spotify/requirements.txt
 ADD ./webFrontend/node_modules.tar.xz /home/root/analytics-for-spotify/webFrontend/
