@@ -9,7 +9,8 @@ log = logging.getLogger(__name__)
 
 
 def main(user, playlist):
-    logging.info("Checking for Playlist Songs")
+    logging.info("Checking for Playlist Songs: " +
+                 str(user) + " " + str(playlist))
     playlist = playlist[0]
     url = ""
     try:

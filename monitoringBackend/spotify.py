@@ -257,12 +257,12 @@ def historySpotify(user):
                 update_status(user, "statusSong", 1)
                 time.sleep(1200)
             except:
-                log.exception("Song Lookup Failure")
+                log.exception("Song Lookup Failure: " + str(user))
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)
     except:
-        log.exception("History Song Failure")
+        log.exception("History Song Failure: " + str(user))
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
@@ -294,7 +294,7 @@ def realTimeSpotify(user):
                               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
                     response = requests.get(url, headers=header)
                 elif("no content" in str.lower(response.reason)):
-                    log.info("Nothing is Playing")
+                    log.debug("Nothing is Playing")
                     update_status(user, "statusSong", 1)
                     time.sleep(60)
                 else:
@@ -322,18 +322,19 @@ def realTimeSpotify(user):
                                 update_status(user, "statusSong", 1)
                                 time.sleep(25)
                     else:
-                        log.info("Nothing is Playing")
+                        log.debug("Nothing is Playing")
                         update_status(user, "statusSong", 1)
                         time.sleep(60)
                 update_status(user, "statusSong", 1)
                 time.sleep(3)
             except:
-                log.exception("song Lookup Failure")
+                log.exception("Song Lookup Failure: " + str(user))
+                log.error(str(response.get("item")))
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)
     except:
-        log.exception("Realtime Song Failure")
+        log.exception("Realtime Song Failure: " + str(user))
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
@@ -367,7 +368,9 @@ def songIdUpdaterChecker(user, once=0):
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
-            log.info(songIdUpdater(user))
+            changeHistory = songIdUpdater(user)
+            if changeHistory:
+                log.info(str(changeHistory))
             if(once == 1):
                 return
             previousDay = lastUpdated
