@@ -10,6 +10,7 @@ PythonTests:
   services:
     - mariadb:latest
   variables:
+    TEST: test
     MARIADB_ROOT_PASSWORD: root
     MARIADB_DATABASE: spotify
   before_script:

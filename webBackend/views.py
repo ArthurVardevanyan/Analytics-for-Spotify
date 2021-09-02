@@ -19,7 +19,10 @@ log = logging.getLogger(__name__)
 def boot(request=0):
 
     try:
-        spotify.main()
+        if(os.environ.get('TEST') == "test"):
+            log.info("Testing Environment")
+        else:
+            spotify.main()
     except:
         log.exception("Monitoring Backend Fail")
         return HttpResponse("", content_type="text/html")
