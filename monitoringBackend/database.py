@@ -3,6 +3,11 @@ from datetime import datetime, timezone
 from django.db import connection
 import sys
 from random import randint
+import logging
+import sys
+sys.path.append("..")
+
+log = logging.getLogger(__name__)
 
 
 def scanWorkers(workerID):
@@ -193,7 +198,7 @@ def add_playlist_songs(cursor, song, playlist, status):
     cursor.execute(addPlaylist, dataPlaylist)
 
     if (int(cursor.rowcount) == 0):
-        print(dataPlaylist)
+        logging.WARNING(str(dataPlaylist))
 
 
 def database_input(user, spotify):

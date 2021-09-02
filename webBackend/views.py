@@ -1,3 +1,4 @@
+import logging
 from django.views.decorators.csrf import csrf_exempt
 import os
 from django.shortcuts import render
@@ -6,10 +7,12 @@ from django.db import connection
 import json
 import requests
 import time
-import songMonitoringBackend.database as database
-import songMonitoringBackend.spotify as spotify
+import monitoringBackend.database as database
+import monitoringBackend.spotify as spotify
 import webBackend.credentials as credentials
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+log = logging.getLogger(__name__)
 
 
 @csrf_exempt
@@ -17,9 +20,8 @@ def boot(request=0):
 
     try:
         spotify.main()
-    except Exception as e:
-        print(e)
-        # exit()
+    except:
+        log.exception("Monitoring Backend Fail")
         return HttpResponse("", content_type="text/html")
     return HttpResponse("", content_type="text/html")
 
@@ -109,7 +111,7 @@ def playlistSongs(request):
         json_data = dictfetchall(cursor)
         playlistDict["id"] = playlist[0]
         playlistDict["name"] = playlist[1]
-        playlistDict["lastUpdated"] = playlist[2]        
+        playlistDict["lastUpdated"] = playlist[2]
         playlistDict["tracks"] = json_data
         playlistsData.append(playlistDict)
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")

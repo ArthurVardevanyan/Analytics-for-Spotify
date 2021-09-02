@@ -1,27 +1,20 @@
 from django.db import connection
 import json
 from datetime import datetime, timezone
+import logging
 import sys
+sys.path.append("..")
+
+log = logging.getLogger(__name__)
 
 
 def songIdUpdater(user):
-    db = {}
-    with open("AnalyticsforSpotify/my.cnf") as f:
-        count = 0
-        for line in f:
-            if not (count == 0 or count == 5):
-                line = line.rstrip().replace(" ", "")
-                (key, val) = line.split('=')
-                db[key] = val
-            count += 1
-
     history = getHistory(connection, user)
     history = duplicateFinder(history)
     databaseUpdate(history, connection, user)
 
 
 def getHistory(connection, user):
-
     with connection.cursor() as cursor:
         query = 'SELECT played1.timestamp, songs.ID, songs.name, playcount.playCount, user\
                 FROM songs\
@@ -39,7 +32,7 @@ def getHistory(connection, user):
         for song in cursor:
             if(song[4] == user):
                 history.append(song)
-        print("Total Songs: " + str(len(history)))
+        logging.info("Total Songs: " + str(len(history)))
         songHistory = []
         for song in history:
             songL = list(song)
@@ -74,14 +67,14 @@ def duplicateFinder(history):
         if (dup == 1):
             temp.append(tuple(history[i]))
             newHistory.append(temp)
-    print("Songs with new ID's: " + str(len(newHistory)))
+    logging.info("Songs with new ID's: " + str(len(newHistory)))
     newHistory2 = []
     for item in newHistory:
         temp = item
         temp.sort(key=lambda i: i[0])
         newHistory2.append(tuple(temp))
     newHistory2 = set(newHistory2)
-    print("Songs with duplicate new ID's: " + str(len(newHistory2)))
+    logging.info("Songs with duplicate new ID's: " + str(len(newHistory2)))
     return newHistory2
 
 
@@ -115,7 +108,7 @@ def databaseUpdate(history, connection, user):
 
 
 def main():
-    #print(songIdUpdater(""))
+    # print(songIdUpdater(""))
     return 1
 
 
