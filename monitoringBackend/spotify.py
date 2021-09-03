@@ -297,6 +297,12 @@ def realTimeSpotify(user):
                     log.debug("Nothing is Playing: " + str(user))
                     update_status(user, "statusSong", 1)
                     time.sleep(60)
+                elif(response.json().get("is_playing") and
+                     "unknown" in str.lower(response.json().get("currently_playing_type", "false"))):
+                    log.warning("Nothing is Playing: " +
+                                str(user) + " : " + str(response))
+                    update_status(user, "statusSong", 1)
+                    time.sleep(45)
                 else:
                     response = response.json()
                     if(response.get("is_playing")):
@@ -329,7 +335,7 @@ def realTimeSpotify(user):
                 time.sleep(3)
             except:
                 log.exception("Song Lookup Failure: " + str(user))
-                log.error(str(response))
+                log.warning(str(response))
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)
