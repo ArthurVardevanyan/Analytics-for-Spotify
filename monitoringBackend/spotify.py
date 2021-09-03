@@ -299,10 +299,15 @@ def realTimeSpotify(user):
                     time.sleep(60)
                 elif(response.json().get("is_playing") and
                      "unknown" in str.lower(response.json().get("currently_playing_type", "false"))):
-                    log.warning("Nothing is Playing: " +
+                    log.warning("Unknown Error: " +
                                 str(user) + " : " + str(response))
                     update_status(user, "statusSong", 1)
                     time.sleep(45)
+                elif(response.json().get("is_playing") and
+                     "episode" in str.lower(response.json().get("currently_playing_type", "false"))):
+                    log.debug("Ignoring Podcast: " + str(user))
+                    update_status(user, "statusSong", 1)
+                    time.sleep(90)
                 else:
                     response = response.json()
                     if(response.get("is_playing")):
