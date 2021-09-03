@@ -8,7 +8,7 @@ PythonTests:
   stage: test
   image: python:slim
   services:
-    - mariadb:latest
+    - name: mariadb:latest
   variables:
     TEST: test
     MARIADB_ROOT_PASSWORD: root
@@ -28,16 +28,14 @@ PythonTests:
   script:
     - python3 manage.py test
 
-image: docker:latest
-
 before_script:
   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-services:
-  - name: docker:dind
 
 DockerBuild:
   stage: build
-
+  image: docker:latest
+  services:
+    - name: docker:dind
   script:
     - docker pull $CI_REGISTRY_IMAGE:latest || true
     - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
@@ -47,6 +45,9 @@ PushLatest:
   variables:
     GIT_STRATEGY: none
   stage: push
+  image: docker:latest
+  services:
+    - name: docker:dind
   only:
     - production
   script:
@@ -58,6 +59,9 @@ PushDevelop:
   variables:
     GIT_STRATEGY: none
   stage: push
+  image: docker:latest
+  services:
+    - name: docker:dind
   only:
     - develop
   script:
