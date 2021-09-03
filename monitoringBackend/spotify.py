@@ -294,7 +294,7 @@ def realTimeSpotify(user):
                               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
                     response = requests.get(url, headers=header)
                 elif("no content" in str.lower(response.reason)):
-                    log.debug("Nothing is Playing")
+                    log.debug("Nothing is Playing: " + str(user))
                     update_status(user, "statusSong", 1)
                     time.sleep(60)
                 else:
@@ -309,7 +309,6 @@ def realTimeSpotify(user):
                                     response["item"]["artists"][i]["id"] = (
                                         (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
                             if(int(response.get("progress_ms")) > 30000):
-                                log.info(track)
                                 previous = track
                                 utc_time = datetime.fromtimestamp(
                                     response.get('timestamp')/1000, timezone.utc)
@@ -318,7 +317,8 @@ def realTimeSpotify(user):
                                 response["utc_timePlayed"] = utc_time.strftime(
                                     "%Y-%m-%d %H:%M:%S")
                                 database.database_input(user, response)
-                                log.info("Song Counted as Played")
+                                log.debug(
+                                    "Song Counted as Played: " + str(track))
                                 update_status(user, "statusSong", 1)
                                 time.sleep(25)
                     else:
@@ -329,7 +329,7 @@ def realTimeSpotify(user):
                 time.sleep(3)
             except:
                 log.exception("Song Lookup Failure: " + str(user))
-                log.error(str(response.get("item")))
+                log.error(str(response))
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)

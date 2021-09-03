@@ -79,11 +79,13 @@ def duplicateFinder(history):
 
 
 def databaseUpdate(history, connection, user):
+    trimmedHistory = []
     for song in history:
         newPlayCount = 0
         for item in song:
             newPlayCount += item[3]
         newID = song[len(song)-1][1]
+        trimmedHistory.append(newID)
         oldIDS = []
         for i in range(0, len(song)-1):
             oldIDS.append(song[i][1])
@@ -104,7 +106,7 @@ def databaseUpdate(history, connection, user):
                 query = "DELETE IGNORE FROM `songs` WHERE `id` ='" + item + "'"
                 cursor.execute(query)
     connection.commit()
-    return history
+    return trimmedHistory
 
 
 def main():

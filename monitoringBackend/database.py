@@ -162,7 +162,7 @@ def listening_history(user, spotify, cursor):
     cursor.execute(add_play, data_play)
 
     if (int(cursor.rowcount) == 0):
-        logging.warning(str(data_play))
+        logging.warning("Duplicate History Song: " + str(data_play[:-1]))
 
 
 def get_playlists(user):
@@ -201,7 +201,7 @@ def add_playlist_songs(cursor, song, playlist, status):
     cursor.execute(addPlaylist, dataPlaylist)
 
     if (int(cursor.rowcount) == 0):
-        logging.warning(str(dataPlaylist))
+        logging.warning("Duplicate Playlist Song: " + str(dataPlaylist))
 
 
 def database_input(user, spotify):
