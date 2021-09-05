@@ -258,6 +258,7 @@ def historySpotify(user):
                 time.sleep(1200)
             except:
                 log.exception("Song Lookup Failure: " + str(user))
+                log.warning(str(response))
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
             status = database.user_status(user)
@@ -298,16 +299,21 @@ def realTimeSpotify(user):
                     update_status(user, "statusSong", 1)
                     time.sleep(60)
                 elif(response.json().get("is_playing") and
-                     "unknown" in str.lower(response.json().get("currently_playing_type", "false"))):
-                    log.warning("Unknown Error: " +
-                                str(user) + " : " + str(response))
+                     "ad" in str.lower(response.json().get("currently_playing_type", "false"))):
+                    log.debug("Ignoring Adt: " + str(user))
                     update_status(user, "statusSong", 1)
-                    time.sleep(45)
+                    time.sleep(30)
                 elif(response.json().get("is_playing") and
                      "episode" in str.lower(response.json().get("currently_playing_type", "false"))):
                     log.debug("Ignoring Podcast: " + str(user))
                     update_status(user, "statusSong", 1)
                     time.sleep(90)
+                elif(response.json().get("is_playing") and
+                     "unknown" in str.lower(response.json().get("currently_playing_type", "false"))):
+                    log.warning("Unknown Error: " +
+                                str(user) + " : " + str(response.json()))
+                    update_status(user, "statusSong", 1)
+                    time.sleep(45)
                 else:
                     response = response.json()
                     if(response.get("is_playing")):
