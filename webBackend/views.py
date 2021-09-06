@@ -40,14 +40,20 @@ def login(request):
         url = '<meta http-equiv="Refresh" content="0; url=' + \
             credentials.getAPI().get("url")+'" />'
     else:
+        log.warning("API Error")
         url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
 def loginResponse(request):
+    url = ""
     CODE = request.GET.get("code")
-    credentials.setSession(request, CODE)
-    url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+    if CODE:
+        credentials.setSession(request, CODE)
+        url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+    else:
+        log.warning("Login Code Failure: " + str(request.GET))
+        url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
