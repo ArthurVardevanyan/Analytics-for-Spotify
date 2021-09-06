@@ -139,7 +139,7 @@ def login(request):
 
 def loginResponse(request):
     CODE = request.GET.get("code")
-    credentials.accessToken(request, CODE)
+    credentials.setSession(request, CODE)
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 

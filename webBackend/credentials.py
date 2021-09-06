@@ -58,7 +58,7 @@ def refresh_token(userID):
         return access.get("access_token")
 
 
-def accessToken(request, CODE):
+def accessToken(CODE):
     header = {"Authorization": "Basic " + getAPI().get("B64CS")}
     data = {
         "grant_type": "authorization_code",
@@ -66,7 +66,11 @@ def accessToken(request, CODE):
         "redirect_uri": getAPI().get("redirect_url")}
     response = requests.post(
         'https://accounts.spotify.com/api/token', headers=header, data=data)
-    auth = response.json()
+    return response.json()
+
+
+def setSession(request, CODE):
+    auth = accessToken(CODE)
     currentTime = int(time.time())
     expire = auth.get("expires_in")
     auth["expires_at"] = currentTime + expire
