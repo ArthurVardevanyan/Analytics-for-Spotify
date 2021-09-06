@@ -18,6 +18,14 @@ class TestCase(TestCase):
         import webBackend.apps as apps
         self.assertEqual(apps.boot(), True)
 
+    def test_redirect(self):
+        response = self.client.get('')
+        self.assertContains(response, "url=/spotify/index.html")
+
+    def test_redirect_spotify(self):
+        response = self.client.get('/spotify/')
+        self.assertContains(response, "url=/spotify/index.html")
+
     def test_authenticated_False(self):
         response = self.client.get('/analytics/authenticated', follow=True)
         self.assertContains(response, "False")
