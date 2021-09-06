@@ -206,20 +206,10 @@ def playlistSubmission(request):
         return HttpResponse(status=401)
     response = ""
     try:
-
-
-<< << << < HEAD
         playlist = request.POST.get("playlist")
         playlist = playlist.split("playlist/")[1].split("?")[0]
         url = 'https://api.spotify.com/v1/playlists/' + playlist + "?market=US"
         header = {"Accept": "application/json",
-== == == =
-        playlist = request.POST.get("playlist")
-        playlist = playlist.split("playlist/")[1].split("?")[0]
-        url = 'https://api.spotify.com/v1/playlists/' +
-            playlist + "?market=US"
-        header = {"Accept": "application/json",
->>>>>> > 7b4c814(Note about Time Delay for Recently Played Tracking)
                   "Content-Type": "application/json", "Authorization": "Bearer " + credentials.refresh_token(spotifyID)}
         response = requests.get(url, headers=header).json()
         if (not response.get("href", False)):

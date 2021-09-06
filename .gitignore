@@ -13,3 +13,5 @@ share/*
 man/*
 lib64
 pyvenv.cfg
+.noseids
+nosetests.xml

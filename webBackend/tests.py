@@ -10,9 +10,14 @@ class testObject(object):
 
 
 class TestCase(TestCase):
+
+    def test_environment(self):
+        import os
+        self.assertEqual(os.environ.get('TEST'), "test")
+
     def test_boot(self):
-        views.boot()
-        self.assertEqual(1, 1)
+        import webBackend.apps as apps
+        self.assertEqual(apps.boot(), True)
 
     def test_authenticated(self):
         req = testObject()
