@@ -3,5 +3,4 @@ django-cors-headers
 django_nose
 coverage
 requests
-mysql-connector-python
 mysqlclient

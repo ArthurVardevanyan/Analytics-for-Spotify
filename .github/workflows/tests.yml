@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -50,5 +50,7 @@ jobs:
         password = spotifyTest
         default-character-set = utf8"> AnalyticsforSpotify/my.cnf
         python3 manage.py test
+      env:
+        TEST: test
     - name: Coveralls Python
       uses: AndreMiras/coveralls-python-action@master

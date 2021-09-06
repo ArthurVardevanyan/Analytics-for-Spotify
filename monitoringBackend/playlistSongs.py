@@ -1,19 +1,23 @@
 import requests
 import sys
+import logging
 sys.path.append("..")
 from webBackend.credentials import refresh_token as authorize
-import songMonitoringBackend.database as database
+import monitoringBackend.database as database
+
+log = logging.getLogger(__name__)
 
 
 def main(user, playlist):
-    print("Checking for Playlist Songs")
+    logging.info("Checking for Playlist Songs: " +
+                 str(user) + " " + str(playlist))
     playlist = playlist[0]
     url = ""
     try:
         url = 'https://api.spotify.com/v1/playlists/' + \
             playlist + "/tracks?offset=0&limit=100&market=US"
     except:
-        print("Playlist Reterival Failure")
+        logging.exception("Playlist Reterival Failure")
         return False
 
     header = {"Accept": "application/json",
