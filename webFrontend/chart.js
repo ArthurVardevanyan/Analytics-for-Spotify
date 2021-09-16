@@ -399,7 +399,7 @@ function hourlyLineChart(data) {
     const dailyPlays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     for (const i in data) {
-      localTime = new Date(`${data[i].timePlayed} UTC`);
+      localTime = new Date(`${data[i].timePlayed}`);
       day = (`${localTime.getFullYear()}-${(`0${localTime.getMonth() + 1}`).slice(-2)}-${(`0${localTime.getDate()}`).slice(-2)}`);
       hour = (`0${String(localTime.getHours())}`).slice(-2);
 
