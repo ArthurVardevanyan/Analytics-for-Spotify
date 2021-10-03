@@ -108,7 +108,8 @@ def playlistSongs(request):
                     AS played1 ON played1.songID = songs.id\
         WHERE playcount.user  = "'+spotifyID + '"\
         and playlists.playlistID =  "'+playlist[0] + '"\
-        GROUP BY songs.id'
+        GROUP BY songs.id \
+        ORDER BY `timePlayed`  ASC'
         cursor = connection.cursor()
         cursor.execute(query)
         json_data = dictfetchall(cursor)
