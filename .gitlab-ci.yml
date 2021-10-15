@@ -14,7 +14,7 @@ stages:
 
 PythonTests:
   stage: test
-  image: python:slim
+  image: python:3.9-slim
   services:
     - name: mariadb:latest
   variables:
