@@ -1,4 +1,11 @@
 # WIP, TESTING ONLY, DO NOT DEPLOY
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+
+variables:
+  SCAN_KUBERNETES_MANIFESTS: "true"
+
 stages:
   - test
   - build
