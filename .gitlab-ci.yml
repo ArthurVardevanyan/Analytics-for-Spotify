@@ -1,4 +1,11 @@
 # WIP, TESTING ONLY, DO NOT DEPLOY
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+
+variables:
+  SCAN_KUBERNETES_MANIFESTS: "true"
+
 stages:
   - test
   - build
@@ -7,7 +14,7 @@ stages:
 
 PythonTests:
   stage: test
-  image: python:slim
+  image: python:3.9-slim
   services:
     - name: mariadb:latest
   variables:
@@ -88,3 +95,29 @@ PushDevelop:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH
+
+DeployKubernetes:
+  stage: deploy
+  image: ${IMAGE}
+  environment: production
+  only:
+    - develop
+    - production
+  script:
+    - sed -i "s,<IMAGE>,${CI_REGISTRY_IMAGE},g" kubernetes/deployment.yaml
+    - sed -i "s/<VERSION>/${CI_COMMIT_SHA}/g" kubernetes/deployment.yaml
+    - kubectl apply -f kubernetes/deployment.yaml
+
+    - sed -i "s,<CLIENT_ID>,${CLIENT_ID},g" kubernetes/configmap.yaml
+    - sed -i "s/<CLIENT_SECRET>/${CLIENT_SECRET}/g" kubernetes/configmap.yaml
+    - sed -i "s,<REDIRECT_URL>,${REDIRECT_URL},g" kubernetes/configmap.yaml
+    - sed -i "s,<HOST>,${HOST},g" kubernetes/configmap.yaml
+    - sed -i "s,<DATABASE>,${DATABASE},g" kubernetes/configmap.yaml
+    - sed -i "s,<USER>,${USER},g" kubernetes/configmap.yaml
+    - sed -i "s,<PASSWORD>,${PASSWORD},g" kubernetes/configmap.yaml
+    - kubectl apply -f kubernetes/configmap.yaml
+
+    - kubectl apply -f kubernetes/service.yaml
+
+    - sed -i "s/<URL>/${URL}/g" kubernetes/traefik.yaml
+    - kubectl apply -f kubernetes/traefik.yaml

@@ -1,5 +1,5 @@
 # WIP, TESTING ONLY, DO NOT DEPLOY
-FROM python:slim
+FROM python:3.9-slim
 RUN apt-get update
 RUN apt-get install -y apache2 libapache2-mod-wsgi-py3 libmariadb-dev gcc
 COPY . /home/root/analytics-for-spotify/
