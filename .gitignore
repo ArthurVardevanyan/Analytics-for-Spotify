@@ -2,7 +2,6 @@ __pycache__
 .cache*
 */node_modules/*
 */logs/*
-.vscode/*
 env.py
 cover/*
 .coverage
