@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: analytics-for-spotify
+  name: analytics-for-spotify
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+      targetPort: 80
+  selector:
+    app: analytics-for-spotify
