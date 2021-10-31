@@ -15,5 +15,5 @@
     "editor.tabSize": 4,
     "editor.renderControlCharacters": true,
     "editor.renderWhitespace": "all",
-
+    "python.pythonPath": "bin/python", // Python VENV
 }

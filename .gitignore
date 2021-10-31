@@ -7,3 +7,9 @@ cover/*
 .coverage
 */my.cnf
 *.env
+bin/*
+lib/*
+share/*
+man/*
+lib64
+pyvenv.cfg
