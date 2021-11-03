@@ -52,38 +52,38 @@ spec:
           env:
             - name: CLIENT_ID
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: CLIENT_ID
                   name: env
             - name: CLIENT_SECRET
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: CLIENT_SECRET
                   name: env
             - name: DATABASE
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: DATABASE
                   name: env
             - name: DOCKER
               value: "YES"
             - name: HOST
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: HOST
                   name: env
             - name: DB_PASSWORD
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: DB_PASSWORD
                   name: env
             - name: REDIRECT_URL
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: REDIRECT_URL
                   name: env
             - name: DB_USER
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   key: DB_USER
                   name: env

@@ -105,14 +105,22 @@ DeployKubernetes:
     - sed -i "s/<VERSION>/${CI_COMMIT_SHA}/g" kubernetes/deployment.yaml
     - kubectl apply -f kubernetes/deployment.yaml
 
-    - sed -i "s,<CLIENT_ID>,${CLIENT_ID},g" kubernetes/configmap.yaml
-    - sed -i "s/<CLIENT_SECRET>/${CLIENT_SECRET}/g" kubernetes/configmap.yaml
-    - sed -i "s,<REDIRECT_URL>,${REDIRECT_URL},g" kubernetes/configmap.yaml
-    - sed -i "s,<HOST>,${HOST},g" kubernetes/configmap.yaml
-    - sed -i "s,<DATABASE>,${DATABASE},g" kubernetes/configmap.yaml
-    - sed -i "s,<DB_USER>,${DB_USER},g" kubernetes/configmap.yaml
-    - sed -i "s,<DB_PASSWORD>,${DB_PASSWORD},g" kubernetes/configmap.yaml
-    - kubectl apply -f kubernetes/configmap.yaml
+    - CLIENT_ID=$(echo -n ${CLIENT_ID} | base64 -w 0 | tr -d \\n)
+    - CLIENT_SECRET=$(echo -n ${CLIENT_SECRET} | base64 -w 0 | tr -d \\n)
+    - REDIRECT_URL=$(echo -n ${REDIRECT_URL} | base64 -w 0 | tr -d \\n)
+    - HOST=$(echo -n ${HOST} | base64 -w 0 | tr -d \\n)
+    - DATABASE=$(echo -n ${DATABASE} | base64 -w 0 | tr -d \\n)
+    - DB_USER=$(echo -n ${DB_USER} | base64 -w 0 | tr -d \\n)
+    - DB_PASSWORD=$(echo -n ${DB_PASSWORD} | base64 -w 0 | tr -d \\n)
+
+    - sed -i "s,<CLIENT_ID>,${CLIENT_ID},g" kubernetes/secret.yaml
+    - sed -i "s/<CLIENT_SECRET>/${CLIENT_SECRET}/g" kubernetes/secret.yaml
+    - sed -i "s,<REDIRECT_URL>,${REDIRECT_URL},g" kubernetes/secret.yaml
+    - sed -i "s,<HOST>,${HOST},g" kubernetes/secret.yaml
+    - sed -i "s,<DATABASE>,${DATABASE},g" kubernetes/secret.yaml
+    - sed -i "s,<DB_USER>,${DB_USER},g" kubernetes/secret.yaml
+    - sed -i "s,<DB_PASSWORD>,${DB_PASSWORD},g" kubernetes/secret.yaml
+    - kubectl apply -f kubernetes/secret.yaml
 
     - kubectl apply -f kubernetes/service.yaml
 
