@@ -7,7 +7,7 @@ function deleteCookies() {
     document.cookie = `${allCookies[i]}=;expires=${new Date(0).toUTCString()}`;
   }
   $.post('/analytics/logout/')
-  window.location.href = '/spotify';
+  window.location.href = '/spotify/index.html';
 }
 
 function start() { $.post('/analytics/start/'); window.location.href = '/spotify/analytics.html'; };
@@ -33,7 +33,7 @@ window.onload = function () {
     method: 'GET',
     success(data) {
       if (data === 'False') {
-        window.location.href = '/spotify';
+        window.location.href = '/spotify/index.html';
       }
     },
 
