@@ -20,6 +20,8 @@ spec:
       annotations:
         enable.version-checker.io/analytics-for-spotify: "false"
     spec:
+      hostname: analytics-for-spotify
+      restartPolicy: Always
       securityContext:
         runAsUser: 10033
         runAsGroup: 30000
@@ -29,6 +31,24 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+          livenessProbe:
+            httpGet:
+              path: /analytics/authenticated/
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 60
+          image: <IMAGE>:<VERSION>
+          imagePullPolicy: IfNotPresent
+          name: analytics-for-spotify
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 200m
+              memory: 250M
+            requests:
+              cpu: 100m
+              memory: 200M
           env:
             - name: CLIENT_ID
               valueFrom:
@@ -67,17 +87,3 @@ spec:
                 configMapKeyRef:
                   key: DB_USER
                   name: env
-          image: <IMAGE>:<VERSION>
-          imagePullPolicy: IfNotPresent
-          name: analytics-for-spotify
-          ports:
-            - containerPort: 8080
-          resources:
-            limits:
-              cpu: 350m
-              memory: 250M
-            requests:
-              cpu: 150m
-              memory: 175M
-      hostname: analytics-for-spotify
-      restartPolicy: Always

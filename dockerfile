@@ -27,8 +27,10 @@ ADD ./webFrontend/node_modules.tar.xz /home/www/analytics-for-spotify/webFronten
 RUN chmod +x /home/www/analytics-for-spotify/docker/startup.sh
 EXPOSE 8080
 
+# Ports
+RUN sed -i "s,80,8080,g" /etc/apache2/ports.conf
+
 # Non Root User Settings
-COPY docker/ports.conf /etc/apache2/ports.conf
 RUN sed -i "s,www-data,www,g" /etc/apache2/envvars
 RUN useradd -u 10033 www
 RUN chown -R 10033:10033 /home/www/analytics-for-spotify/
