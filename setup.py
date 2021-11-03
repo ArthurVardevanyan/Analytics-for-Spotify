@@ -18,7 +18,7 @@ def dockerSetup():
     R_URL = os.environ.get('REDIRECT_URL')
     API = spotifyAPI(CLIENT, SECRET, R_URL)
 
-    IP = os.environ.get('HOST')
+    IP = os.environ.get('DB_HOST')
     DB = os.environ.get('DATABASE')
     USER = os.environ.get('DB_USER')
     PASS = os.environ.get('DB_PASSWORD')

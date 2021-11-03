@@ -67,10 +67,10 @@ spec:
                   name: env
             - name: DOCKER
               value: "YES"
-            - name: HOST
+            - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  key: HOST
+                  key: DB_HOST
                   name: env
             - name: DB_PASSWORD
               valueFrom:
