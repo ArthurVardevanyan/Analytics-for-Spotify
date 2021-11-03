@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.redirect),
+    path('/', views.redirect),
     path('spotify/', views.redirect),
     path('analytics/', views.redirect),
     path('listeningHistory/', views.listeningHistory, name='listeningHistory'),
