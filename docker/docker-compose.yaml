@@ -8,8 +8,8 @@ services:
   analytics-for-spotify:
     container_name: analytics-for-spotify
     hostname: analytics-for-spotify
-    ports: 
-      - "8000:80"
+    ports:
+      - "8080:8080"
     env_file: .env
     image: ${REPOSITORY}
     environment:
@@ -17,8 +17,7 @@ services:
         - CLIENT_ID=${CLIENT_ID}
         - CLIENT_SECRET=${CLIENT_SECRET}
         - REDIRECT_URL=${REDIRECT_URL}
-        - HOST=${HOST}
+        - DB_HOST=${DB_HOST}
         - DATABASE=${DATABASE}
-        - USER=${USERNAME}
-        - PASSWORD=${PASSWORD}
-   
+        - DB_USER=${DB_USER}
+        - DB_PASSWORD=${DB_PASSWORD}
