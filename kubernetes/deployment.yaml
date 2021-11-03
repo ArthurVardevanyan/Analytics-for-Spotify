@@ -27,6 +27,7 @@ spec:
       containers:
         - securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
           env:
             - name: CLIENT_ID
