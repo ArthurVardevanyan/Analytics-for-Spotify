@@ -20,8 +20,15 @@ spec:
       annotations:
         enable.version-checker.io/analytics-for-spotify: "false"
     spec:
+      securityContext:
+        runAsUser: 10033
+        runAsGroup: 30000
+        fsGroup: 20000
       containers:
-        - env:
+        - securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+          env:
             - name: CLIENT_ID
               valueFrom:
                 configMapKeyRef:
@@ -44,26 +51,26 @@ spec:
                 configMapKeyRef:
                   key: HOST
                   name: env
-            - name: PASSWORD
+            - name: DB_PASSWORD
               valueFrom:
                 configMapKeyRef:
-                  key: PASSWORD
+                  key: DB_PASSWORD
                   name: env
             - name: REDIRECT_URL
               valueFrom:
                 configMapKeyRef:
                   key: REDIRECT_URL
                   name: env
-            - name: USER
+            - name: DB_USER
               valueFrom:
                 configMapKeyRef:
-                  key: USER
+                  key: DB_USER
                   name: env
           image: <IMAGE>:<VERSION>
           imagePullPolicy: IfNotPresent
           name: analytics-for-spotify
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           resources:
             limits:
               cpu: 350m

@@ -1,4 +1,4 @@
 #!/bin/bash
-cd /home/root/analytics-for-spotify/
+cd /home/www/analytics-for-spotify/
 python3 setup.py
 exec "$@"

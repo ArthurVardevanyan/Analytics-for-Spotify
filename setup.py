@@ -20,8 +20,8 @@ def dockerSetup():
 
     IP = os.environ.get('HOST')
     DB = os.environ.get('DATABASE')
-    USER = os.environ.get('USER')
-    PASS = os.environ.get('PASSWORD')
+    USER = os.environ.get('DB_USER')
+    PASS = os.environ.get('DB_PASSWORD')
 
     db = myCNF(IP, DB, USER, PASS)
     setup(db, API)
@@ -38,8 +38,7 @@ def myCNF(IP, DB, USER, PASS):
         "password = "+PASS,
         "default-character-set = utf8",
     ]
-    with open("AnalyticsforSpotify/my.cnf",  'w+') as f:
-        f.writelines('\n'.join(MYSQL))
+
     db = MySQLdb.connect(
         host=IP,
         user=USER,

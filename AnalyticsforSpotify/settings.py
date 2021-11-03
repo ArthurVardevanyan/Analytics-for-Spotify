@@ -86,9 +86,10 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file':  BASE_DIR + '/AnalyticsforSpotify/my.cnf',
-        },
+        'NAME': os.environ.get('DATABASE'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('HOST'),
     }
 }
 WSGI_APPLICATION = 'AnalyticsforSpotify.wsgi.application'
