@@ -20,56 +20,70 @@ spec:
       annotations:
         enable.version-checker.io/analytics-for-spotify: "false"
     spec:
+      hostname: analytics-for-spotify
+      restartPolicy: Always
+      securityContext:
+        runAsUser: 10033
+        runAsGroup: 30000
+        fsGroup: 20000
       containers:
-        - env:
-            - name: CLIENT_ID
-              valueFrom:
-                configMapKeyRef:
-                  key: CLIENT_ID
-                  name: env
-            - name: CLIENT_SECRET
-              valueFrom:
-                configMapKeyRef:
-                  key: CLIENT_SECRET
-                  name: env
-            - name: DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  key: DATABASE
-                  name: env
-            - name: DOCKER
-              value: "YES"
-            - name: HOST
-              valueFrom:
-                configMapKeyRef:
-                  key: HOST
-                  name: env
-            - name: PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  key: PASSWORD
-                  name: env
-            - name: REDIRECT_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: REDIRECT_URL
-                  name: env
-            - name: USER
-              valueFrom:
-                configMapKeyRef:
-                  key: USER
-                  name: env
+        - securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          livenessProbe:
+            httpGet:
+              path: /analytics/authenticated/
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 60
           image: <IMAGE>:<VERSION>
           imagePullPolicy: IfNotPresent
           name: analytics-for-spotify
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           resources:
             limits:
-              cpu: 350m
+              cpu: 200m
               memory: 250M
             requests:
-              cpu: 150m
-              memory: 175M
-      hostname: analytics-for-spotify
-      restartPolicy: Always
+              cpu: 100m
+              memory: 200M
+          env:
+            - name: CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: CLIENT_ID
+                  name: env
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: CLIENT_SECRET
+                  name: env
+            - name: DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: DATABASE
+                  name: env
+            - name: DOCKER
+              value: "YES"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: DB_HOST
+                  name: env
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: DB_PASSWORD
+                  name: env
+            - name: REDIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  key: REDIRECT_URL
+                  name: env
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: DB_USER
+                  name: env

@@ -9,48 +9,45 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.9]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get install mysql-server
-        sudo apt-get install python3-pip libmysqlclient-dev
-        python -m pip install --upgrade pip
-        python -m pip install flake8 
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Setup Database
-      run: |
-        sudo /etc/init.d/mysql start
-        sudo mysql -uroot -proot -Bse "CREATE USER 'spotifyTest'@'localhost' IDENTIFIED BY 'spotifyTest';"
-        sudo mysql -uroot -proot -Bse "GRANT ALL PRIVILEGES ON *.* TO 'spotifyTest'@'localhost';"
-        sudo mysql -uroot -proot -Bse "flush privileges;"
-        sudo mysql -uroot -proot -Bse "create database spotifyTest;"
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with Django
-      run: |
-        echo "[client]
-        host = localhost
-        database = spotifyTest
-        user = spotifyTest
-        password = spotifyTest
-        default-character-set = utf8"> AnalyticsforSpotify/my.cnf
-        python3 manage.py test
-      env:
-        TEST: test
-    - name: Coveralls Python
-      uses: AndreMiras/coveralls-python-action@master
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          sudo apt-get install mysql-server
+          sudo apt-get install python3-pip libmysqlclient-dev
+          python -m pip install --upgrade pip
+          python -m pip install flake8
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Setup Database
+        run: |
+          sudo /etc/init.d/mysql start
+          sudo mysql -uroot -proot -Bse "CREATE USER 'spotifyTest'@'localhost' IDENTIFIED BY 'spotifyTest';"
+          sudo mysql -uroot -proot -Bse "GRANT ALL PRIVILEGES ON *.* TO 'spotifyTest'@'localhost';"
+          sudo mysql -uroot -proot -Bse "flush privileges;"
+          sudo mysql -uroot -proot -Bse "create database spotifyTest;"
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Test with Django
+        run: |
+          export DB_HOST=localhost
+          export DATABASE=spotifyTest
+          export DB_USER=spotifyTest
+          export DB_PASSWORD=spotifyTest
+          python3 manage.py test
+        env:
+          TEST: test
+      - name: Coveralls Python
+        uses: AndreMiras/coveralls-python-action@master

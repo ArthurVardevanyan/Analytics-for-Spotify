@@ -11,4 +11,4 @@ spec:
       kind: Rule
       services:
         - name: analytics-for-spotify
-          port: 80
+          port: 8080

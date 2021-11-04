@@ -9,7 +9,6 @@ variables:
 stages:
   - test
   - build
-  - push
   - deploy
 
 PythonTests:
@@ -22,13 +21,10 @@ PythonTests:
     MARIADB_ROOT_PASSWORD: root
     MARIADB_DATABASE: spotify
   before_script:
-    - |
-      echo "[client]
-      host = mariadb
-      database = spotify
-      user = root
-      password = root
-      default-character-set = utf8"> AnalyticsforSpotify/my.cnf
+    - export DB_HOST=mariadb
+    - export DATABASE=spotify
+    - export DB_USER=root
+    - export DB_PASSWORD=root
     - apt-get update
     - apt-get install -y libmariadb-dev gcc
     - python -m pip install --upgrade pip
@@ -53,46 +49,6 @@ DockerBuild:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH || true
     - docker build --network host --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-
-PushProduction:
-  stage: push
-  image: docker:latest
-  variables:
-    GIT_STRATEGY: none
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:dind
-      alias: docker
-      command: ["--tls=false"]
-  only:
-    - production
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH
-
-PushDevelop:
-  stage: push
-  image: docker:latest
-  variables:
-    GIT_STRATEGY: none
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:dind
-      alias: docker
-      command: ["--tls=false"]
-  only:
-    - develop
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH
 
@@ -108,14 +64,22 @@ DeployKubernetes:
     - sed -i "s/<VERSION>/${CI_COMMIT_SHA}/g" kubernetes/deployment.yaml
     - kubectl apply -f kubernetes/deployment.yaml
 
-    - sed -i "s,<CLIENT_ID>,${CLIENT_ID},g" kubernetes/configmap.yaml
-    - sed -i "s/<CLIENT_SECRET>/${CLIENT_SECRET}/g" kubernetes/configmap.yaml
-    - sed -i "s,<REDIRECT_URL>,${REDIRECT_URL},g" kubernetes/configmap.yaml
-    - sed -i "s,<HOST>,${HOST},g" kubernetes/configmap.yaml
-    - sed -i "s,<DATABASE>,${DATABASE},g" kubernetes/configmap.yaml
-    - sed -i "s,<USER>,${USER},g" kubernetes/configmap.yaml
-    - sed -i "s,<PASSWORD>,${PASSWORD},g" kubernetes/configmap.yaml
-    - kubectl apply -f kubernetes/configmap.yaml
+    - CLIENT_ID=$(echo -n ${CLIENT_ID} | base64 -w 0 | tr -d \\n)
+    - CLIENT_SECRET=$(echo -n ${CLIENT_SECRET} | base64 -w 0 | tr -d \\n)
+    - REDIRECT_URL=$(echo -n ${REDIRECT_URL} | base64 -w 0 | tr -d \\n)
+    - DB_HOST=$(echo -n ${DB_HOST} | base64 -w 0 | tr -d \\n)
+    - DATABASE=$(echo -n ${DATABASE} | base64 -w 0 | tr -d \\n)
+    - DB_USER=$(echo -n ${DB_USER} | base64 -w 0 | tr -d \\n)
+    - DB_PASSWORD=$(echo -n ${DB_PASSWORD} | base64 -w 0 | tr -d \\n)
+
+    - sed -i "s,<CLIENT_ID>,${CLIENT_ID},g" kubernetes/secret.yaml
+    - sed -i "s/<CLIENT_SECRET>/${CLIENT_SECRET}/g" kubernetes/secret.yaml
+    - sed -i "s,<REDIRECT_URL>,${REDIRECT_URL},g" kubernetes/secret.yaml
+    - sed -i "s,<DB_HOST>,${DB_HOST},g" kubernetes/secret.yaml
+    - sed -i "s,<DATABASE>,${DATABASE},g" kubernetes/secret.yaml
+    - sed -i "s,<DB_USER>,${DB_USER},g" kubernetes/secret.yaml
+    - sed -i "s,<DB_PASSWORD>,${DB_PASSWORD},g" kubernetes/secret.yaml
+    - kubectl apply -f kubernetes/secret.yaml
 
     - kubectl apply -f kubernetes/service.yaml
 
