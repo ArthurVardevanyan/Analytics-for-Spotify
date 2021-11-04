@@ -32,9 +32,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.messages',
     'webBackend.apps.WebBackendConfig',
     'django_nose',
 ]
