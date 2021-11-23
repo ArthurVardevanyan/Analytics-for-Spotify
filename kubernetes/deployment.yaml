@@ -19,6 +19,7 @@ spec:
         app: analytics-for-spotify
       annotations:
         enable.version-checker.io/analytics-for-spotify: "false"
+        seccomp.security.alpha.kubernetes.io/defaultProfileName: "runtime/default"
     spec:
       hostname: analytics-for-spotify
       restartPolicy: Always
@@ -26,11 +27,16 @@ spec:
         runAsUser: 10033
         runAsGroup: 30000
         fsGroup: 20000
+      automountServiceAccountToken: false
       containers:
         - securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            runAsUser: 10033
+            capabilities:
+              drop:
+                - all
           livenessProbe:
             httpGet:
               path: /analytics/authenticated/

@@ -19,13 +19,13 @@ PythonTests:
     - name: mariadb:latest
   variables:
     TEST: test
-    MARIADB_ROOT_PASSWORD: root
+    MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     MARIADB_DATABASE: spotify
   before_script:
     - export DB_HOST=mariadb
     - export DATABASE=spotify
-    - export DB_USER=root
-    - export DB_PASSWORD=root
+    - export DB_USER=${MARIADB_ROOT_PASSWORD}
+    - export DB_PASSWORD=${MARIADB_ROOT_PASSWORD}
     - apt-get update
     - apt-get install -y libmariadb-dev gcc
     - python -m pip install --upgrade pip
@@ -61,6 +61,8 @@ DeployKubernetes:
     - develop
     - production
   script:
+    - kubectl apply -f kubernetes/namespace.yaml
+
     - sed -i "s,<IMAGE>,${CI_REGISTRY_IMAGE},g" kubernetes/deployment.yaml
     - sed -i "s/<VERSION>/${CI_COMMIT_SHA}/g" kubernetes/deployment.yaml
     - kubectl apply -f kubernetes/deployment.yaml
@@ -86,3 +88,6 @@ DeployKubernetes:
 
     - sed -i "s/<URL>/${URL}/g" kubernetes/traefik.yaml
     - kubectl apply -f kubernetes/traefik.yaml
+
+    - kubectl apply -f kubernetes/limitRange.yaml
+    - kubectl apply -f kubernetes/resourceQuota.yaml
