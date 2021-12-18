@@ -134,7 +134,6 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('timestamp', models.BigIntegerField()),
                 ('timeplayed', models.TextField(db_column='timePlayed')),
-                ('json', models.TextField(blank=True, null=True)),
                 ('songid', models.ForeignKey(db_column='songID', on_delete=django.db.models.deletion.RESTRICT, to='webBackend.songs')),
                 ('user', models.ForeignKey(db_column='user', on_delete=django.db.models.deletion.RESTRICT, to='webBackend.users')),
             ],
@@ -157,3 +156,4 @@ class Migration(migrations.Migration):
             },
         ),
     ]
+
