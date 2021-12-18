@@ -150,14 +150,13 @@ def add_song(spotify, cursor):
 def listening_history(user, spotify, cursor):
 
     add_play = ("INSERT IGNORE INTO listeningHistory"
-                "(user, timestamp,timePlayed, songID,json)"
-                "VALUES (%s, %s, %s, %s, %s)")
+                "(user, timestamp,timePlayed, songID)"
+                "VALUES (%s, %s, %s, %s)")
     data_play = (
         user,
         spotify.get('utc_timestamp'),
         spotify.get('utc_timePlayed'),
         spotify.get("item").get("id"),
-        json.dumps(spotify)
     )
     cursor.execute(add_play, data_play)
 

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: analytics-for-spotify
+  namespace: analytics-for-spotify
+spec:
+  hard:
+    requests.cpu: 200m
+    requests.memory: 400M
