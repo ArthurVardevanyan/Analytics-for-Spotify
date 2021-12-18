@@ -9,10 +9,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [3.9]
+        mariadb-version: [10.6]
 
     steps:
       - uses: actions/checkout@v2
@@ -20,10 +21,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - uses: ankane/setup-mariadb@v1
+        with:
+          mariadb-version: ${{ matrix.mariadb-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install mysql-server
-          sudo apt-get install python3-pip libmysqlclient-dev
+          sudo apt-get install python3-pip libmariadb-dev
           python -m pip install --upgrade pip
           python -m pip install flake8
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
