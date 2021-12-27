@@ -74,7 +74,7 @@ def accessToken(request, CODE):
     userID = getUser(auth)
     request.session['spotify'] = userID  # SESSION
     query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `realTime`, `cache`) VALUES ("' + \
-        userID + '", 0, 0, 0, 1,' + "'" + json.dumps(auth) + "')"
+        userID + '", 0, 0, 0, 0,' + "'" + json.dumps(auth) + "')"
     cursor = connection.cursor()
     cursor.execute(query)
     query = "UPDATE users SET cache = '" + \
