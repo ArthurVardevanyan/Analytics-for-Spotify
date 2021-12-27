@@ -6,25 +6,30 @@ function deleteCookies() {
   for (let i = 0; i < allCookies.length; i++) {
     document.cookie = `${allCookies[i]}=;expires=${new Date(0).toUTCString()}`;
   }
-  $.post("/analytics/logout/");
-  window.location.href = "/spotify/index.html";
+  $.post("/analytics/logout/", function () {
+    window.location.href = "/spotify/index.html";
+  });
 }
 
 function start() {
-  $.post("/analytics/start/");
-  window.location.href = "/spotify/analytics.html";
+  $.post("/analytics/start/", function () {
+    window.location.href = "/spotify/analytics.html";
+  });
 }
-
 function stop() {
-  $.post("/analytics/stop/");
-  window.location.href = "/spotify/analytics.html";
+  $.post("/analytics/stop/", function () {
+    window.location.href = "/spotify/analytics.html";
+  });
 }
 
 function playlist() {
-  $.post("/analytics/playlistSubmission/", {
-    playlist: document.getElementById("playlist").value,
-  });
-  window.location.href = "/spotify/analytics.html";
+  $.post(
+    "/analytics/playlistSubmission/",
+    { playlist: document.getElementById("playlist").value },
+    function () {
+      window.location.href = "/spotify/analytics.html";
+    }
+  );
 }
 
 function deletePlaylist(id) {
