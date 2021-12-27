@@ -39,11 +39,12 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # Comment for Testing
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # Comment for Testing
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 CORS_ORIGIN_ALLOW_ALL = False  # True For Testing
+CSRF_COOKIE_SECURE = False  # True for HTTPS
 
 ROOT_URLCONF = 'AnalyticsforSpotify.urls'
 
