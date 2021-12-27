@@ -104,7 +104,8 @@ function playlistSongs() {
           var aDemoItems = data[i].tracks;
 
           if (aDemoItems.length > 0) {
-            lt = new Date(`${data[i].lastUpdated} UTC`);
+            var time = data[i].lastUpdated.split(" ");
+            lt = new Date(time[0] + "T" + time[1] + "+00:00");
             localDateTime = (`${lt.getFullYear()}-${(`0${lt.getMonth() + 1}`).slice(-2)}-${(`0${lt.getDate()}`).slice(-2)} ${(`0${lt.getHours()}`).slice(-2)}:${(`0${lt.getMinutes()}`).slice(-2)}:${(`0${lt.getSeconds()}`).slice(-2)}`);
 
             tableName = data[i].name.replace(/ /g, '_');
@@ -144,7 +145,12 @@ function playlistSongs() {
             const plays = [];
 
             for (const i in aDemoItems) {
-              localTime = new Date(`${aDemoItems[i].timePlayed} UTC`);
+              if (aDemoItems[i].timePlayed != null) {
+                localTime = new Date(aDemoItems[i].timePlayed + "T" + "00:00:00" + "+00:00");
+              }
+              else {
+                localTime = new Date(aDemoItems[i].timePlayed);
+              }
               day = (`${localTime.getFullYear()}-${(`0${localTime.getMonth() + 1}`).slice(-2)}-${(`0${localTime.getDate()}`).slice(-2)}`);
               if (songs.includes(day)) {
                 for (let j = 0; j < songs.length; j++) {
@@ -218,7 +224,8 @@ function summaryLineChart(data) {
   const plays = [];
 
   for (const i in data) {
-    localTime = new Date(`${data[i].timePlayed} UTC`);
+    var time = data[i].timePlayed.split(" ");
+    localTime = new Date(time[0] + "T" + time[1] + "+00:00");
     day = (`${localTime.getFullYear()}-${(`0${localTime.getMonth() + 1}`).slice(-2)}-${(`0${localTime.getDate()}`).slice(-2)}`);
     if (songs.includes(day)) {
       for (let j = 0; j < songs.length; j++) {
@@ -352,7 +359,8 @@ function hourlyLineChart(data) {
     '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'];
   const plays = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   for (const i in data) {
-    localTime = new Date(`${data[i].timePlayed} UTC`);
+    var time = data[i].timePlayed.split(" ");
+    localTime = new Date(time[0] + "T" + time[1] + "+00:00");
     hour = (`0${String(localTime.getHours())}`).slice(-2);
     // hour = data[i].timePlayed.slice(11, 13);
     for (let j = 0; j < songs.length; j++) {
@@ -421,7 +429,8 @@ function listeningHistory(data) {
     // https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
 
     for (let i = 0; i < data.length; i++) {
-      lt = new Date(`${data[i].timePlayed} UTC`);
+      var time = data[i].timePlayed.split(" ");
+      lt = new Date(time[0] + "T" + time[1] + "+00:00");
       localDateTime = (`${lt.getFullYear()}-${(`0${lt.getMonth() + 1}`).slice(-2)}-${(`0${lt.getDate()}`).slice(-2)} ${(`0${lt.getHours()}`).slice(-2)}:${(`0${lt.getMinutes()}`).slice(-2)}:${(`0${lt.getSeconds()}`).slice(-2)}`);
       data[i].timePlayed = localDateTime;
     }
