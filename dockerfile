@@ -19,26 +19,28 @@ RUN sed -i "s,/var/run/apache2\$SUFFIX/,/dev/shm/,g" /etc/apache2/envvars
 RUN sed -i "s,/var/run/apache2\$SUFFIX,/dev/shm/apache2\$SUFFIX,g" /etc/apache2/envvars
 RUN sed -i "s,#WSGISocketPrefix /var/run/apache2/,WSGISocketPrefix /dev/shm/apache2/,g" /etc/apache2/mods-available/wsgi.conf
 
-# Setup Analytics For Spotify
-COPY . /home/www/analytics-for-spotify/
-COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
-RUN pip3 install -r /home/www/analytics-for-spotify/requirements.txt
-ADD ./webFrontend/node_modules.tar.xz /home/www/analytics-for-spotify/webFrontend/
-RUN chmod +x /home/www/analytics-for-spotify/docker/startup.sh
-EXPOSE 8080
-
 # Ports
+EXPOSE 8080
+COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN sed -i "s,80,8080,g" /etc/apache2/ports.conf
 
 # Non Root User Settings
 RUN sed -i "s,www-data,www,g" /etc/apache2/envvars
 RUN useradd -u 10033 www
-RUN chown -R 10033:10033 /home/www/analytics-for-spotify/
 RUN chown -R 10033:10033 /var/log/apache2/
 RUN chown -R 10033:10033 /var/run/apache2/
 RUN chown -R 10033:10033 /proc/self/fd/1
-USER 10033
+
+# Setup Python
+COPY requirements.txt /tmp/
+RUN pip3 install -r /tmp/requirements.txt
+
+# Setup Analytics For Spotify
+COPY . /home/www/analytics-for-spotify/
+ADD ./webFrontend/node_modules.tar.xz /home/www/analytics-for-spotify/webFrontend/
+RUN chown -R 10033:10033 /home/www/analytics-for-spotify/
 
 # Entry Point
+USER 10033
 ENTRYPOINT ["/home/www/analytics-for-spotify/docker/startup.sh"]
 CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]
