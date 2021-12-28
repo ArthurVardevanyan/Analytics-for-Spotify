@@ -63,6 +63,11 @@ window.onload = function () {
         document.getElementById("status").innerHTML =
           "<h3 style='margin: 0px; color:red'>Service is not Running</h3>";
       }
+      if (data[2] === "0") {
+        document.getElementById("realTime").style.display = "";
+        document.getElementById("realTime").innerHTML =
+          "<h3 style='margin: 0px; color:black'>Their may be up to a 20 minute delay in song history.</h3>";
+      }
     },
   });
 

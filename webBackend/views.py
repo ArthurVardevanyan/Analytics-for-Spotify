@@ -148,7 +148,7 @@ def status(request):
             request.session.get('spotify') + "'"
         cursor.execute(query)
         for stat in cursor:
-            status = str(stat[1])+":"+str(stat[2])
+            status = str(stat[1])+":"+str(stat[2])+":"+str(stat[5])
     return HttpResponse(status)
 
 
@@ -201,8 +201,7 @@ def playlistSubmission(request):
     try:
         playlist = request.POST.get("playlist")
         playlist = playlist.split("playlist/")[1].split("?")[0]
-        url = 'https://api.spotify.com/v1/playlists/' + \
-            playlist + "?market=US"
+        url = 'https://api.spotify.com/v1/playlists/' + playlist + "?market=US"
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + credentials.refresh_token(spotifyID)}
         response = requests.get(url, headers=header).json()
