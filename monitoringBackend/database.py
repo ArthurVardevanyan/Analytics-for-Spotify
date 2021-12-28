@@ -162,6 +162,8 @@ def listening_history(user, spotify, cursor):
 
     if (int(cursor.rowcount) == 0):
         logging.warning("Duplicate History Song: " + str(data_play[:-1]))
+        return 0
+    return 1
 
 
 def get_playlists(user):
@@ -207,8 +209,8 @@ def database_input(user, spotify):
     with connection.cursor() as cursor:
         add_artists(spotify, cursor)
         add_song(spotify, cursor)
-        add_song_count(user, spotify, cursor)
-        listening_history(user, spotify, cursor)
+        if(listening_history(user, spotify, cursor)):
+            add_song_count(user, spotify, cursor)
     return spotify
 
 

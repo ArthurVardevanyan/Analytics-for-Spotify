@@ -315,7 +315,7 @@ def realTimeSpotify(user, hybrid):
                     time.sleep(60)
                 elif(response.json().get("is_playing") and
                      "ad" in str.lower(response.json().get("currently_playing_type", "false"))):
-                    log.debug("Ignoring Adt: " + str(user))
+                    log.debug("Ignoring Ad: " + str(user))
                     update_status(user, "statusSong", 1)
                     time.sleep(30)
                 elif(response.json().get("is_playing") and
