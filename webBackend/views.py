@@ -10,6 +10,7 @@ import time
 import monitoringBackend.database as database
 import monitoringBackend.spotify as spotify
 import webBackend.credentials as credentials
+import webBackend.models as models
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 log = logging.getLogger(__name__)
@@ -168,9 +169,10 @@ def deleteUser(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    cursor = connection.cursor()
-    query = "DELETE FROM `users`  WHERE user = '" + spotifyID + "'"
-    cursor.execute(query)
+    models.Listeninghistory.objects.filter(user=spotifyID).delete()
+    models.Playcount.objects.filter(user=spotifyID).delete()
+    models.Playlistsusers.objects.filter(user=spotifyID).delete()
+    models.Users.objects.filter(user=spotifyID).delete()
     url = '<meta http-equiv="Refresh" content="0; url=/spotify"/>'
     return HttpResponse(url, content_type="text/html")
 

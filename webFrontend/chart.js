@@ -22,6 +22,12 @@ function stop() {
   });
 }
 
+function deleteUser() {
+  $.post("/analytics/delete/", function () {
+    window.location.href = "/spotify/index.html";
+  });
+}
+
 function playlist() {
   $.post(
     "/analytics/playlistSubmission/",
