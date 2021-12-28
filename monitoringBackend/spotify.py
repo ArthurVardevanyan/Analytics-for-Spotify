@@ -179,17 +179,32 @@ def playlistSongThread(user, once=0):
 
 def SpotifyThread(user):
     try:
-        if(user[5]):
+        S = []
+        if(user[5] == 1):
+            hybrid = False
             log.info("realTimeSpotifyThread: " + user[0])
-            S = threading.Thread(target=realTimeSpotify, args=(user[0],))
-        else:
+            S.append(threading.Thread(
+                target=realTimeSpotify, args=(user[0], hybrid,)))
+        elif(user[5] == 0):
             log.info("historySpotifyThread: " + user[0])
-            S = threading.Thread(target=historySpotify, args=(user[0],))
-        S.start()
-        thread = [user[0]]
-        thread.append(S)
+            S.append(threading.Thread(target=historySpotify, args=(user[0],)))
+        elif(user[5] == 2):
+            log.info("hybrid+historySpotifyThread: " + user[0])
+            S.append(threading.Thread(target=historySpotify, args=(user[0],)))
+            hybrid = True
+            log.info("hybrid+realTimeSpotifyThread: " + user[0])
+            S.append(threading.Thread(
+                target=realTimeSpotify, args=(user[0], hybrid,)))
         global THREADS
+        thread = [user[0]]
+        S[0].start()
+        thread.append(S[0])
         THREADS.append(thread)
+        if len(S) > 1:
+            thread = [user[0]]
+            S[1].start()
+            thread.append(S[1])
+            THREADS.append(thread)
     except:
         log.exception("Song Thread Failure")
 
@@ -269,7 +284,7 @@ def historySpotify(user):
     update_status(user, "statusSong", 0)
 
 
-def realTimeSpotify(user):
+def realTimeSpotify(user, hybrid):
     try:
         update_status(user, "statusSong", 0)
         time.sleep(10)
@@ -317,27 +332,32 @@ def realTimeSpotify(user):
                 else:
                     response = response.json()
                     if(response.get("is_playing")):
-                        track = response.get("item").get("name")
-                        if(previous != track):
-                            if(response.get("item").get("is_local")):
-                                response["item"]["id"] = ":" + response.get("item").get("uri").replace("%2C", "").replace(
-                                    "+", "").replace("%28", "").replace(":", "")[12:30] + response.get("item").get("uri")[-3:]
-                                for i in range(0, len(response.get("item").get("artists"))):
-                                    response["item"]["artists"][i]["id"] = (
-                                        (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
-                            if(int(response.get("progress_ms")) > 30000):
-                                previous = track
-                                utc_time = datetime.fromtimestamp(
-                                    response.get('timestamp')/1000, timezone.utc)
-                                response["utc_timestamp"] = utc_time.strftime(
-                                    "%Y%m%d%H%M%S")
-                                response["utc_timePlayed"] = utc_time.strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                database.database_input(user, response)
-                                log.debug(
-                                    "Song Counted as Played: " + str(track))
-                                update_status(user, "statusSong", 1)
-                                time.sleep(25)
+                        if(response.get("item").get("is_local") == False and hybrid == True):
+                            log.debug("Hybrid Mode: Local Song Not Playing")
+                            update_status(user, "statusSong", 1)
+                            time.sleep(60)
+                        else:
+                            track = response.get("item").get("name")
+                            if(previous != track):
+                                if(response.get("item").get("is_local")):
+                                    response["item"]["id"] = ":" + response.get("item").get("uri").replace("%2C", "").replace(
+                                        "+", "").replace("%28", "").replace(":", "")[12:30] + response.get("item").get("uri")[-3:]
+                                    for i in range(0, len(response.get("item").get("artists"))):
+                                        response["item"]["artists"][i]["id"] = (
+                                            (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+                                if(int(response.get("progress_ms")) > 30000):
+                                    previous = track
+                                    utc_time = datetime.fromtimestamp(
+                                        response.get('timestamp')/1000, timezone.utc)
+                                    response["utc_timestamp"] = utc_time.strftime(
+                                        "%Y%m%d%H%M%S")
+                                    response["utc_timePlayed"] = utc_time.strftime(
+                                        "%Y-%m-%d %H:%M:%S")
+                                    database.database_input(user, response)
+                                    log.debug(
+                                        "Song Counted as Played: " + str(track))
+                                    update_status(user, "statusSong", 1)
+                                    time.sleep(25)
                     else:
                         log.debug("Nothing is Playing")
                         update_status(user, "statusSong", 1)
