@@ -1,4 +1,6 @@
 import logging
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 import os
@@ -31,10 +33,12 @@ def boot(request=0):
     return HttpResponse("", content_type="text/html")
 
 
+@require_GET
+@ensure_csrf_cookie
 def authenticated(request):
-    if request.session.get('spotify', False):
+    if request.session.get('spotify', False) and request.method == "GET":
         response = request.session.get('spotify')
-        return HttpResponse(get_token(request))
+        return HttpResponse(True)
     else:
         return HttpResponse(False)
 

@@ -1,4 +1,19 @@
-CSRF_TOKEN = "";
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+const CSRF_TOKEN = getCookie("csrftoken");
 
 function deleteCookies() {
   const allCookies = document.cookie.split(";");
@@ -94,8 +109,6 @@ window.onload = function () {
     success(data) {
       if (data === "False") {
         window.location.href = "/spotify/index.html";
-      } else {
-        CSRF_TOKEN = data;
       }
     },
   });
