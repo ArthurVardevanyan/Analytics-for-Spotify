@@ -63,7 +63,7 @@ function stop() {
 
 function deleteUser() {
   $.ajax({
-    url: "/analytics/delete/",
+    url: "/analytics/deleteUser/",
     method: "POST",
     headers: {
       "X-CSRFToken": CSRF_TOKEN,

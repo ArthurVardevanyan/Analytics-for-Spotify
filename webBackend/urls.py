@@ -17,7 +17,7 @@ urlpatterns = [
     path('start/', views.start),
     path('logout/', views.logout),
     path('boot/', views.boot),
-    path('delete/', views.deleteUser),
+    path('deleteUser/', views.deleteUser),
     path('playlistSubmission/', views.playlistSubmission),
     path('deletePlaylist/', views.deletePlaylist),
 ]
