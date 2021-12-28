@@ -8,13 +8,33 @@ variables:
   SCAN_KUBERNETES_MANIFESTS: "true"
 
 stages:
+  - image
   - test
   - build
   - deploy
 
+TestingImage:
+  stage: image
+  when: manual
+  image: docker:latest
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:dind
+      alias: docker
+      command: ["--tls=false"]
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:test || true
+    - docker build --network host -f docker/dockerfile --cache-from $CI_REGISTRY_IMAGE:test -t $CI_REGISTRY_IMAGE:test .
+    - docker push $CI_REGISTRY_IMAGE:test
+
 PythonTests:
   stage: test
-  image: python:3.9-slim
+  image: $CI_REGISTRY_IMAGE:test
   services:
     - name: mariadb:latest
   variables:
@@ -26,10 +46,7 @@ PythonTests:
     - export DATABASE=spotify
     - export DB_USER=${MARIADB_ROOT_PASSWORD}
     - export DB_PASSWORD=${MARIADB_ROOT_PASSWORD}
-    - apt-get update
-    - apt-get install -y libmariadb-dev gcc
-    - python -m pip install --upgrade pip
-    - pip3 install -r requirements.txt
+    - sleep 10
   script:
     - python3 manage.py test
 
