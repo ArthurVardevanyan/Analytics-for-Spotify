@@ -1,3 +1,5 @@
+CSRF_TOKEN = "";
+
 function deleteCookies() {
   const allCookies = document.cookie.split(";");
   // https://www.geeksforgeeks.org/how-to-clear-all-cookies-using-javascript/
@@ -6,41 +8,83 @@ function deleteCookies() {
   for (let i = 0; i < allCookies.length; i++) {
     document.cookie = `${allCookies[i]}=;expires=${new Date(0).toUTCString()}`;
   }
-  $.post("/analytics/logout/", function () {
-    window.location.href = "/spotify/index.html";
+  $.ajax({
+    url: "/analytics/logout/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    success() {
+      window.location.href = "/spotify/index.html";
+    },
   });
 }
 
 function start() {
-  $.post("/analytics/start/", function () {
-    window.location.href = "/spotify/analytics.html";
+  $.ajax({
+    url: "/analytics/start/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    success() {
+      window.location.href = "/spotify/analytics.html";
+    },
   });
 }
+
 function stop() {
-  $.post("/analytics/stop/", function () {
-    window.location.href = "/spotify/analytics.html";
+  $.ajax({
+    url: "/analytics/stop/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    success() {
+      window.location.href = "/spotify/analytics.html";
+    },
   });
 }
 
 function deleteUser() {
-  $.post("/analytics/delete/", function () {
-    window.location.href = "/spotify/index.html";
+  $.ajax({
+    url: "/analytics/delete/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    success() {
+      window.location.href = "/spotify/index.html";
+    },
   });
 }
 
 function playlist() {
-  $.post(
-    "/analytics/playlistSubmission/",
-    { playlist: document.getElementById("playlist").value },
-    function () {
+  $.ajax({
+    url: "/analytics/playlistSubmission/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    data: { playlist: document.getElementById("playlist").value },
+    success() {
       window.location.href = "/spotify/analytics.html";
-    }
-  );
+    },
+  });
 }
 
 function deletePlaylist(id) {
-  $.post("/analytics/deletePlaylist/", { playlist: id });
-  window.location.href = "/spotify/analytics.html";
+  $.ajax({
+    url: "/analytics/deletePlaylist/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    data: { playlist: id },
+    success() {
+      window.location.href = "/spotify/analytics.html";
+    },
+  });
 }
 
 window.onload = function () {
@@ -50,6 +94,8 @@ window.onload = function () {
     success(data) {
       if (data === "False") {
         window.location.href = "/spotify/index.html";
+      } else {
+        CSRF_TOKEN = data;
       }
     },
   });

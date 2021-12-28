@@ -1,5 +1,6 @@
 import logging
 from django.views.decorators.csrf import csrf_exempt
+from django.middleware.csrf import get_token
 import os
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -31,9 +32,9 @@ def boot(request=0):
 
 
 def authenticated(request):
-    if request.session.get('spotify'):
+    if request.session.get('spotify', False):
         response = request.session.get('spotify')
-        return HttpResponse(True)
+        return HttpResponse(get_token(request))
     else:
         return HttpResponse(False)
 
