@@ -358,12 +358,14 @@ def realTimeSpotify(user, hybrid):
                                         "Song Counted as Played: " + str(track))
                                     update_status(user, "statusSong", 1)
                                     time.sleep(25)
+                            if(int(response.get("progress_ms")) > 30000):
+                                time.sleep(10)
                     else:
                         log.debug("Nothing is Playing")
                         update_status(user, "statusSong", 1)
                         time.sleep(60)
                 update_status(user, "statusSong", 1)
-                time.sleep(3)
+                time.sleep(5)
             except:
                 log.exception("Song Lookup Failure: " + str(user))
                 log.warning(str(response))
