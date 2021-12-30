@@ -49,7 +49,8 @@ jobs:
           export DATABASE=spotifyTest
           export DB_USER=spotifyTest
           export DB_PASSWORD=spotifyTest
-          python3 manage.py test
+          coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+          coverage report -m
         env:
           TEST: test
       - name: Coveralls Python

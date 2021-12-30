@@ -28,11 +28,14 @@
 			"type": "python",
 			"request": "launch",
 			"envFile": "${workspaceFolder}/.env",
+			"module": "coverage",
 			"env": {
 				"TEST": "test"
 			},
-			"program": "${workspaceFolder}/manage.py",
 			"args": [
+				"run",
+				"--source=monitoringBackend,webBackend",
+				"manage.py",
 				"test",
 			],
 			"django": true,

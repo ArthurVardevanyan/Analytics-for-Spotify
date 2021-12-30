@@ -48,7 +48,8 @@ PythonTests:
     - export DB_PASSWORD=${MARIADB_ROOT_PASSWORD}
     - sleep 10
   script:
-    - python3 manage.py test
+    - coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+    - coverage report -m
 
 DockerBuild:
   stage: build
