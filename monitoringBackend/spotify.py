@@ -234,8 +234,9 @@ def historySpotify(user):
                               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
                     response = requests.get(url, headers=header)
                 else:
+                    newSongs = False
                     response = response.json()
-                    query = "SELECT * FROM `listeningHistory`  where user ='" + user + \
+                    query = "SELECT id,timestamp,timePlayed,songID,user FROM `listeningHistory`  where user ='" + user + \
                         "' ORDER BY `listeningHistory`.`timePlayed`  DESC  LIMIT 50"
                     listeningHistoy = []
                     with connection.cursor() as cursor:
@@ -244,7 +245,7 @@ def historySpotify(user):
                         for song in cursor:
                             for listened in response.get("items"):
                                 utc_time = datetime.fromisoformat(
-                                    listened.get('played_at')[:-5])
+                                    listened.get('played_at').split(".")[0].replace("Z", ""))
                                 timestamp = utc_time.strftime("%Y%m%d%H%M%S")
                                 # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
                                 listened["utc_timestamp"] = utc_time.strftime(
@@ -260,15 +261,18 @@ def historySpotify(user):
                                     tracked = True
                             if(not tracked):
                                 utc_time = datetime.fromisoformat(
-                                    listened.get('played_at')[:-5])
+                                    listened.get('played_at').split(".")[0].replace("Z", ""))
                                 # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
                                 listened["utc_timestamp"] = utc_time.strftime(
                                     "%Y%m%d%H%M%S")
                                 listened["utc_timePlayed"] = utc_time.strftime(
                                     "%Y-%m-%d %H:%M:%S")
                                 listened["item"] = listened.get("track")
-                                log.info(database.database_input(
-                                    user, listened).get("track").get("name"))
+                                log.info("History: " + str(user) + ": " +
+                                         database.database_input(user, listened).get("track").get("name"))
+                                newSongs = True
+                    if (newSongs == False):
+                        log.debug("No New Songs: " + str(user))
                 update_status(user, "statusSong", 1)
                 time.sleep(1200)
             except:
@@ -333,7 +337,8 @@ def realTimeSpotify(user, hybrid):
                     response = response.json()
                     if(response.get("is_playing")):
                         if(response.get("item").get("is_local") == False and hybrid == True):
-                            log.debug("Hybrid Mode: Local Song Not Playing")
+                            log.debug("Hybrid Mode: " + str(user) +
+                                      ": Local Song Not Playing")
                             update_status(user, "statusSong", 1)
                             time.sleep(60)
                         else:
@@ -361,7 +366,7 @@ def realTimeSpotify(user, hybrid):
                             if(int(response.get("progress_ms")) > 30000):
                                 time.sleep(10)
                     else:
-                        log.debug("Nothing is Playing")
+                        log.debug("Nothing is Playing: " + str(user))
                         update_status(user, "statusSong", 1)
                         time.sleep(60)
                 update_status(user, "statusSong", 1)
