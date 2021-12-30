@@ -5,15 +5,37 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Python: Django",
+			"name": "Python",
 			"type": "python",
 			"request": "launch",
+			"program": "${file}",
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "Django",
+			"type": "python",
+			"request": "launch",
+			"envFile": "${workspaceFolder}/.env",
 			"program": "${workspaceFolder}/manage.py",
 			"args": [
 				"runserver",
 				"--noreload"
 			],
-			"django": true
+			"django": true,
+		},
+		{
+			"name": "Django Tests",
+			"type": "python",
+			"request": "launch",
+			"envFile": "${workspaceFolder}/.env",
+			"env": {
+				"TEST": "test"
+			},
+			"program": "${workspaceFolder}/manage.py",
+			"args": [
+				"test",
+			],
+			"django": true,
 		}
 	]
 }
