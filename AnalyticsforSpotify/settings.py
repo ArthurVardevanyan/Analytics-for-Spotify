@@ -19,19 +19,8 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.sessions',
     'webBackend.apps.WebBackendConfig',
-    'django_nose',
 ]
 
-# Use nose to run all tests
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-
-# Tell nose to measure coverage on the 'foo' and 'bar' apps
-NOSE_ARGS = [
-    '--with-coverage',
-    '--cover-package=webBackend',
-    '--cover-package=monitoringBackend',
-    '--cover-html',
-]
 
 MIDDLEWARE = [
     # https://stackoverflow.com/a/30956822
@@ -44,6 +33,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 CORS_ORIGIN_ALLOW_ALL = False  # True For Testing
+CSRF_COOKIE_SECURE = False  # True for HTTPS
 
 ROOT_URLCONF = 'AnalyticsforSpotify.urls'
 

@@ -1,179 +1,63 @@
 # Analytics for Spotify
-#### Production:  ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg?branch=production)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg?branch=production) [![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg?branch=production)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify?branch=production)
 
-#### Develop: ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg?branch=develop)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg?branch=develop)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify?branch=develop)
+**Production:** ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg?branch=production)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg?branch=production) [![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg?branch=production)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify?branch=production)
 
-### WIP
+**Develop:** ![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/tests/badge.svg?branch=develop)![Actions Status](https://github.com/ArthurVardevanyan/Analytics-for-Spotify/workflows/CodeQL/badge.svg?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/ArthurVardevanyan/Analytics-for-Spotify/badge.svg?branch=develop)](https://coveralls.io/github/ArthurVardevanyan/Analytics-for-Spotify?branch=develop)
 
+## Work In Progress
 
 Self Hosted Last.FM Alternative to keeping track of your Spotify History
 
-
 Current Features:
-* Keeps Track of Listening History
-* Keeps Track of how many times a song is played
-* Includes Local Files*
-* Ability to view un-playable songs in a Spotify Playlist
+
+- Keeps Track of Listening History
+- Keeps Track of How Many Times a Song is Played
+- Ability to View Unplayable Songs in a Spotify Playlist
+- Includes Local Files (Hybrid & Realtime Scanning)
 
 Notes:
 
-* Will not include Private Sessions
-* Offline Mode Not Supported (Currently)
-* Ignores Scrubbing Through Songs (Counts as one Play)
-* A play is counted after the 30 second mark
-* If you play one song consecutively only the first play is counted (Currently)* 
-* Requires Spotify Developer App to be Created
+- Ignores Scrubbing Through Songs (Counts as one Play)
+- Requires Spotify Developer App to be Created
 
-#### Internal Site / Local Network Use Only, <br>Not Designed to be Public / Internet Facing.
-![Alt text](img/SpotifyAnalyticsSample.png?raw=true "Sample Output")
-![Alt text](img/SonyPlayPlaylistDistribution.png?raw=true "Sample Output")
+### Internal Site / Local Network Use Only
 
+Not Designed to be Public / Internet Facing.
 
-<details>
-  <summary>Potentially Out of Date / Not Validated Installation Instructions</summary>
-  
-## Installation Instructions
-## This contains only installation instructions. Thier are currently no Update Instructions!!!
-### Instructions are for installing in a VM / No Other Websites Hosted.
-### This Project is a work in progress.<br> The database structure could change in future versions.
-#### Installation Instructions are also a work in progress and were tested on Ubuntu Server 20.04.2.
-I currently run this virtualized on a Virtual Machine running Debian 10.
-#### Please Thoroughly Read The Instructions 
-### Note:
-This must run on a machine that is always on or<br />
-it must be on and running when you want to keep track of play history.
+## Spotify API
 
-Ideal Setup is a Local Server or a Local Machine<br />
+### Scopes
 
-Do not run on an external machine or allow external network access.<br />
-It is Not Setup for Secure External Operation. 
+These are the scopes used by the application.
 
-Default Installation are as follows. <br />
+- [User Read Currently Playing](https://developer.spotify.com/documentation/general/guides/authorization/scopes/#user-read-currently-playing)
+- [User Read Recently Played](https://developer.spotify.com/documentation/general/guides/authorization/scopes/#user-read-recently-played)
 
-### Get Spotify API Credentials:
-Create a Non-Commercial Spotify App: https://developer.spotify.com/dashboard
+### Endpoints
 
-For API Redirect URL Box<br />
-Same Machine: http://localhost:PORT/analytics/loginResponse<br />
-Local Server http://IPV4ADDRESS:PORT/analytics/loginResponse <br>
-(Replace with the Local IPv4 Address of your server)<br />
+These are the endpoints used by the application.
 
-#### For Django Test Server (Option 1) 
-Use Port 8000 if you plan to test manually and not integrate it with Apache Web Server
+- [Get Current User's Profile](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-current-users-profile)
+- [Get Recently Played Tracks](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recently-played)
+- [Get Playlist](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlist)
+- [Get Currently Playing Track](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-the-users-currently-playing-track)
 
+### Scanning Modes
 
-#### For Apache (Option 2) (Recommended For Long Term)
-Port 80 is recommended. However if you already using port 80 for another service, you will need to use a different port. 
+Recently Played Scanning is preferred due to the significantly lower volume of requests being made.
 
-#### Note:
-Keep Track of your Client ID, Secret Key, and Redirect Url<br />
+Feature           | Recently Played                                                                                                                           | Hybrid                  | Currently Playing
+----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------
+Default Mode      | Yes (Preferred)                                                                                                                           | No                      | No
+Offline Support   | Yes                                                                                                                                       | Not Local Songs         | No
+Realtime          | No                                                                                                                                        | Only Local Songs        | Yes
+Polling Frequency | ~20 Minutes                                                                                                                               | ~60s Local* & ~ 20m     | ~5-60 Seconds
+Songs Returned    | Last 50                                                                                                                                   | Local Current & Last 50 | Current Song
+Repeated Songs    | Counted                                                                                                                                   | Counted / Not Local     | Currently Ignored
+Counted as Played | [Immediately](https://community.spotify.com/t5/Your-Library/Why-does-recently-played-songs-show-songs-I-skipped-immediately/td-p/5066927) | Immediately / Local 30s | After 30 Second Mark
 
-The port number doesn't matter as long your consistent.<br>
-For Apache, for not using port 80, you will need to change the default port or make another virtual host.
+*Hybrid: 5-15 seconds when local song is playing. 60 seconds when non local song is playing.
 
-### Source Code:
-SSH into Local Server or run on local machine.<br />
-Default Installation is ~/.
+## Sample Images
 
-```
-cd ~/
-git clone https://github.com/ArthurVardevanyan/Analytics-for-Spotify.git
-```
-
-
-### Local Database Setup:
-If you have a mariaDB or mySQL database setup with proper credentials, you may skip this section.
-```
-sudo apt-get install mariadb-server
-```
-Log Into MySql (sudo password, if asked)
-```
-sudo mysql
-```
-Within mysql Create User, Grant Privileges, and create database. <br/> 
-Note: Alter statement may error out on older versions of MySql, you can ignore the error and continue.
-```
-CREATE USER 'spotify'@'localhost' IDENTIFIED BY 'spotify'; 
-GRANT ALL PRIVILEGES ON *.* TO 'spotify'@'localhost';
-alter user 'spotify'@'localhost' identified with mysql_native_password by 'spotify';
-flush privileges;
-create database spotify;
-exit;
-```
-
-The default database credentials are:
-```
-host = localhost
-database = spotify
-user = spotify
-password = spotify
-```
-### Project Setup :
-Run the setup.py to setup the project.
-```
-sudo apt-get install python3-pip libmariadb-dev
-```
-```
-cd Analytics-for-Spotify
-pip3 install -r requirements.txt
-python3 setup.py
-```
-The setup will ask for Spotify API Credentials and Database Credentials. 
-
-### Option 1: Django Test Server Command Line
-```
-python3 manage.py runserver --noreload
-```
-After Navigating to the IP:PORT, Click "Start Service" (Django Default is port 8000)
-
-### Option 2: WSGI Apache WebServer Setup (Recommended For Long Term):
-If you have an existing webserver you will need to modify the below to run on a different port / virtual host.<br>
-Otherwise just delete everything in the file below and replace with this.<br>
-You must change "PATH_TO_PROGRAM" with your path. 
-```
-sudo pip3 install -r requirements.txt
-sudo apt-get install apache2 libapache2-mod-wsgi-py3
-sudo nano /etc/apache2/sites-available/000-default.conf 
-```
-
-```
-<VirtualHost *:80>
-        ErrorLog ${APACHE_LOG_DIR}/error.log
-        CustomLog ${APACHE_LOG_DIR}/access.log combined
-
-        Alias /spotify  /PATH_TO_PROGRAM/Analytics-for-Spotify/webFrontend
-        <Directory /PATH_TO_PROGRAM/Analytics-for-Spotify/webFrontend>
-            Require all granted
-        </Directory>
-
-        <Directory /PATH_TO_PROGRAM/Analytics-for-Spotify/AnalyticsforSpotify>
-            <Files wsgi.py>
-                Require all granted
-            </Files>
-        </Directory>
-
-        WSGIDaemonProcess AnalyticsforSpotify python-path=//PATH_TO_PROGRAM/Analytics-for-Spotify/
-        WSGIScriptAlias / /PATH_TO_PROGRAM/Analytics-for-Spotify/AnalyticsforSpotify/wsgi.py process-group=AnalyticsforSpotify application-group=%{GLOBAL}
-        WSGIProcessGroup AnalyticsforSpotify
-</VirtualHost>
-```
-
-```
-sudo systemctl restart apache2
-```
-After Navigating to the IP:PORT, Click "Start Service"
-
-
-### Final Notes
-
-For either option, the server needs to be running to keep track of songs.
-
-
-To update the API if you want to change the IP and/or PORT for the Redirect URIs. <br>
-
-Make a backup of the database first.<br>
-
-Click "Stop Service" in the Web API, and wait for the Service to Stop. (Manually Refresh The Page)<br>
-
-Then Run setup.py again.<br><br>
-</details>
+![Analytics For Spotify Sample](img/AnalyticsForSpotifySample.png?raw=true "Sample Output") ![Song Play Playlist Distribution](img/SongPlayPlaylistDistribution.png?raw=true "Sample Output")

@@ -179,17 +179,32 @@ def playlistSongThread(user, once=0):
 
 def SpotifyThread(user):
     try:
-        if(user[5]):
+        S = []
+        if(user[5] == 1):
+            hybrid = False
             log.info("realTimeSpotifyThread: " + user[0])
-            S = threading.Thread(target=realTimeSpotify, args=(user[0],))
-        else:
+            S.append(threading.Thread(
+                target=realTimeSpotify, args=(user[0], hybrid,)))
+        elif(user[5] == 0):
             log.info("historySpotifyThread: " + user[0])
-            S = threading.Thread(target=historySpotify, args=(user[0],))
-        S.start()
-        thread = [user[0]]
-        thread.append(S)
+            S.append(threading.Thread(target=historySpotify, args=(user[0],)))
+        elif(user[5] == 2):
+            log.info("hybrid+historySpotifyThread: " + user[0])
+            S.append(threading.Thread(target=historySpotify, args=(user[0],)))
+            hybrid = True
+            log.info("hybrid+realTimeSpotifyThread: " + user[0])
+            S.append(threading.Thread(
+                target=realTimeSpotify, args=(user[0], hybrid,)))
         global THREADS
+        thread = [user[0]]
+        S[0].start()
+        thread.append(S[0])
         THREADS.append(thread)
+        if len(S) > 1:
+            thread = [user[0]]
+            S[1].start()
+            thread.append(S[1])
+            THREADS.append(thread)
     except:
         log.exception("Song Thread Failure")
 
@@ -219,8 +234,9 @@ def historySpotify(user):
                               "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
                     response = requests.get(url, headers=header)
                 else:
+                    newSongs = False
                     response = response.json()
-                    query = "SELECT * FROM `listeningHistory`  where user ='" + user + \
+                    query = "SELECT id,timestamp,timePlayed,songID,user FROM `listeningHistory`  where user ='" + user + \
                         "' ORDER BY `listeningHistory`.`timePlayed`  DESC  LIMIT 50"
                     listeningHistoy = []
                     with connection.cursor() as cursor:
@@ -229,7 +245,7 @@ def historySpotify(user):
                         for song in cursor:
                             for listened in response.get("items"):
                                 utc_time = datetime.fromisoformat(
-                                    listened.get('played_at')[:-5])
+                                    listened.get('played_at').split(".")[0].replace("Z", ""))
                                 timestamp = utc_time.strftime("%Y%m%d%H%M%S")
                                 # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
                                 listened["utc_timestamp"] = utc_time.strftime(
@@ -245,15 +261,18 @@ def historySpotify(user):
                                     tracked = True
                             if(not tracked):
                                 utc_time = datetime.fromisoformat(
-                                    listened.get('played_at')[:-5])
+                                    listened.get('played_at').split(".")[0].replace("Z", ""))
                                 # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
                                 listened["utc_timestamp"] = utc_time.strftime(
                                     "%Y%m%d%H%M%S")
                                 listened["utc_timePlayed"] = utc_time.strftime(
                                     "%Y-%m-%d %H:%M:%S")
                                 listened["item"] = listened.get("track")
-                                log.info(database.database_input(
-                                    user, listened).get("track").get("name"))
+                                log.info("History: " + str(user) + ": " +
+                                         database.database_input(user, listened).get("track").get("name"))
+                                newSongs = True
+                    if (newSongs == False):
+                        log.debug("No New Songs: " + str(user))
                 update_status(user, "statusSong", 1)
                 time.sleep(1200)
             except:
@@ -269,7 +288,7 @@ def historySpotify(user):
     update_status(user, "statusSong", 0)
 
 
-def realTimeSpotify(user):
+def realTimeSpotify(user, hybrid):
     try:
         update_status(user, "statusSong", 0)
         time.sleep(10)
@@ -300,7 +319,7 @@ def realTimeSpotify(user):
                     time.sleep(60)
                 elif(response.json().get("is_playing") and
                      "ad" in str.lower(response.json().get("currently_playing_type", "false"))):
-                    log.debug("Ignoring Adt: " + str(user))
+                    log.debug("Ignoring Ad: " + str(user))
                     update_status(user, "statusSong", 1)
                     time.sleep(30)
                 elif(response.json().get("is_playing") and
@@ -317,33 +336,41 @@ def realTimeSpotify(user):
                 else:
                     response = response.json()
                     if(response.get("is_playing")):
-                        track = response.get("item").get("name")
-                        if(previous != track):
-                            if(response.get("item").get("is_local")):
-                                response["item"]["id"] = ":" + response.get("item").get("uri").replace("%2C", "").replace(
-                                    "+", "").replace("%28", "").replace(":", "")[12:30] + response.get("item").get("uri")[-3:]
-                                for i in range(0, len(response.get("item").get("artists"))):
-                                    response["item"]["artists"][i]["id"] = (
-                                        (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+                        if(response.get("item").get("is_local") == False and hybrid == True):
+                            log.debug("Hybrid Mode: " + str(user) +
+                                      ": Local Song Not Playing")
+                            update_status(user, "statusSong", 1)
+                            time.sleep(60)
+                        else:
+                            track = response.get("item").get("name")
+                            if(previous != track):
+                                if(response.get("item").get("is_local")):
+                                    response["item"]["id"] = ":" + response.get("item").get("uri").replace("%2C", "").replace(
+                                        "+", "").replace("%28", "").replace(":", "")[12:30] + response.get("item").get("uri")[-3:]
+                                    for i in range(0, len(response.get("item").get("artists"))):
+                                        response["item"]["artists"][i]["id"] = (
+                                            (":" + (response.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+                                if(int(response.get("progress_ms")) > 30000):
+                                    previous = track
+                                    utc_time = datetime.fromtimestamp(
+                                        response.get('timestamp')/1000, timezone.utc)
+                                    response["utc_timestamp"] = utc_time.strftime(
+                                        "%Y%m%d%H%M%S")
+                                    response["utc_timePlayed"] = utc_time.strftime(
+                                        "%Y-%m-%d %H:%M:%S")
+                                    database.database_input(user, response)
+                                    log.debug(
+                                        "Song Counted as Played: " + str(track))
+                                    update_status(user, "statusSong", 1)
+                                    time.sleep(25)
                             if(int(response.get("progress_ms")) > 30000):
-                                previous = track
-                                utc_time = datetime.fromtimestamp(
-                                    response.get('timestamp')/1000, timezone.utc)
-                                response["utc_timestamp"] = utc_time.strftime(
-                                    "%Y%m%d%H%M%S")
-                                response["utc_timePlayed"] = utc_time.strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                database.database_input(user, response)
-                                log.debug(
-                                    "Song Counted as Played: " + str(track))
-                                update_status(user, "statusSong", 1)
-                                time.sleep(25)
+                                time.sleep(10)
                     else:
-                        log.debug("Nothing is Playing")
+                        log.debug("Nothing is Playing: " + str(user))
                         update_status(user, "statusSong", 1)
                         time.sleep(60)
                 update_status(user, "statusSong", 1)
-                time.sleep(3)
+                time.sleep(5)
             except:
                 log.exception("Song Lookup Failure: " + str(user))
                 log.warning(str(response))

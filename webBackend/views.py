@@ -1,5 +1,8 @@
 import logging
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
+from django.middleware.csrf import get_token
 import os
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -10,6 +13,7 @@ import time
 import monitoringBackend.database as database
 import monitoringBackend.spotify as spotify
 import webBackend.credentials as credentials
+import webBackend.models as models
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 log = logging.getLogger(__name__)
@@ -29,8 +33,10 @@ def boot(request=0):
     return HttpResponse("", content_type="text/html")
 
 
+@require_GET
+@ensure_csrf_cookie
 def authenticated(request):
-    if request.session.get('spotify'):
+    if request.session.get('spotify', False) and request.method == "GET":
         response = request.session.get('spotify')
         return HttpResponse(True)
     else:
@@ -148,7 +154,7 @@ def status(request):
             request.session.get('spotify') + "'"
         cursor.execute(query)
         for stat in cursor:
-            status = str(stat[1])+":"+str(stat[2])
+            status = str(stat[1])+":"+str(stat[2])+":"+str(stat[5])
     return HttpResponse(status)
 
 
@@ -168,9 +174,10 @@ def deleteUser(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    cursor = connection.cursor()
-    query = "DELETE FROM `users`  WHERE user = '" + spotifyID + "'"
-    cursor.execute(query)
+    models.Listeninghistory.objects.filter(user=spotifyID).delete()
+    models.Playcount.objects.filter(user=spotifyID).delete()
+    models.Playlistsusers.objects.filter(user=spotifyID).delete()
+    models.Users.objects.filter(user=spotifyID).delete()
     url = '<meta http-equiv="Refresh" content="0; url=/spotify"/>'
     return HttpResponse(url, content_type="text/html")
 
@@ -201,8 +208,7 @@ def playlistSubmission(request):
     try:
         playlist = request.POST.get("playlist")
         playlist = playlist.split("playlist/")[1].split("?")[0]
-        url = 'https://api.spotify.com/v1/playlists/' + \
-            playlist + "?market=US"
+        url = 'https://api.spotify.com/v1/playlists/' + playlist + "?market=US"
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + credentials.refresh_token(spotifyID)}
         response = requests.get(url, headers=header).json()

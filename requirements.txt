@@ -1,6 +1,5 @@
 django
 django-cors-headers
-django_nose
 coverage
 requests
 mysqlclient

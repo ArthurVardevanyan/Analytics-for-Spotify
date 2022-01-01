@@ -17,6 +17,9 @@ class TestCase(TestCase):
     def test_authenticated(self):
         req = testObject()
         req.session = {}
+        req.COOKIES = {}
+        req.META = {}
+        req.method = "GET"
         views.authenticated(req)
         self.assertEqual(1, 1)
 

@@ -1,10 +1,4 @@
 {
-    "python.testing.nosetestArgs": [
-        "webBackend"
-    ],
-    "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": true,
     "workbench.editor.highlightModifiedTabs": true,
     "editor.insertSpaces": false,
     "files.trimFinalNewlines": true,
@@ -15,5 +9,4 @@
     "editor.tabSize": 2,
     "editor.renderControlCharacters": true,
     "editor.renderWhitespace": "all",
-    "python.pythonPath": "bin/python", // Python VENV
 }
