@@ -11,17 +11,13 @@ Self Hosted Last.FM Alternative to keeping track of your Spotify History
 Current Features:
 
 - Keeps Track of Listening History
-- Keeps Track of how many times a song is played
-- Includes Local Files*
-- Ability to view un-playable songs in a Spotify Playlist
+- Keeps Track of How Many Times a Song is Played
+- Ability to View Unplayable Songs in a Spotify Playlist
+- Includes Local Files (Hybrid & Realtime Scanning)
 
 Notes:
 
-- Will not include Private Sessions
-- Offline Mode Not Supported (Currently)
 - Ignores Scrubbing Through Songs (Counts as one Play)
-- A play is counted after the 30 second mark
-- If you play one song consecutively only the first play is counted (Currently)*
 - Requires Spotify Developer App to be Created
 
 ### Internal Site / Local Network Use Only
@@ -45,6 +41,22 @@ These are the endpoints used by the application.
 - [Get Recently Played Tracks](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recently-played)
 - [Get Playlist](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlist)
 - [Get Currently Playing Track](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-the-users-currently-playing-track)
+
+### Scanning Modes
+
+Recently Played Scanning is preferred due to the significantly lower volume of requests being made.
+
+Feature           | Recently Played                                                                                                                           | Hybrid                  | Currently Playing
+----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------
+Default Mode      | Yes (Preferred)                                                                                                                           | No                      | No
+Offline Support   | Yes                                                                                                                                       | Not Local Songs         | No
+Realtime          | No                                                                                                                                        | Only Local Songs        | Yes
+Polling Frequency | ~20 Minutes                                                                                                                               | ~60s Local* & ~ 20m     | ~5-60 Seconds
+Songs Returned    | Last 50                                                                                                                                   | Local Current & Last 50 | Current Song
+Repeated Songs    | Counted                                                                                                                                   | Counted / Not Local     | Currently Ignored
+Counted as Played | [Immediately](https://community.spotify.com/t5/Your-Library/Why-does-recently-played-songs-show-songs-I-skipped-immediately/td-p/5066927) | Immediately / Local 30s | After 30 Second Mark
+
+*Hybrid: 5-15 seconds when local song is playing. 60 seconds when non local song is playing.
 
 ## Sample Images
 
