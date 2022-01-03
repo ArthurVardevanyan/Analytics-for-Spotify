@@ -50,11 +50,11 @@ spec:
             - containerPort: 8080
           resources:
             limits:
-              cpu: 200m
+              cpu: 150m
               memory: 250M
             requests:
-              cpu: 100m
-              memory: 200M
+              cpu: 50m
+              memory: 175M
           env:
             - name: CLIENT_ID
               valueFrom:
