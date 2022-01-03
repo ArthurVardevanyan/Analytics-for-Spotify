@@ -68,7 +68,7 @@ class TestCase(TestCase):
 
     def test_authenticated_False(self):
         response = self.client.get('/analytics/authenticated', follow=True)
-        self.assertContains(response, "False")
+        self.assertContains(response, "False", status_code=401)
 
     @patch('webBackend.credentials.accessToken')
     @patch('webBackend.credentials.getUser')

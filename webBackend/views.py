@@ -24,6 +24,17 @@ def redirect(request):
     return HttpResponse(url, content_type="text/html")
 
 
+def health(request):
+    try:
+        if connection.ensure_connection():
+            return HttpResponse(status=503)
+        else:
+            return HttpResponse(status=200)
+    except:
+        log.exception("DB Error")
+        return HttpResponse(status=500)
+
+
 @require_GET
 @ensure_csrf_cookie
 def authenticated(request):
@@ -31,7 +42,7 @@ def authenticated(request):
         response = request.session.get('spotify')
         return HttpResponse(True)
     else:
-        return HttpResponse(False)
+        return HttpResponse(False, status=401)
 
 
 def login(request):

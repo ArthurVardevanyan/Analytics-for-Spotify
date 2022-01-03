@@ -4,9 +4,9 @@ from . import views
 
 urlpatterns = [
     path('', views.redirect),
-    path('/', views.redirect),
     path('spotify/', views.redirect),
     path('analytics/', views.redirect),
+    path('health/', views.health),
     path('authenticated/', views.authenticated),
     path('login/', views.login, name='login'),
     path('loginResponse', views.loginResponse, name='loginResponse'),
