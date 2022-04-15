@@ -1,0 +1,17 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: analytics-for-spotify
+  namespace: analytics-for-spotify
+  labels:
+    app: analytics-for-spotify
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  host: <URL>
+  to:
+    kind: Service
+    name: analytics-for-spotify
+    weight: 100
+  port:
+    targetPort: 8080
+  wildcardPolicy: None
