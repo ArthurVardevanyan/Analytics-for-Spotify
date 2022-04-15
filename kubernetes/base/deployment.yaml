@@ -5,6 +5,7 @@ metadata:
   namespace: analytics-for-spotify
   labels:
     app: analytics-for-spotify
+    app.kubernetes.io/instance: analytics-for-spotify
 spec:
   replicas: 1
   revisionHistoryLimit: 0
@@ -23,26 +24,38 @@ spec:
     spec:
       hostname: analytics-for-spotify
       restartPolicy: Always
-      securityContext:
-        runAsUser: 10033
-        runAsGroup: 30000
-        fsGroup: 20000
+      # securityContext:
+      # runAsUser: 10033
+      # runAsGroup: 30000
+      # fsGroup: 20000
       automountServiceAccountToken: false
       containers:
         - securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
-            runAsUser: 10033
+            # runAsUser: 10033
             capabilities:
               drop:
                 - all
           livenessProbe:
             httpGet:
-              path: /analytics/authenticated/
+              path: /analytics/health/
               port: 8080
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
             periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /analytics/health/
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 3
           image: <IMAGE>:<VERSION>
           imagePullPolicy: IfNotPresent
           name: analytics-for-spotify
@@ -50,11 +63,11 @@ spec:
             - containerPort: 8080
           resources:
             limits:
-              cpu: 200m
+              cpu: 150m
               memory: 250M
             requests:
-              cpu: 100m
-              memory: 200M
+              cpu: 50m
+              memory: 175M
           env:
             - name: CLIENT_ID
               valueFrom:

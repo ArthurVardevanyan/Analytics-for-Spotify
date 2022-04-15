@@ -423,7 +423,7 @@ def songIdUpdaterChecker(user, once=0):
         status = database.user_status(user)
 
 
-def main():
+def boot():
     with connection.cursor() as cursor:
         global WORKER
         WORKER, workerCount = database.createWorker()
@@ -434,7 +434,12 @@ def main():
         log.info("Users : " + str(users))
         usersPerWorker = int(math.ceil(users/workerCount))
         log.info("Users Per Worker: " + str(usersPerWorker))
-        keepAliveThread()
+        return WORKER, workerCount, users
+
+
+def main():
+    boot()
+    keepAliveThread()
     return 1
 
 

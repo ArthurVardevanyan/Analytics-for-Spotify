@@ -3,6 +3,8 @@ kind: IngressRoute
 metadata:
   name: analytics-for-spotify
   namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
 spec:
   entryPoints:
     - web
