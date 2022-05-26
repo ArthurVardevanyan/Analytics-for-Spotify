@@ -1,0 +1,37 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: analytics-for-spotify-cr
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+rules:
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - anyuid
+      - privileged
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
+  # - apiGroups:
+  #     - authentication.k8s.io
+  #   resources:
+  #     - tokenreviews
+  #   verbs:
+  #     - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: analytics-for-spotify-crb
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: analytics-for-spotify-cr
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: analytics-for-spotify

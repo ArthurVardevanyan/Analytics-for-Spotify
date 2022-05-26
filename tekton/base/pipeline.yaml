@@ -1,0 +1,51 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: analytics-for-spotify
+  namespace: analytics-for-spotify
+spec:
+  params:
+    - name: url
+      description: Repository URL to clone from.
+    - name: IMAGE
+      description: Reference of the image buildah will produce.
+
+  workspaces:
+    - name: data
+
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.url)
+      workspaces:
+        - name: output
+          workspace: data
+
+    - name: test
+      runAfter:
+        - git-clone
+      taskRef:
+        name: test
+        kind: task
+      workspaces:
+        - name: data
+          workspace: data
+
+    - name: buildah
+      runAfter:
+        - test
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+        - name: DOCKERFILE
+          value: ./dockerfile
+      workspaces:
+        - name: source
+          workspace: data

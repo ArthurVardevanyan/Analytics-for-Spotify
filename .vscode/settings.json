@@ -23,6 +23,7 @@
         "SAST",
         "seccomp",
         "securitycontextconstraints",
+        "Tekton",
         "traefik"
     ],
 }
