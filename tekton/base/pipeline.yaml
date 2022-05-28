@@ -60,7 +60,8 @@ spec:
 
     - name: build-image
       runAfter:
-        - unit-test
+        - git-pending
+        - git-clone
       taskRef:
         name: buildah
         kind: ClusterTask
@@ -75,6 +76,7 @@ spec:
 
     - name: deploy
       runAfter:
+        - unit-test
         - build-image
       taskRef:
         name: deploy
