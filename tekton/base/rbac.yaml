@@ -1,9 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: analytics-for-spotify-cr
+  name: pipeline-cr
   labels:
-    app.kubernetes.io/instance: analytics-for-spotify
+    app.kubernetes.io/instance: pipeline
 rules:
   - apiGroups:
       - security.openshift.io
@@ -14,12 +14,19 @@ rules:
       - securitycontextconstraints
     verbs:
       - use
-  # - apiGroups:
-  #     - authentication.k8s.io
-  #   resources:
-  #     - tokenreviews
-  #   verbs:
-  #     - create
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - triggers.tekton.dev
+    resources:
+      - clusterinterceptors
+    verbs:
+      - list
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -30,8 +37,8 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: analytics-for-spotify-cr
+  name: pipeline-cr
 subjects:
   - kind: ServiceAccount
-    name: default
+    name: pipeline-sa
     namespace: analytics-for-spotify

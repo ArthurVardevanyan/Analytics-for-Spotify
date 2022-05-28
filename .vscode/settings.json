@@ -13,6 +13,8 @@
         "anyuid",
         "automount",
         "buildah",
+        "clusterinterceptors",
+        "eventlisteners",
         "kubectl",
         "kubernetes",
         "Kustomization",
@@ -20,10 +22,15 @@
         "loadbalancers",
         "nodeports",
         "openshift",
+        "pipelineruns",
+        "resourcetemplates",
         "SAST",
         "seccomp",
         "securitycontextconstraints",
         "Tekton",
-        "traefik"
+        "tokenreviews",
+        "traefik",
+        "triggerbindings",
+        "triggertemplates"
     ],
 }

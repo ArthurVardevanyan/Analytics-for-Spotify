@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: test
+  name: unit-test
   namespace: analytics-for-spotify
 spec:
   workspaces:
@@ -18,7 +18,7 @@ spec:
         - name: MARIADB_DATABASE
           value: spotify
   steps:
-    - name: test
+    - name: unit-test
       image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify-unit-test:latest"
       env:
         - name: WORKSPACE_DATA_PATH
