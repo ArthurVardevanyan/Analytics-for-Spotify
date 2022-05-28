@@ -41,6 +41,8 @@ spec:
       params:
         - name: url
           value: $(params.git-url)
+        - name: revision
+          value: $(params.git-commit)
       workspaces:
         - name: output
           workspace: data
@@ -70,6 +72,19 @@ spec:
       workspaces:
         - name: source
           workspace: data
+
+    - name: deploy
+      runAfter:
+        - build-image
+      taskRef:
+        name: deploy
+        kind: task
+      workspaces:
+        - name: data
+          workspace: data
+      params:
+        - name: git-commit
+          value: $(params.git-commit)
 
   finally:
     - name: git-success

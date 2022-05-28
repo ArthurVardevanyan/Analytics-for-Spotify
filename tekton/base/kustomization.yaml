@@ -3,7 +3,9 @@ kind: Kustomization
 namespace: analytics-for-spotify
 resources:
   - unit-test.yaml
+  - deployment.yaml
   - pipeline.yaml
+  - pipeline-sa.yaml
   - rbac.yaml
   - triggers/event-listener.yaml
   - triggers/rbac.yaml
