@@ -4,7 +4,6 @@ resources:
   # - namespace.yaml
   # - resource-quota.yaml
   # - limit-range.yaml
-  - pipeline-sa.yaml
   - secret.yaml
   - service.yaml
   - deployment.yaml

@@ -1,0 +1,55 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: unit-test
+  namespace: analytics-for-spotify
+spec:
+  workspaces:
+    - name: data
+
+  sidecars:
+    - image: mariadb:latest
+      name: mariadb
+      resources:
+        requests:
+          memory: 125Mi
+          cpu: 100m
+        limits:
+          memory: 250Mi
+          cpu: 200m
+      ports:
+        - containerPort: 3306
+      env:
+        - name: MARIADB_ROOT_PASSWORD
+          value: spotify
+        - name: MARIADB_DATABASE
+          value: spotify
+  steps:
+    - name: unit-test
+      image: "registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify-unit-test:latest"
+      env:
+        - name: WORKSPACE_DATA_PATH
+          value: $(workspaces.data.path)
+        - name: DB_HOST
+          value: "127.0.0.1"
+        - name: DATABASE
+          value: spotify
+        - name: DB_USER
+          value: root
+        - name: DB_PASSWORD
+          value: spotify
+        - name: TEST
+          value: test
+      script: |
+        #!/bin/bash
+
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        echo "Waiting for Database to Start"
+        sleep 25
+        cd $(workspaces.data.path)
+
+        coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+        coverage report -m

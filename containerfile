@@ -2,8 +2,9 @@
 
 # Base OS & Dependencies
 FROM python:3.9-slim
-RUN apt-get update
-RUN apt-get install -y apache2 libapache2-mod-wsgi-py3 libmariadb-dev gcc
+RUN apt-get update && apt-get install -y apache2 libapache2-mod-wsgi-py3 libmariadb-dev gcc && \
+	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Custom Apache Logs
 RUN echo 'LogFormat "%{%a %b %d %H:%M:%S %Y}t %H %m %U" customLog' >> /etc/apache2/apache2.conf

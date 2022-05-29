@@ -9,7 +9,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: "Host(`<URL>`)"
+    - match: "Host(`spotify.<path:secret/data/homelab/domain#url>`)"
       kind: Rule
       services:
         - name: analytics-for-spotify
