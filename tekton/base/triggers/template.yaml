@@ -37,4 +37,4 @@ spec:
           - name: git-commit
             value: $(tt.params.git-commit)
           - name: IMAGE
-            value: registry.arthurvardevanyan.com/apps/analytics-for-spotify:$(tt.params.git-commit)
+            value: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:$(tt.params.git-commit)

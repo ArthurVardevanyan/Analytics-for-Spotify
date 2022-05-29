@@ -13,7 +13,7 @@ spec:
 
   steps:
     - name: deploy
-      image: "registry.arthurvardevanyan.com/homelab/toolbox:latest"
+      image: "registry.<path:secret/data/homelab/domain#url>/homelab/toolbox:latest"
       env:
         - name: SHA
           value: $(params.git-commit)
@@ -33,45 +33,15 @@ spec:
         set -o nounset
         set -o pipefail
 
+        export TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+        export URL=<path:secret/data/homelab/domain#url>
 
-        export URL=arthurvardevanyan.com
-
-        export CI_JOB_JWT="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+        export AVP_TYPE=vault
+        export AVP_AUTH_TYPE=token
         export VAULT_ADDR=https://vault.${URL}
-        export VAULT_TOKEN="$(vault write -field=token auth/analytics-for-spotify/login role=analytics-for-spotify jwt=${CI_JOB_JWT})"
+        export VAULT_TOKEN="$(vault write -field=token auth/analytics-for-spotify/login role=analytics-for-spotify jwt=${TOKEN})"
 
-        CI_REGISTRY_IMAGE=registry.arthurvardevanyan.com/apps/analytics-for-spotify
-        CI_COMMIT_SHA=${SHA}
+        sed -i "s/<VERSION>/${SHA}/g" ${WORKSPACE_DATA_PATH}/kubernetes/base/deployment.yaml
 
-        CLIENT_ID="$(vault kv get -field=client_id secret/spotify/spotify)"
-        CLIENT_SECRET="$(vault kv get -field=client_secret secret/spotify/spotify)"
-        REDIRECT_URL="$(vault kv get -field=redirect_url secret/spotify/spotify)"
-
-        DB_HOST="$(vault kv get -field=db_host secret/spotify/database)"
-        DATABASE="$(vault kv get -field=database secret/spotify/database)"
-        DB_USER="$(vault kv get -field=db_user secret/spotify/database)"
-        DB_PASSWORD="$(vault kv get -field=db_password secret/spotify/database)"
-
-        sed -i "s,<IMAGE>,${CI_REGISTRY_IMAGE},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/deployment.yaml
-        sed -i "s/<VERSION>/${CI_COMMIT_SHA}/g" ${WORKSPACE_DATA_PATH}/kubernetes/base/deployment.yaml
-
-        CLIENT_ID=$(echo -n ${CLIENT_ID} | base64 -w 0 | tr -d \\n)
-        CLIENT_SECRET=$(echo -n ${CLIENT_SECRET} | base64 -w 0 | tr -d \\n)
-        REDIRECT_URL=$(echo -n ${REDIRECT_URL} | base64 -w 0 | tr -d \\n)
-        DB_HOST=$(echo -n ${DB_HOST} | base64 -w 0 | tr -d \\n)
-        DATABASE=$(echo -n ${DATABASE} | base64 -w 0 | tr -d \\n)
-        DB_USER=$(echo -n ${DB_USER} | base64 -w 0 | tr -d \\n)
-        DB_PASSWORD=$(echo -n ${DB_PASSWORD} | base64 -w 0 | tr -d \\n)
-        sed -i "s,<CLIENT_ID>,${CLIENT_ID},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-        sed -i "s/<CLIENT_SECRET>/${CLIENT_SECRET}/g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-        sed -i "s,<REDIRECT_URL>,${REDIRECT_URL},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-        sed -i "s,<DB_HOST>,${DB_HOST},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-        sed -i "s,<DATABASE>,${DATABASE},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-        sed -i "s,<DB_USER>,${DB_USER},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-        sed -i "s,<DB_PASSWORD>,${DB_PASSWORD},g" ${WORKSPACE_DATA_PATH}/kubernetes/base/secret.yaml
-
-        URL=spotify.arthurvardevanyan.com
-        sed -i "s/<URL>/${URL}/g" ${WORKSPACE_DATA_PATH}/kubernetes/overlays/k3s/traefik.yaml
-        sed -i "s/<URL>/${URL}/g" ${WORKSPACE_DATA_PATH}/kubernetes/overlays/okd/route.yaml
-
-        kubectl apply -k  ${WORKSPACE_DATA_PATH}/kubernetes/overlays/okd
+        kubectl kustomize ${WORKSPACE_DATA_PATH}/kubernetes/overlays/okd | \
+          argocd-vault-plugin generate - | kubectl apply -f -

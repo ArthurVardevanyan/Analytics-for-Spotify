@@ -26,7 +26,7 @@ spec:
           value: spotify
   steps:
     - name: unit-test
-      image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify-unit-test:latest"
+      image: "registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify-unit-test:latest"
       env:
         - name: WORKSPACE_DATA_PATH
           value: $(workspaces.data.path)
