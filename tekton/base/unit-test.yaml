@@ -10,6 +10,13 @@ spec:
   sidecars:
     - image: mariadb:latest
       name: mariadb
+      resources:
+        requests:
+          memory: 125Mi
+          cpu: 100m
+        limits:
+          memory: 250Mi
+          cpu: 200m
       ports:
         - containerPort: 3306
       env:
@@ -41,7 +48,7 @@ spec:
         set -o pipefail
 
         echo "Waiting for Database to Start"
-        sleep 15
+        sleep 25
         cd $(workspaces.data.path)
 
         coverage run --source='./monitoringBackend,./webBackend'  manage.py test
