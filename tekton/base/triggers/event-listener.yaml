@@ -1,0 +1,26 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: webhook
+  namespace: analytics-for-spotify
+spec:
+  triggers:
+    - name: webhook
+      bindings:
+        - ref: git-push
+      template:
+        ref: trigger-template
+  resources:
+    kubernetesResource:
+      spec:
+        template:
+          spec:
+            serviceAccountName: pipeline-sa
+            containers:
+              - resources:
+                  requests:
+                    cpu: 25m
+                    memory: 25Mi
+                  limits:
+                    cpu: 50m
+                    memory: 50Mi

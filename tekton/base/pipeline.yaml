@@ -1,0 +1,132 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: analytics-for-spotify
+  namespace: analytics-for-spotify
+spec:
+  params:
+    - name: IMAGE
+      description: Reference of the image buildah will produce.
+    - name: git-name
+      type: string
+    - name: git-commit
+      type: string
+    - name: git-url
+      description: Repository URL to clone from.
+
+  workspaces:
+    - name: data
+
+  tasks:
+    - name: git-pending
+      taskRef:
+        kind: ClusterTask
+        name: github-set-status
+      params:
+        - name: REPO_FULL_NAME
+          value: $(params.git-name)
+        - name: SHA
+          value: $(params.git-commit)
+        - name: DESCRIPTION
+          value: "Pipeline Running"
+        - name: CONTEXT
+          value: "Tekton CI/CD"
+        - name: STATE
+          value: "pending"
+
+    - name: git-clone
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-commit)
+      workspaces:
+        - name: output
+          workspace: data
+
+    - name: unit-test
+      runAfter:
+        - git-pending
+        - git-clone
+      taskRef:
+        name: unit-test
+        kind: task
+      workspaces:
+        - name: data
+          workspace: data
+
+    - name: build-image
+      runAfter:
+        - git-pending
+        - git-clone
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+        - name: DOCKERFILE
+          value: ./containerfile
+      workspaces:
+        - name: source
+          workspace: data
+
+    - name: deploy
+      runAfter:
+        - unit-test
+        - build-image
+      taskRef:
+        name: deploy
+        kind: task
+      workspaces:
+        - name: data
+          workspace: data
+      params:
+        - name: git-commit
+          value: $(params.git-commit)
+
+  finally:
+    - name: git-success
+      retries: 0
+      when:
+        - input: "$(tasks.status)"
+          operator: in
+          values: ["Succeeded", "Completed"]
+      taskRef:
+        kind: ClusterTask
+        name: github-set-status
+      params:
+        - name: REPO_FULL_NAME
+          value: $(params.git-name)
+        - name: SHA
+          value: $(params.git-commit)
+        - name: DESCRIPTION
+          value: "Completed Successfully"
+        - name: CONTEXT
+          value: "Tekton CI/CD"
+        - name: STATE
+          value: "success"
+
+    - name: git-failure
+      retries: 0
+      when:
+        - input: "$(tasks.status)"
+          operator: in
+          values: ["Failed"]
+      taskRef:
+        kind: ClusterTask
+        name: github-set-status
+      params:
+        - name: REPO_FULL_NAME
+          value: $(params.git-name)
+        - name: SHA
+          value: $(params.git-commit)
+        - name: DESCRIPTION
+          value: "Pipeline Failed"
+        - name: CONTEXT
+          value: "Tekton CI/CD"
+        - name: STATE
+          value: "error"
