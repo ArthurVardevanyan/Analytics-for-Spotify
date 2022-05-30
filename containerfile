@@ -1,7 +1,9 @@
 # WIP, TESTING ONLY, DO NOT DEPLOY
 
 # Base OS & Dependencies
-FROM python:3.9-slim
+# FROM python:3.9-slim
+FROM registry.arthurvardevanyan.com/apps/analytics-for-spotify:base
+
 RUN apt-get update && apt-get install -y apache2 libapache2-mod-wsgi-py3 libmariadb-dev gcc && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

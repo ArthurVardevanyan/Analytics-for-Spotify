@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: analytics-for-spotify
 resources:
+  - image-build-pipeline.yaml
   - unit-test.yaml
   - pipeline.yaml
   - pipeline-sa.yaml
