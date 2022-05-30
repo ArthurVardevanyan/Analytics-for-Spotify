@@ -80,13 +80,15 @@ spec:
         - build-image
       taskRef:
         name: deploy
-        kind: task
+        kind: ClusterTask
       workspaces:
         - name: data
           workspace: data
       params:
         - name: git-commit
           value: $(params.git-commit)
+        - name: vault-path
+          value: analytics-for-spotify
 
   finally:
     - name: git-success
