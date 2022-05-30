@@ -4,6 +4,9 @@
 # FROM python:3.9-slim
 FROM registry.arthurvardevanyan.com/apps/analytics-for-spotify:base
 
+ARG quay_expiration=24h
+LABEL quay.expires-after=${quay_expiration}
+
 RUN apt-get update && apt-get install -y apache2 libapache2-mod-wsgi-py3 libmariadb-dev gcc && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
