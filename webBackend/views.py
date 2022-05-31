@@ -156,7 +156,7 @@ def songs(request):
     INNER JOIN songs ON songs.id=songArtists.songID \
     INNER JOIN artists ON artists.id = songArtists.artistID \
 	INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user = '"+spotifyID + "'\
-    GROUP BY songs.id"
+    GROUP BY songs.id, songs.name, playcount.playCount"
     cursor = connection.cursor()
     cursor.execute(query)
     json_data = dictfetchall(cursor)
