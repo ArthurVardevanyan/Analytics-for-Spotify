@@ -8,6 +8,7 @@ spec:
     - name: git-url
     - name: git-name
     - name: git-commit
+    - name: git-ref
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
       kind: PipelineRun
@@ -36,5 +37,7 @@ spec:
             value: $(tt.params.git-name)
           - name: git-commit
             value: $(tt.params.git-commit)
+          - name: git-ref
+            value: $(tt.params.git-ref)
           - name: IMAGE
             value: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:$(tt.params.git-commit)

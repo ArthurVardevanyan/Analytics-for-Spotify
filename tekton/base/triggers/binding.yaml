@@ -11,3 +11,5 @@ spec:
       value: $(body.repository.full_name)
     - name: git-commit
       value: $(body.head_commit.id)
+    - name: git-ref
+      value: $(body.ref)
