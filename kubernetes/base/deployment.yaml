@@ -64,10 +64,10 @@ spec:
           resources:
             limits:
               cpu: 150m
-              memory: 250M
+              memory: 250Mi
             requests:
               cpu: 50m
-              memory: 175M
+              memory: 125Mi
           env:
             - name: CLIENT_ID
               valueFrom:

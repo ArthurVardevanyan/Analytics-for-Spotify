@@ -5,7 +5,7 @@ tkn -n analytics-for-spotify pipeline start image-build -s pipeline-sa \
   --param="IMAGE=registry.arthurvardevanyan.com/apps/analytics-for-spotify:base" \
   --param="git-url=https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify.git" \
   --param="git-commit=$(git log --format=oneline | cut -d ' ' -f 1 | head -n 1)" \
-  --param="DOCKERFILE=./docker/containerfile" \
+  --param="DOCKERFILE=./container/containerfile" \
   --workspace=name=data,volumeClaimTemplateFile=tekton/base/pvc.yaml \
   --showlog
 
