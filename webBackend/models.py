@@ -23,8 +23,8 @@ class Workers(models.Model):
 class Users(models.Model):
     user = models.CharField(primary_key=True, max_length=128)
     enabled = models.IntegerField()
-    statussong = models.IntegerField(db_column='statusSong')
-    statusplaylist = models.IntegerField(db_column='statusPlaylist')
+    statusSong = models.IntegerField(db_column='statusSong')
+    statusPlaylist = models.IntegerField(db_column='statusPlaylist')
     cache = models.TextField()
     realtime = models.IntegerField(db_column='realTime')
     worker = models.ForeignKey(
@@ -47,14 +47,14 @@ class Artists(models.Model):
 class Songs(models.Model):
     id = models.CharField(primary_key=True, max_length=22)
     name = models.TextField()
-    tracklength = models.BigIntegerField(db_column='trackLength')
+    trackLength = models.BigIntegerField(db_column='trackLength')
 
     class Meta:
         managed = True
         db_table = 'songs'
 
 
-class Songartists(models.Model):
+class SongArtists(models.Model):
 
     songID = models.OneToOneField(
         'Songs', models.RESTRICT, db_column='songID', primary_key=True)
@@ -67,23 +67,23 @@ class Songartists(models.Model):
         unique_together = (('songID', 'artistID'),)
 
 
-class Playcount(models.Model):
+class PlayCount(models.Model):
     user = models.ForeignKey(
         'Users', models.RESTRICT, db_column='user')
-    songid = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
-    playcount = models.IntegerField(db_column='playCount', default=1)
+    songID = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
+    playCount = models.IntegerField(db_column='playCount', default=1)
 
     class Meta:
         managed = True
-        db_table = 'playcount'
-        unique_together = (('user', 'songid'),)
+        db_table = 'playCount'
+        unique_together = (('user', 'songID'),)
 
 
-class Listeninghistory(models.Model):
+class ListeningHistory(models.Model):
     user = models.ForeignKey('Users', models.RESTRICT, db_column='user')
-    songid = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
+    songID = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')
     timestamp = models.BigIntegerField()
-    timeplayed = models.TextField(db_column='timePlayed')
+    timePlayed = models.TextField(db_column='timePlayed')
 
     class Meta:
         managed = True
@@ -94,14 +94,14 @@ class Listeninghistory(models.Model):
 class Playlists(models.Model):
     playlistID = models.CharField(max_length=128, primary_key=True)
     name = models.CharField(max_length=128)
-    lastupdated = models.TextField(db_column='lastUpdated')
+    lastUpdated = models.TextField(db_column='lastUpdated')
 
     class Meta:
         managed = True
         db_table = 'playlists'
 
 
-class Playlistsusers(models.Model):
+class PlaylistsUsers(models.Model):
     user = models.ForeignKey('Users', models.RESTRICT, db_column='user')
     playlistID = models.ForeignKey(
         'Playlists', models.RESTRICT, to_field='playlistID', db_column='playlistID')
@@ -112,9 +112,9 @@ class Playlistsusers(models.Model):
         unique_together = (('playlistID', 'user'),)
 
 
-class Playlistsongs(models.Model):
+class PlaylistSongs(models.Model):
 
-    songstatus = models.TextField(db_column='songStatus')
+    songStatus = models.TextField(db_column='songStatus')
     playlistID = models.ForeignKey(
         'Playlists', models.RESTRICT, to_field='playlistID', db_column='playlistID')
     songID = models.ForeignKey('Songs', models.RESTRICT, db_column='songID')

@@ -42,14 +42,14 @@ class TestCase(TestCase):
 
     @patch('webBackend.credentials.accessToken')
     @patch('webBackend.credentials.getUser')
-    def test_loginResponce(self, mock_Token, mock_User):
+    def test_loginResponse(self, mock_Token, mock_User):
         mock_Token.return_value = "testUser"
         mock_User.return_value = {"expires_in": 3600}
         response = self.client.get(
             '/analytics/loginResponse?code=testCode', follow=True)
         self.assertContains(response, "url=/spotify/analytics.html")
 
-    def test_loginResponce_noCode(self):
+    def test_loginResponse_noCode(self):
         response = self.client.get('/analytics/loginResponse', follow=True)
         self.assertContains(response, "url=/spotify/index.html")
 

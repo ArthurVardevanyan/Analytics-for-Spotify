@@ -3,8 +3,10 @@ from datetime import datetime, timezone
 from django.db import connection
 import sys
 from random import randint
+import time
 import logging
 import sys
+import webBackend.models as models
 sys.path.append("..")
 
 log = logging.getLogger(__name__)
@@ -14,20 +16,14 @@ def scanWorkers(workerID):
     with connection.cursor() as cursor:
         utc_time = datetime.now()
         currentEpoch = int(utc_time.astimezone().timestamp())
-        time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
-        sql = "UPDATE workers SET lastUpdated = " + \
-            str(currentEpoch) + " WHERE worker = " + str(workerID)
-        cursor.execute(sql)
-        sql = "UPDATE workers SET updatedTime = '" + \
-            str(time) + "' WHERE worker = " + str(workerID)
-        cursor.execute(sql)
+        models.Workers.objects.filter(worker=str(workerID)).update(
+            lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
+        time.sleep(1)
         cursor.execute("SELECT * from workers")
         count = 0
         for worker in cursor:
             if currentEpoch - worker[1] > 90:
-                from webBackend.models import Workers
-                Workers.objects.filter(worker=str(worker[0])).delete()
-
+                models.Workers.objects.filter(worker=str(worker[0])).delete()
             else:
                 count += 1
     return count
@@ -110,14 +106,14 @@ def add_song_artists(spotify, cursor):
 
 
 def add_song_count(user, spotify, cursor, count=1):
-    playCount = "SELECT `playCount` from `playcount` WHERE songID = '" + \
+    playCount = "SELECT `playCount` from `playCount` WHERE songID = '" + \
         spotify.get("item").get("id") + "' and  user = '" + user + "'"
     cursor.execute(playCount)
     playCount = -1
     for id in cursor:
         playCount = int(id[0])
     if playCount < 0:
-        add_song = ("INSERT IGNORE INTO playcount "
+        add_song = ("INSERT IGNORE INTO playCount "
                     "(user,songID,playCount) "
                     "VALUES (%s, %s, %s)")
         data_song = (
@@ -129,7 +125,7 @@ def add_song_count(user, spotify, cursor, count=1):
         add_song_artists(spotify, cursor)  # Function
     else:
         playCount = playCount + count
-        add_song = ("UPDATE playcount SET playCount = '" + str(playCount) +
+        add_song = ("UPDATE playCount SET playCount = '" + str(playCount) +
                     "' WHERE songID = '" + spotify.get("item").get("id") + "' and  user = '" + user + "'")
         cursor.execute(add_song)
 

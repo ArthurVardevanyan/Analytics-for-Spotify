@@ -13,12 +13,18 @@ spec:
       type: string
     - name: git-url
       description: Repository URL to clone from.
+    - name: git-ref
+      type: string
 
   workspaces:
     - name: data
 
   tasks:
     - name: git-pending
+      when:
+        - input: "$(params.git-ref)"
+          operator: in
+          values: ["refs/heads/production", "refs/heads/develop"]
       taskRef:
         kind: ClusterTask
         name: github-set-status
@@ -78,6 +84,10 @@ spec:
       runAfter:
         - unit-test
         - build-image
+      when:
+        - input: "$(params.git-ref)"
+          operator: in
+          values: ["refs/heads/production", "refs/heads/develop"]
       taskRef:
         name: deploy
         kind: ClusterTask
@@ -97,6 +107,9 @@ spec:
         - input: "$(tasks.status)"
           operator: in
           values: ["Succeeded", "Completed"]
+        - input: "$(params.git-ref)"
+          operator: in
+          values: ["refs/heads/production", "refs/heads/develop"]
       taskRef:
         kind: ClusterTask
         name: github-set-status
@@ -118,6 +131,9 @@ spec:
         - input: "$(tasks.status)"
           operator: in
           values: ["Failed"]
+        - input: "$(params.git-ref)"
+          operator: in
+          values: ["refs/heads/production", "refs/heads/develop"]
       taskRef:
         kind: ClusterTask
         name: github-set-status
