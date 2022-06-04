@@ -16,9 +16,9 @@ def songIdUpdater(user):
 
 def getHistory(connection, user):
     with connection.cursor() as cursor:
-        query = 'SELECT played1.timestamp, songs.ID, songs.name, playcount.playCount, user\
+        query = 'SELECT played1.timestamp, songs.ID, songs.name, playCount.playCount, user\
                 FROM songs\
-                INNER JOIN playcount ON playcount.songID = songs.id\
+                INNER JOIN playCount ON playCount.songID = songs.id\
                 LEFT JOIN (\
                 SELECT `songID`, `timestamp`\
                 FROM(SELECT `songID`, `timestamp`,\
@@ -90,7 +90,7 @@ def databaseUpdate(history, connection, user):
         for i in range(0, len(song)-1):
             oldIDS.append(song[i][1])
         with connection.cursor() as cursor:
-            query = "UPDATE `playcount` SET `playCount`=" + \
+            query = "UPDATE `playCount` SET `playCount`=" + \
                 str(newPlayCount) + " WHERE `songID` ='" + \
                 newID + "' AND `user` ='" + user + "'"
             cursor.execute(query)
@@ -98,7 +98,7 @@ def databaseUpdate(history, connection, user):
                 query = "UPDATE `listeningHistory` SET `songID`='" + \
                     newID + "' WHERE `songID` ='" + item + "' AND `user` ='" + user + "'"
                 cursor.execute(query)
-                query = "DELETE FROM `playcount` WHERE `songID` ='" + \
+                query = "DELETE FROM `playCount` WHERE `songID` ='" + \
                     item + "' AND `user` ='" + user + "'"
                 cursor.execute(query)
                 query = "DELETE IGNORE FROM `songArtists` WHERE `songID` ='" + item + "'"
