@@ -21,9 +21,10 @@ def scanWorkers(workerID):
         time.sleep(1)
         cursor.execute("SELECT * from workers")
         count = 0
-        for worker in cursor:
-            if currentEpoch - worker[1] > 90:
-                models.Workers.objects.filter(worker=str(worker[0])).delete()
+        for worker in models.Workers.objects.all():
+            if currentEpoch - worker.lastUpdated > 90:
+                models.Workers.objects.filter(
+                    worker=str(worker.worker)).delete()
             else:
                 count += 1
     return count
@@ -34,19 +35,10 @@ def createWorker():
     workerID = randint(10**(9-1), (10**9)-1)
     utc_time = datetime.now()
     currentEpoch = int(utc_time.astimezone().timestamp())
-    time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+    currentTime = utc_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    add_worker = ("INSERT INTO workers"
-                  "(worker,lastUpdated,creationTime,updatedTime)"
-                  "VALUES (%s, %s, %s, %s)")
-    data_worker = (
-        workerID,
-        currentEpoch,
-        time,
-        time
-    )
-    with connection.cursor() as cursor:
-        cursor.execute(add_worker, data_worker)
+    models.Workers(worker=workerID, lastUpdated=currentEpoch,
+                   creationTime=currentTime, updatedTime=currentTime).save()
 
     count = scanWorkers(workerID)
     return workerID, count

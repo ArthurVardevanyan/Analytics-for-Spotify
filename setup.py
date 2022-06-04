@@ -12,7 +12,7 @@ def extractNode():
         tar.extractall("webFrontend/")
 
 
-def dockerSetup():
+def containerSetup():
     CLIENT = os.environ.get('CLIENT_ID')
     SECRET = os.environ.get('CLIENT_SECRET')
     R_URL = os.environ.get('REDIRECT_URL')
@@ -93,7 +93,7 @@ def setup(db, API):
 def main():
     print("*Disclaimer*, DO NOT USE WITH PUBLIC ACCESS")
     if(os.environ.get('DOCKER')):
-        dockerSetup()
+        containerSetup()
     else:
         extractNode()
         CLIENT = input("Enter Spotify Client ID    :")

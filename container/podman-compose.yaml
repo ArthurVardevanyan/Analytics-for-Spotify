@@ -1,0 +1,54 @@
+# Test DB for Local Testing
+# podman-compose -f container/podman-compose.yaml up -d
+# rm container/podman-compose.yaml && container/podman container-compose.yaml
+# podman-compose down
+# podman-compose pull
+# podman-compose --compatibility up --detach  --remove-orphans
+
+#.env
+# DB_HOST=127.0.0.1
+# DATABASE=spotify
+# DB_USER=root
+# DB_PASSWORD=spotify
+# DEBUG=True
+
+version: "3"
+
+services:
+  mariadb:
+    container_name: mariadb
+    image: docker.io/mariadb:latest
+    ports:
+      - 3306:3306
+      - "8081:8081"
+    environment:
+      MYSQL_ROOT_PASSWORD: "spotify"
+      MARIADB_DATABASE: "spotify"
+    volumes:
+      - /mnt/mariadb:/var/lib/mysql
+
+  phpMyAdmin:
+    container_name: phpMyAdmin
+    image: docker.io/bitnami/phpmyadmin
+    restart: always
+    network_mode: "service:mariadb"
+    environment:
+      DATABASE_HOST: "127.0.0.1"
+      APACHE_HTTP_PORT_NUMBER: "8081"
+
+  # analytics-for-spotify:
+  #   container_name: analytics-for-spotify
+  #   hostname: analytics-for-spotify
+  #   ports:
+  #     - "8080:8080"
+  #   env_file: .env
+  #   image: ${REPOSITORY}
+  #   environment:
+  #     - DOCKER=YES
+  #     - CLIENT_ID=${CLIENT_ID}
+  #     - CLIENT_SECRET=${CLIENT_SECRET}
+  #     - REDIRECT_URL=${REDIRECT_URL}
+  #     - DB_HOST=${DB_HOST}
+  #     - DATABASE=${DATABASE}
+  #     - DB_USER=${DB_USER}
+  #     - DB_PASSWORD=${DB_PASSWORD}

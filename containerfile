@@ -27,7 +27,7 @@ RUN sed -i "s,#WSGISocketPrefix /var/run/apache2/,WSGISocketPrefix /dev/shm/apac
 
 # Ports
 EXPOSE 8080
-COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY container/000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN sed -i "s,80,8080,g" /etc/apache2/ports.conf
 
 # Non Root User Settings
@@ -48,5 +48,5 @@ RUN chown -R 10033:10033 /home/www/analytics-for-spotify/
 
 # Entry Point
 USER 10033
-ENTRYPOINT ["/home/www/analytics-for-spotify/docker/startup.sh"]
+ENTRYPOINT ["/home/www/analytics-for-spotify/container/startup.sh"]
 CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]
