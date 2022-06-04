@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from django.db import connection
 import sys
 from random import randint
-import time
 import logging
 import sys
 import webBackend.models as models
@@ -13,20 +12,17 @@ log = logging.getLogger(__name__)
 
 
 def scanWorkers(workerID):
-    with connection.cursor() as cursor:
-        utc_time = datetime.now()
-        currentEpoch = int(utc_time.astimezone().timestamp())
-        models.Workers.objects.filter(worker=str(workerID)).update(
-            lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
-        time.sleep(1)
-        cursor.execute("SELECT * from workers")
-        count = 0
-        for worker in models.Workers.objects.all():
-            if currentEpoch - worker.lastUpdated > 90:
-                models.Workers.objects.filter(
-                    worker=str(worker.worker)).delete()
-            else:
-                count += 1
+    utc_time = datetime.now()
+    currentEpoch = int(utc_time.astimezone().timestamp())
+    models.Workers.objects.filter(worker=str(workerID)).update(
+        lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
+    count = 0
+    for worker in models.Workers.objects.all():
+        if currentEpoch - worker.lastUpdated > 90:
+            models.Workers.objects.filter(
+                worker=str(worker.worker)).delete()
+        else:
+            count += 1
     return count
 
 
