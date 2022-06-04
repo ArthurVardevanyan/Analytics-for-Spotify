@@ -5,12 +5,10 @@ from monitoringBackend.scripts import songIdUpdater
 from webBackend.credentials import refresh_token as authorize
 import requests
 import time
-import _thread
 import threading
 from datetime import datetime, timezone
 import os
 from django.db import connection
-from _datetime import timedelta
 import math
 import sys
 sys.path.append("..")
@@ -238,7 +236,7 @@ def historySpotify(user):
                     response = response.json()
                     query = "SELECT id,timestamp,timePlayed,songID,user FROM `listeningHistory`  where user ='" + user + \
                         "' ORDER BY `listeningHistory`.`timePlayed`  DESC  LIMIT 50"
-                    listeningHistoy = []
+                    listeningHistory = []
                     with connection.cursor() as cursor:
                         cursor.execute(query)
                         listenTemp = []

@@ -123,15 +123,15 @@ def deleteUser(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    models.Listeninghistory.objects.filter(user=spotifyID).delete()
-    models.Playcount.objects.filter(user=spotifyID).delete()
-    models.Playlistsusers.objects.filter(user=spotifyID).delete()
+    models.ListeningHistory.objects.filter(user=spotifyID).delete()
+    models.PlayCount.objects.filter(user=spotifyID).delete()
+    models.PlaylistsUsers.objects.filter(user=spotifyID).delete()
     models.Users.objects.filter(user=spotifyID).delete()
     url = '<meta http-equiv="Refresh" content="0; url=/spotify"/>'
     return HttpResponse(url, content_type="text/html")
 
 
-def dictfetchall(cursor):
+def dictFetchAll(cursor):
     # https://stackoverflow.com/a/58969129
     columns = [col[0] for col in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -145,21 +145,21 @@ def listeningHistory(request):
     WHERE listeningHistory.user = '"+spotifyID + "' ORDER BY listeningHistory.id"
     cursor = connection.cursor()
     cursor.execute(query)
-    return HttpResponse(json.dumps(dictfetchall(cursor)), content_type="application/json")
+    return HttpResponse(json.dumps(dictFetchAll(cursor)), content_type="application/json")
 
 
 def songs(request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    query = "SELECT songs.name as 'name', playcount.playCount, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
+    query = "SELECT songs.name as 'name', playCount.playCount, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
     INNER JOIN songs ON songs.id=songArtists.songID \
     INNER JOIN artists ON artists.id = songArtists.artistID \
-	INNER JOIN playcount ON playcount.songID = songs.id WHERE playcount.user = '"+spotifyID + "'\
-    GROUP BY songs.id, songs.name, playcount.playCount"
+	INNER JOIN playCount ON playCount.songID = songs.id WHERE playCount.user = '"+spotifyID + "'\
+    GROUP BY songs.id, songs.name, playCount.playCount"
     cursor = connection.cursor()
     cursor.execute(query)
-    json_data = dictfetchall(cursor)
+    json_data = dictFetchAll(cursor)
     return HttpResponse(json.dumps(json_data), content_type="application/json")
 
 
@@ -237,7 +237,7 @@ def playlistSongs(request):
     playlists = database.get_playlists(spotifyID)
     for playlist in playlists:
         playlistDict = {}
-        query = 'SELECT playlistSongs.songStatus, songs.name as "name", playcount.playCount,\
+        query = 'SELECT playlistSongs.songStatus, songs.name as "name", playCount.playCount,\
         DATE_FORMAT(played1.timePlayed, "%Y-%m-%d") as timePlayed,\
 	    GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"\
         FROM playlistSongs\
@@ -245,7 +245,7 @@ def playlistSongs(request):
         INNER JOIN songArtists ON songs.id=songArtists.songID\
         INNER JOIN artists ON artists.id=songArtists.artistID\
         INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID\
-        INNER JOIN playcount ON playcount.songID = songs.id\
+        INNER JOIN playCount ON playCount.songID = songs.id\
         LEFT JOIN (\
         		SELECT `songID`, `timePlayed`\
             	FROM(\
@@ -254,13 +254,13 @@ def playlistSongs(request):
        				FROM `listeningHistory`  )\
             		AS played0 WHERE `rn` = 1)\
                     AS played1 ON played1.songID = songs.id\
-        WHERE playcount.user  = "'+spotifyID + '"\
+        WHERE playCount.user  = "'+spotifyID + '"\
         and playlists.playlistID =  "'+playlist[0] + '"\
         GROUP BY songs.id \
         ORDER BY `timePlayed`  ASC'
         cursor = connection.cursor()
         cursor.execute(query)
-        json_data = dictfetchall(cursor)
+        json_data = dictFetchAll(cursor)
         playlistDict["id"] = playlist[0]
         playlistDict["name"] = playlist[1]
         playlistDict["lastUpdated"] = playlist[2]

@@ -106,14 +106,14 @@ def add_song_artists(spotify, cursor):
 
 
 def add_song_count(user, spotify, cursor, count=1):
-    playCount = "SELECT `playCount` from `playcount` WHERE songID = '" + \
+    playCount = "SELECT `playCount` from `playCount` WHERE songID = '" + \
         spotify.get("item").get("id") + "' and  user = '" + user + "'"
     cursor.execute(playCount)
     playCount = -1
     for id in cursor:
         playCount = int(id[0])
     if playCount < 0:
-        add_song = ("INSERT IGNORE INTO playcount "
+        add_song = ("INSERT IGNORE INTO playCount "
                     "(user,songID,playCount) "
                     "VALUES (%s, %s, %s)")
         data_song = (
@@ -125,7 +125,7 @@ def add_song_count(user, spotify, cursor, count=1):
         add_song_artists(spotify, cursor)  # Function
     else:
         playCount = playCount + count
-        add_song = ("UPDATE playcount SET playCount = '" + str(playCount) +
+        add_song = ("UPDATE playCount SET playCount = '" + str(playCount) +
                     "' WHERE songID = '" + spotify.get("item").get("id") + "' and  user = '" + user + "'")
         cursor.execute(add_song)
 
