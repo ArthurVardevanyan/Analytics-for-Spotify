@@ -107,7 +107,12 @@ window.onload = function () {
     url: "/analytics/authenticated/",
     method: "GET",
     success(data) {
-      if (data === "False") {
+      if (data !== "True") {
+        window.location.href = "/spotify/index.html";
+      }
+    },
+    error(data) {
+      if (data !== "True") {
         window.location.href = "/spotify/index.html";
       }
     },
