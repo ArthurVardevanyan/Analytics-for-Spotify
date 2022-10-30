@@ -21,6 +21,14 @@ log = logging.getLogger(__name__)
 
 
 def keepAlive():
+    """
+    Calls Thread Management Function on Loop
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
     global WORKER
     while(1 == 1):
         time.sleep(75)
@@ -28,6 +36,14 @@ def keepAlive():
 
 
 def keepAliveThread():
+    """
+    Calls Function that Spawns a KeepAlive Thread
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
     try:
         log.info("keepAlive")
         S = threading.Thread(target=keepAlive)
@@ -422,9 +438,20 @@ def songIdUpdaterChecker(user, once=0):
 
 
 def boot():
+    """
+    Boots the Spotify Monitoring Backend.
+    Assigns this Instance an UID into the Database
+    Logs some Startup Information
+
+    Parameters:
+        None
+    Returns:
+        bool: unused return
+    """
     with connection.cursor() as cursor:
         global WORKER
-        WORKER, workerCount = database.createWorker()
+        WORKER = database.createWorker()
+        workerCount = database.scanWorkers(WORKER)
         log.info("Worker ID: " + str(WORKER))
         log.info("Workers  : " + str(workerCount))
         cursor.execute("SELECT COUNT(*) from users where enabled = 1")
@@ -432,13 +459,21 @@ def boot():
         log.info("Users : " + str(users))
         usersPerWorker = int(math.ceil(users/workerCount))
         log.info("Users Per Worker: " + str(usersPerWorker))
-        return WORKER, workerCount, users
+        return 0
 
 
 def main():
+    """
+    Spotify Monitoring Backend EntryPoint
+
+    Parameters:
+        None
+    Returns:
+        bool: unused return
+    """
     boot()
     keepAliveThread()
-    return 1
+    return 0
 
 
 if __name__ == "__main__":

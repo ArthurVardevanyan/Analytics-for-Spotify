@@ -105,7 +105,7 @@ def spotifyAPI(CLIENT: str, SECRET: str, R_URL: str):
     return API
 
 
-def setup(db: MySQLdb.connections, API: dict):
+def setup(db: MySQLdb.Connection, API: dict):
     """
     If new Instance, sets up the database, and injects API Config.
     If existing Instance, updates the API Config.

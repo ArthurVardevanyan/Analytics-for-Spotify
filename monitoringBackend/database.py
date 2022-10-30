@@ -11,7 +11,16 @@ sys.path.append("..")
 log = logging.getLogger(__name__)
 
 
-def scanWorkers(workerID):
+def scanWorkers(workerID: int):
+    """
+    Boots the Spotify Monitoring Backend.
+    Assigns this Instance an UID into the Database
+
+    Parameters:
+        int: Current Worker ID
+    Returns:
+        int: Worker Count
+    """
     utc_time = datetime.now()
     currentEpoch = int(utc_time.astimezone().timestamp())
     models.Workers.objects.filter(worker=str(workerID)).update(
@@ -27,7 +36,15 @@ def scanWorkers(workerID):
 
 
 def createWorker():
+    """
+    Boots the Spotify Monitoring Backend.
+    Assigns this Instance an UID into the Database
 
+    Parameters:
+        None
+    Returns:
+        int: Current Worker ID
+    """
     workerID = randint(10**(9-1), (10**9)-1)
     utc_time = datetime.now()
     currentEpoch = int(utc_time.astimezone().timestamp())
@@ -36,8 +53,7 @@ def createWorker():
     models.Workers(worker=workerID, lastUpdated=currentEpoch,
                    creationTime=currentTime, updatedTime=currentTime).save()
 
-    count = scanWorkers(workerID)
-    return workerID, count
+    return workerID
 
 
 def user_status(user, detailed=0):
