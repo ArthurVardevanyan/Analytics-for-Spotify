@@ -1,6 +1,4 @@
 from django.db import connection
-import json
-from datetime import datetime, timezone
 import logging
 import sys
 sys.path.append("..")
@@ -8,13 +6,29 @@ sys.path.append("..")
 log = logging.getLogger(__name__)
 
 
-def songIdUpdater(user):
-    history = getHistory(connection, user)
+def songIdUpdater(user: str):
+    """
+    Song ID Updater Helper Function
+
+    Parameters:
+        user   (str): User to Scan
+    Returns:
+        list: List of Changed Song IDs
+    """
+    history = getHistory(user)
     history = duplicateFinder(history)
-    return databaseUpdate(history, connection, user)
+    return databaseUpdate(history, user)
 
 
-def getHistory(connection, user):
+def getHistory(user: str):
+    """
+    Get Song History of User
+
+    Parameters:
+        user   (str): User to Scan
+    Returns:
+        list: List of Changed Song IDs
+    """
     with connection.cursor() as cursor:
         query = 'SELECT played1.timestamp, songs.ID, songs.name, playCount.playCount, user\
                 FROM songs\
@@ -53,7 +67,15 @@ def getHistory(connection, user):
     return songHistory
 
 
-def duplicateFinder(history):
+def duplicateFinder(history: list):
+    """
+    Find Songs with Duplicate IDs
+
+    Parameters:
+        history   (list): Song History of User
+    Returns:
+        set: List of Song with Duplicate IDs
+    """
     history.sort(key=lambda i: i[5])
     newHistory = []
     for i in reversed(range(0, len(history))):
@@ -78,7 +100,16 @@ def duplicateFinder(history):
     return newHistory2
 
 
-def databaseUpdate(history, connection, user):
+def databaseUpdate(history: set, user: str):
+    """
+    Get Song History of User
+
+    Parameters:
+        set: List of Song with Duplicate IDs
+        user   (str): User to Scan
+    Returns:
+        list: List of updated songs.
+    """
     trimmedHistory = []
     for song in history:
         newPlayCount = 0
@@ -111,7 +142,7 @@ def databaseUpdate(history, connection, user):
 
 def main():
     # print(songIdUpdater(""))
-    return 1
+    return 0
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ def extractNode():
     Parameters:
         None
     Returns:
-        bool: unused return
+        int: unused return
     """
     with tarfile.open("webFrontend/node_modules.tar.xz", 'r') as tar:
         tar.extractall("webFrontend/")
@@ -36,7 +36,7 @@ def containerSetup():
         USER    (str)   : Database Username
         PASS    (str)   : Database Password
     Returns:
-        bool: unused return
+        int: unused return
     """
     CLIENT = os.environ.get('CLIENT_ID')
     SECRET = os.environ.get('CLIENT_SECRET')
@@ -115,7 +115,7 @@ def setup(db: MySQLdb.Connection, API: dict):
         API  (dict)   : Spotify API Configuration
 
     Returns:
-        bool: unused return
+        int: unused return
     """
     cursor = db.cursor()
     users = 'show tables like "users"'

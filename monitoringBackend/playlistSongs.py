@@ -8,7 +8,16 @@ sys.path.append("..")
 log = logging.getLogger(__name__)
 
 
-def main(user, playlist):
+def main(user: str, playlist: str):
+    """
+    Playlist Song Controller
+
+    Parameters:
+        user        (str): User ID
+        playlist    (str)   : Which Playlist to Insert Song Into
+    Returns:
+        bool: unused return
+    """
     logging.info("Checking for Playlist Songs: " +
                  str(user) + " " + str(playlist))
     playlist = playlist[0]
@@ -25,7 +34,7 @@ def main(user, playlist):
     playlistSections = []
     loop = True
     response = requests.get(url, headers=header).json()
-    database.add_playlist(user, playlist)
+    database.add_playlist(playlist)
     playlistSections.append(response.get("items"))
     if response.get("next") == None:
         loop = False
