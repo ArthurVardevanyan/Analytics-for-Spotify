@@ -1,5 +1,5 @@
-django
-django-cors-headers
-coverage
-requests
-mysqlclient
+django>=4.1.2
+django-cors-headers>=3.13.0
+coverage>=6.5.0
+requests>=2.28.1
+mysqlclient>=2.1.1

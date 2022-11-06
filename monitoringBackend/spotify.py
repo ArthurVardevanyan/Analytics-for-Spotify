@@ -7,7 +7,6 @@ import requests
 import time
 import threading
 from datetime import datetime, timezone
-import os
 from django.db import connection
 import math
 import sys
@@ -21,6 +20,14 @@ log = logging.getLogger(__name__)
 
 
 def keepAlive():
+    """
+    Calls Thread Management Function on Loop
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
     global WORKER
     while(1 == 1):
         time.sleep(75)
@@ -28,6 +35,14 @@ def keepAlive():
 
 
 def keepAliveThread():
+    """
+    Calls Function that Spawns a KeepAlive Thread
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
     try:
         log.info("keepAlive")
         S = threading.Thread(target=keepAlive)
@@ -36,7 +51,17 @@ def keepAliveThread():
         log.exception("keepAlive Thread Failure")
 
 
-def spawnThreads(workerCount):
+def spawnThreads(workerCount: int):
+    """
+    Spawn Monitoring Threads for Users.
+    Spawns Threads for Users currently not on any workers.
+
+    Parameters:
+        workerCount   (int): Worker Count
+
+    Returns:
+        int: unused return
+    """
     with connection.cursor() as cursor:
         global WORKER
         global KILL
@@ -67,10 +92,20 @@ def spawnThreads(workerCount):
                     songIdUpdaterThread(user)
                     time.sleep(5)
                     count += 1
-    return 1
+    return 0
 
 
-def killThreads(workerCount, user):
+def killThreads(workerCount: int, user: str):
+    """
+    Kills thread of current user if workers are out of balance.
+
+    Parameters:
+        workerCount   (int): Worker Count
+        user          (str): User ID
+
+    Returns:
+        int: unused return
+    """
     with connection.cursor() as cursor:
         global WORKER
         global KILL
@@ -98,7 +133,7 @@ def killThreads(workerCount, user):
                 else:
                     newThread.append(thread)
             THREADS = newThread
-            return 1
+            return 0
 
         if len(usersOnThisWorker) > usersPerWorker:
             log.info("Users On Worker : " + str(len(usersOnThisWorker)))
@@ -116,16 +151,37 @@ def killThreads(workerCount, user):
                 else:
                     newThread.append(thread)
             THREADS = newThread
-    return 1
+    return 0
 
 
-def update_status(user, status, value):
+def update_status(user: str, status: str, value: int):
+    """
+    Kills thread of current user if workers are out of balance.
+
+    Parameters:
+        user    (str): User ID
+        status  (str): Status Type: (statusPlaylist/statusSong)
+        value   (int): 0/1/2
+
+    Returns:
+        int: unused return
+    """
     with connection.cursor() as cursor:
         cursor.execute("UPDATE users SET  `" + status + "` = " +
                        str(value) + " where user ='" + user + "'")
+    return 0
 
 
-def playlistSongsChecker(user, once=0):
+def playlistSongsChecker(user: str, once: int = 0):
+    """
+    Monitors User's Inputted Playlists
+
+    Parameters:
+        user    (str): User ID
+        once    (str): Optional Flag to Run Once and Exit
+    Returns:
+        int: unused return
+    """
     update_status(user, "statusPlaylist", 0)
     time.sleep(15)
     previousDay = ""
@@ -159,9 +215,19 @@ def playlistSongsChecker(user, once=0):
         time.sleep(360)
         status = database.user_status(user)
     update_status(user, "statusPlaylist", 0)
+    return 0
 
 
-def playlistSongThread(user, once=0):
+def playlistSongThread(user: str, once: int = 0):
+    """
+    Incepts Thread for Monitoring User's Inputted Playlists
+
+    Parameters:
+        user    (str): User ID
+        once    (str): Optional Flag to Run Once and Exit
+    Returns:
+        int: unused return
+    """
     try:
         log.info("playlistSongThread: " + user)
         USC = threading.Thread(
@@ -173,9 +239,20 @@ def playlistSongThread(user, once=0):
         THREADS.append(thread)
     except:
         log.exception("Playlist Thread Failure")
+    return 0
 
 
-def SpotifyThread(user):
+def SpotifyThread(user: str):
+    """
+    Incepts Thread for monitoring Spotify User Playback History
+    Depending on Flag Defined in Database, either uses
+    History Mode, Realtime Mode, or Hybrid Mode.
+
+    Parameters:
+        user    (str): User ID
+    Returns:
+        int: unused return
+    """
     try:
         S = []
         if(user[5] == 1):
@@ -205,9 +282,18 @@ def SpotifyThread(user):
             THREADS.append(thread)
     except:
         log.exception("Song Thread Failure")
+    return 0
 
 
-def historySpotify(user):
+def historySpotify(user: str):
+    """
+    Incepts Thread for Monitoring User's Playback History using History Mode
+
+    Parameters:
+        user    (str): User ID
+    Returns:
+        int: unused return
+    """
     try:
         update_status(user, "statusSong", 0)
         time.sleep(10)
@@ -284,9 +370,19 @@ def historySpotify(user):
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
+    return 0
 
 
-def realTimeSpotify(user, hybrid):
+def realTimeSpotify(user: str, hybrid: bool):
+    """
+    Incepts Thread for Monitoring User's Playback History using RealTime Mode
+
+    Parameters:
+        user    (str): User ID
+        hybrid  (bool): Flag whether hybrid scanning mode is enabled or not.
+    Returns:
+        int: unused return
+    """
     try:
         update_status(user, "statusSong", 0)
         time.sleep(10)
@@ -380,9 +476,19 @@ def realTimeSpotify(user, hybrid):
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
+    return 0
 
 
-def songIdUpdaterThread(user, once=0):
+def songIdUpdaterThread(user: str, once: int = 0):
+    """
+    Incepts Thread for Updating Song IDs
+
+    Parameters:
+        user    (str): User ID
+        once    (str): Optional Flag to Run Once and Exit
+    Returns:
+        int: unused return
+    """
     try:
         log.info("songIdUpdaterThread: " + user[0])
         USC = threading.Thread(
@@ -396,7 +502,16 @@ def songIdUpdaterThread(user, once=0):
         log.exception("songIdUpdaterThread Thread Failure")
 
 
-def songIdUpdaterChecker(user, once=0):
+def songIdUpdaterChecker(user: str, once: int = 0):
+    """
+    Thread for Monitoring when SongIDs have changed from Spotify.
+
+    Parameters:
+        user    (str): User ID
+        once    (str): Optional Flag to Run Once and Exit
+    Returns:
+        int: unused return
+    """
     previousDay = ""
     status = database.user_status(user)
     time.sleep(15)
@@ -422,9 +537,20 @@ def songIdUpdaterChecker(user, once=0):
 
 
 def boot():
+    """
+    Boots the Spotify Monitoring Backend.
+    Assigns this Instance an UID into the Database
+    Logs some Startup Information
+
+    Parameters:
+        None
+    Returns:
+        int: unused return
+    """
     with connection.cursor() as cursor:
         global WORKER
-        WORKER, workerCount = database.createWorker()
+        WORKER = database.createWorker()
+        workerCount = database.scanWorkers(WORKER)
         log.info("Worker ID: " + str(WORKER))
         log.info("Workers  : " + str(workerCount))
         cursor.execute("SELECT COUNT(*) from users where enabled = 1")
@@ -432,13 +558,21 @@ def boot():
         log.info("Users : " + str(users))
         usersPerWorker = int(math.ceil(users/workerCount))
         log.info("Users Per Worker: " + str(usersPerWorker))
-        return WORKER, workerCount, users
+        return 0
 
 
 def main():
+    """
+    Spotify Monitoring Backend EntryPoint
+
+    Parameters:
+        None
+    Returns:
+        int: unused return
+    """
     boot()
     keepAliveThread()
-    return 1
+    return 0
 
 
 if __name__ == "__main__":
