@@ -1,14 +1,18 @@
-from django.views.decorators.csrf import csrf_exempt
-import os
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
 from django.db import connection
 import json
 import requests
 import time
 
 
-def getUserJson(userID):
+def getUserJson(userID: str):
+    """
+    Gets User JSON from Database.
+
+    Parameters:
+        userID        (str): User ID
+    Returns:
+        dict: User Json
+    """
     userData = ""
     with connection.cursor() as cursor:
         cursor.execute("SELECT * from users  WHERE user = '" + userID + "'")
@@ -17,7 +21,15 @@ def getUserJson(userID):
     return json.loads(userData[4])
 
 
-def getUser(auth):
+def getUser(auth: dict):
+    """
+    Gets User from Spotify API from Auth Object
+
+    Parameters:
+        auth    (dict): Spotify Auth Object
+    Returns:
+        str: UserID
+    """
     url = "https://api.spotify.com/v1/me"
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
@@ -27,14 +39,29 @@ def getUser(auth):
 
 
 def getAPI():
+    """
+    Gets User from Spotify API from Auth Object
+
+    Parameters:
+        userID        (str): User ID
+    Returns:
+        dict: Spotify API Configuration
+    """
     with connection.cursor() as cursor:
         cursor.execute("SELECT `api` from spotifyAPI")
         for api in cursor:
             return json.loads(api[0])
 
 
-def refresh_token(userID):
-    # Checks For and Provides Refresh Token
+def refresh_token(userID: str):
+    """
+    Checks For and Provides Refresh Token
+
+    Parameters:
+        None
+    Returns:
+        str: Access Token
+    """
     access = ''
     access = getUserJson(userID)
     if(int(time.time()) >= access["expires_at"]):
@@ -58,7 +85,15 @@ def refresh_token(userID):
         return access.get("access_token")
 
 
-def accessToken(CODE):
+def accessToken(CODE: str):
+    """
+    Access Token from Authorization Code
+
+    Parameters:
+        CODE:   (str): Authorization Code
+    Returns:
+        dict: Spotify Auth Object
+    """
     header = {"Authorization": "Basic " + getAPI().get("B64CS")}
     data = {
         "grant_type": "authorization_code",
@@ -69,7 +104,16 @@ def accessToken(CODE):
     return response.json()
 
 
-def setSession(request, CODE):
+def setSession(request: requests.request, CODE: str):
+    """
+    Access Token from Authorization Code
+
+    Parameters:
+        request:    (request)   : Request Object
+        CODE:       (str)       : Authorization Code
+    Returns:
+        bool: Unused Return
+    """
     auth = accessToken(CODE)
     currentTime = int(time.time())
     expire = auth.get("expires_in")
