@@ -4,12 +4,10 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 import os
-from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.db import connection
 import json
 import requests
-import time
 import monitoringBackend.database as database
 import monitoringBackend.spotify as spotify
 import webBackend.credentials as credentials
@@ -19,12 +17,26 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 log = logging.getLogger(__name__)
 
 
-def redirect(request):
+def redirect(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Unused Request Object
+    Returns:
+        HttpResponseRedirect: HTTP Response Redirect
+    """
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
-def health(request):
+def health(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Unused Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     try:
         if connection.ensure_connection():
             return HttpResponse(status=503)
@@ -37,7 +49,14 @@ def health(request):
 
 @require_GET
 @ensure_csrf_cookie
-def authenticated(request):
+def authenticated(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     if request.session.get('spotify', False) and request.method == "GET":
         response = request.session.get('spotify')
         return HttpResponse(True)
@@ -45,7 +64,14 @@ def authenticated(request):
         return HttpResponse(False, status=401)
 
 
-def login(request):
+def login(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Unused Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     url = ""
     if(isinstance(credentials.getAPI(), dict)):
         url = '<meta http-equiv="Refresh" content="0; url=' + \
@@ -56,7 +82,14 @@ def login(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def loginResponse(request):
+def loginResponse(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     url = ""
     CODE = request.GET.get("code")
     if CODE:
@@ -68,14 +101,28 @@ def loginResponse(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def logout(request):
+def logout(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     if(request.session.get('spotify', False) != False):
         request.session.pop('spotify')
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
     return HttpResponse(url, content_type="text/html")
 
 
-def status(request):
+def status(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -89,7 +136,14 @@ def status(request):
     return HttpResponse(status)
 
 
-def start(request):
+def start(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -107,7 +161,14 @@ def start(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def stop(request):
+def stop(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -119,7 +180,14 @@ def stop(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def deleteUser(request):
+def deleteUser(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -131,13 +199,27 @@ def deleteUser(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def dictFetchAll(cursor):
+def dictFetchAll(cursor: connection.cursor):
+    """
+
+    Parameters:
+        cursor:    (cursor): DB Query Output Connection
+    Returns:
+        dict: Song Objects
+    """
     # https://stackoverflow.com/a/58969129
     columns = [col[0] for col in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-def listeningHistory(request):
+def listeningHistory(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -148,7 +230,14 @@ def listeningHistory(request):
     return HttpResponse(json.dumps(dictFetchAll(cursor)), content_type="application/json")
 
 
-def songs(request):
+def songs(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -163,7 +252,14 @@ def songs(request):
     return HttpResponse(json.dumps(json_data), content_type="application/json")
 
 
-def playlistSubmission(request):
+def playlistSubmission(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -207,7 +303,14 @@ def playlistSubmission(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def deletePlaylist(request):
+def deletePlaylist(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -229,7 +332,14 @@ def deletePlaylist(request):
     return HttpResponse(url, content_type="text/html")
 
 
-def playlistSongs(request):
+def playlistSongs(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
