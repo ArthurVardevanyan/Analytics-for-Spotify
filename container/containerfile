@@ -45,3 +45,10 @@ RUN useradd -u 10033 www
 RUN chown -R 10033:10033 /var/log/apache2/
 RUN chown -R 10033:10033 /var/run/apache2/
 RUN chown -R 10033:10033 /proc/self/fd/1
+
+RUN cp /usr/bin/dpkg /tmp/dpkg && \
+	/tmp/dpkg -P --force-remove-essential --force-depends apt dpkg && \
+	rm -rf \
+	/tmp/dpkg /var/log/apt \
+	/var/lib/apt/lists/* /tmp/* /var/tmp/* \
+	/var/lib/dpkg/updates /var/lib/dpkg/info /var/lib/dpkg/alternatives /etc/dpkg/dpkg.cfg.d /etc/alternatives
