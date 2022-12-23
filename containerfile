@@ -11,9 +11,9 @@ LABEL quay.expires-after=${quay_expiration}
 # Setup Analytics For Spotify
 COPY . /home/www/analytics-for-spotify/
 ADD ./webFrontend/node_modules.tar.xz /home/www/analytics-for-spotify/webFrontend/
-RUN chown -R 10033:10033 /home/www/analytics-for-spotify/
+RUN chown -R 65534:65534 /home/www/analytics-for-spotify/
 
 # Entry Point
-USER 10033
+USER 65534
 ENTRYPOINT ["/home/www/analytics-for-spotify/container/startup.sh"]
 CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]

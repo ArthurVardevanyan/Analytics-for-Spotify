@@ -33,8 +33,11 @@ spec:
         - securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            privileged: false
             runAsNonRoot: true
             # runAsUser: 10033
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - all
