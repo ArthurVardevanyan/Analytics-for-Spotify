@@ -15,7 +15,7 @@ spec:
       metadata:
         generateName: "analytics-for-spotify-"
       spec:
-        serviceAccountName: pipeline-sa
+        serviceAccountName: pipeline
         timeout: 15m0s
         pipelineRef:
           name: analytics-for-spotify
