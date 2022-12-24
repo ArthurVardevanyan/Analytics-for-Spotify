@@ -244,7 +244,7 @@ def songs(request: requests.request):
     query = "SELECT songs.name as 'name', playCount.playCount, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
     INNER JOIN songs ON songs.id=songArtists.songID \
     INNER JOIN artists ON artists.id = songArtists.artistID \
-	INNER JOIN playCount ON playCount.songID = songs.id WHERE playCount.user = '"+spotifyID + "'\
+    INNER JOIN playCount ON playCount.songID = songs.id WHERE playCount.user = '"+spotifyID + "'\
     GROUP BY songs.id, songs.name, playCount.playCount"
     cursor = connection.cursor()
     cursor.execute(query)
@@ -349,24 +349,24 @@ def playlistSongs(request: requests.request):
         playlistDict = {}
         query = 'SELECT playlistSongs.songStatus, songs.name as "name", playCount.playCount,\
         DATE_FORMAT(played1.timePlayed, "%Y-%m-%d") as timePlayed,\
-	    GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"\
+        GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"\
         FROM playlistSongs\
         INNER JOIN songs ON songs.id =playlistSongs.songID\
         INNER JOIN songArtists ON songs.id=songArtists.songID\
         INNER JOIN artists ON artists.id=songArtists.artistID\
         INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID\
         INNER JOIN playCount ON playCount.songID = songs.id\
-        LEFT JOIN (\
-        		SELECT `songID`, `timePlayed`\
-            	FROM(\
-                    SELECT `songID`, `timePlayed`,\
-      					  (ROW_NUMBER() OVER (PARTITION BY songID ORDER BY timePlayed DESC)) as rn\
-       				FROM `listeningHistory`  )\
-            		AS played0 WHERE `rn` = 1)\
+        RIGHT JOIN (\
+            SELECT lastPlayed_id.songId, listeningHistory.timePlayed\
+            FROM `listeningHistory`\
+                RIGHT JOIN (\
+                    SELECT distinct songID,  max(id) as "id" FROM `listeningHistory` GROUP BY songID) \
+                    AS lastPlayed_id\
+                    ON lastPlayed_id.id =listeningHistory.id  )\
                     AS played1 ON played1.songID = songs.id\
         WHERE playCount.user  = "'+spotifyID + '"\
         and playlists.playlistID =  "'+playlist[0] + '"\
-        GROUP BY songs.id \
+        GROUP BY songs.id, playlistSongs.songStatus, spotify.songs.name,spotify.playCount.playCount\
         ORDER BY `timePlayed`  ASC'
         cursor = connection.cursor()
         cursor.execute(query)
