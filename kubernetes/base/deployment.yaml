@@ -59,6 +59,15 @@ spec:
             periodSeconds: 60
             successThreshold: 1
             failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /analytics/health/
+              port: 8080
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+            periodSeconds: 15
+            successThreshold: 1
+            failureThreshold: 5
           image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
           imagePullPolicy: IfNotPresent
           name: analytics-for-spotify
