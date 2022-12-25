@@ -347,29 +347,29 @@ def playlistSongs(request: requests.request):
     playlists = database.get_playlists(spotifyID)
     for playlist in playlists:
         playlistDict = {}
-        query = 'SELECT playlistSongs.songStatus, songs.name as "name", playCount.playCount,\
-        DATE_FORMAT(played1.timePlayed, "%Y-%m-%d") as timePlayed,\
-        GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"\
-        FROM playlistSongs\
-        INNER JOIN songs ON songs.id =playlistSongs.songID\
-        INNER JOIN songArtists ON songs.id=songArtists.songID\
-        INNER JOIN artists ON artists.id=songArtists.artistID\
-        INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID\
-        INNER JOIN playCount ON playCount.songID = songs.id\
-        RIGHT JOIN (\
-            SELECT lastPlayed_id.songId, listeningHistory.timePlayed\
-            FROM `listeningHistory`\
-                RIGHT JOIN (\
-                    SELECT distinct songID,  max(id) as "id" FROM `listeningHistory` GROUP BY songID) \
-                    AS lastPlayed_id\
-                    ON lastPlayed_id.id =listeningHistory.id  )\
+        query = """SELECT playlistSongs.songStatus, songs.name as "name", playCount.playCount,
+        DATE_FORMAT(played1.timePlayed, "%%Y-%%m-%%d") as timePlayed,
+        GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"
+        FROM playlistSongs
+        INNER JOIN songs ON songs.id =playlistSongs.songID
+        INNER JOIN songArtists ON songs.id=songArtists.songID
+        INNER JOIN artists ON artists.id=songArtists.artistID
+        INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID
+        INNER JOIN playCount ON playCount.songID = songs.id
+        RIGHT JOIN (
+            SELECT lastPlayed_id.songId, listeningHistory.timePlayed
+            FROM `listeningHistory`
+                RIGHT JOIN (
+                    SELECT distinct songID,  max(id) as "id" FROM `listeningHistory` GROUP BY songID)
+                    AS lastPlayed_id
+                    ON lastPlayed_id.id =listeningHistory.id  )
                     AS played1 ON played1.songID = songs.id\
-        WHERE playCount.user  = "'+spotifyID + '"\
-        and playlists.playlistID =  "'+playlist[0] + '"\
-        GROUP BY songs.id, playlistSongs.songStatus, spotify.songs.name,spotify.playCount.playCount\
-        ORDER BY `timePlayed`  ASC'
+        WHERE playCount.user  =  %s
+        and playlists.playlistID = %s
+        GROUP BY songs.id, playlistSongs.songStatus, spotify.songs.name,spotify.playCount.playCount
+        ORDER BY `timePlayed`  ASC"""
         cursor = connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, (str(spotifyID),  str(playlist[0])))
         json_data = dictFetchAll(cursor)
         playlistDict["id"] = playlist[0]
         playlistDict["name"] = playlist[1]
