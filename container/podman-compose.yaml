@@ -17,7 +17,7 @@ version: "3"
 services:
   mariadb:
     container_name: mariadb
-    image: docker.io/mariadb:latest
+    image: docker.io/mariadb:10.10
     ports:
       - 3306:3306
       - "8081:8081"

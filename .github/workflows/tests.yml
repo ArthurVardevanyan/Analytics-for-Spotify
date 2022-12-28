@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.11]
-        mariadb-version: [10.6]
+        mariadb-version: ["10.10"]
 
     steps:
       - uses: actions/checkout@v2
