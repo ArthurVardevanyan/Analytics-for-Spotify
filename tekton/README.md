@@ -11,7 +11,7 @@ tkn -n analytics-for-spotify pipeline start image-build -s pipeline \
 
 tkn -n analytics-for-spotify pipeline start analytics-for-spotify -s pipeline \
     --workspace=name=data,volumeClaimTemplateFile=tekton/base/pvc.yaml \
-    --param="IMAGE=registry.arthurvardevanyan.com/apps/analytics-for-spotify:production" \
+    --param="IMAGE=registry.arthurvardevanyan.com/apps/analytics-for-spotify:develop" \
     --param="git-url=https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify" \
     --param="git-name=ArthurVardevanyan/Analytics-for-Spotify" \
     --param="git-ref=refs/heads/develop"\
