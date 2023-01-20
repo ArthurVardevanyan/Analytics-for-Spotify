@@ -17,7 +17,9 @@ RUN pip3 install -r /tmp/requirements.txt
 RUN echo 'LogFormat "%{%a %b %d %H:%M:%S %Y}t %H %m %U" customLog' >> /etc/apache2/apache2.conf  && \
   echo 'ErrorLogFormat "%t %M"' >> /etc/apache2/apache2.conf  && \
   echo "ServerName 127.0.0.1" >> /etc/apache2/apache2.conf && \
-  sed -i "s,80,8080,g" /etc/apache2/ports.conf
+  sed -i "s,80,8081,g" /etc/apache2/ports.conf && \
+  sed -i "s,443,8080,g" /etc/apache2/ports.conf && \
+  a2enmod ssl
 COPY container/000-default.conf /etc/apache2/sites-available/000-default.conf
 EXPOSE 8080
 

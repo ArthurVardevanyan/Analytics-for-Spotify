@@ -33,7 +33,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 CORS_ORIGIN_ALLOW_ALL = False  # True For Testing
-CSRF_COOKIE_SECURE = False  # True for HTTPS
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'AnalyticsForSpotify.urls'
 

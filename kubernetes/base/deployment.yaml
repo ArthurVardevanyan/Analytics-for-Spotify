@@ -45,6 +45,7 @@ spec:
             httpGet:
               path: /analytics/health/
               port: 8080
+              scheme: HTTPS
             initialDelaySeconds: 15
             timeoutSeconds: 1
             periodSeconds: 60
@@ -54,6 +55,7 @@ spec:
             httpGet:
               path: /analytics/health/
               port: 8080
+              scheme: HTTPS
             initialDelaySeconds: 15
             timeoutSeconds: 1
             periodSeconds: 60
@@ -63,6 +65,7 @@ spec:
             httpGet:
               path: /analytics/health/
               port: 8080
+              scheme: HTTPS
             initialDelaySeconds: 15
             timeoutSeconds: 1
             periodSeconds: 15
@@ -118,3 +121,16 @@ spec:
                 secretKeyRef:
                   key: DB_USER
                   name: env
+          volumeMounts:
+            - name: certs
+              mountPath: "/home/root/cert"
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: analytics-for-spotify-cert
+            items:
+              - key: "tls.crt"
+                path: "tls.crt"
+              - key: "tls.key"
+                path: "tls.key"

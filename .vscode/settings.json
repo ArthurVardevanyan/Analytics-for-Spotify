@@ -39,6 +39,7 @@
         "kubernetes",
         "Kustomization",
         "kustomize",
+        "letsencrypt",
         "loadbalancers",
         "nodeports",
         "nounset",

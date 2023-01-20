@@ -14,4 +14,7 @@ spec:
     weight: 100
   port:
     targetPort: 8080
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
   wildcardPolicy: None
