@@ -4,7 +4,8 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 import os
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse
+
 from django.db import connection
 import json
 import requests
@@ -127,12 +128,11 @@ def status(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
     status = 0
-    with connection.cursor() as cursor:
-        query = "SELECT * from users where user = '" + \
-            request.session.get('spotify') + "'"
-        cursor.execute(query)
-        for stat in cursor:
-            status = str(stat[1])+":"+str(stat[2])+":"+str(stat[5])
+
+    user = models.Users.objects.get(user=str(request.session.get('spotify')))
+    status = str(user.enabled)+":"+str(user.statusSong) + \
+        ":"+str(user.realtime)
+
     return HttpResponse(status)
 
 
@@ -147,15 +147,15 @@ def start(request: requests.request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "UPDATE users SET enabled = 1 where user ='" + spotifyID + "'")
-        user = database.user_status(spotifyID, 1)
-        if(user[2] == 0):
-            spotify.SpotifyThread(user)
-            spotify.songIdUpdaterThread(user)
-        if(user[3] == 0):
-            spotify.playlistSongThread(spotifyID[0])
+    models.Users.objects.filter(
+        user=str(spotifyID)).update(enabled=1)
+    user = database.user_status(spotifyID, 1)
+
+    if(user[2] == 0):
+        spotify.SpotifyThread(user)
+        spotify.songIdUpdaterThread(user)
+    if(user[3] == 0):
+        spotify.playlistSongThread(spotifyID[0])
 
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
@@ -172,9 +172,9 @@ def stop(request: requests.request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "UPDATE users SET enabled = 0 where user ='" + spotifyID + "'")
+
+    models.Users.objects.filter(
+        user=str(spotifyID)).update(enabled=0)
 
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
@@ -223,11 +223,12 @@ def listeningHistory(request: requests.request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    query = "SELECT timePlayed, songs.name, songs.trackLength FROM `listeningHistory` LEFT JOIN songs ON songs.id =listeningHistory.songID  \
-    WHERE listeningHistory.user = '"+spotifyID + "' ORDER BY listeningHistory.id"
-    cursor = connection.cursor()
-    cursor.execute(query)
-    return HttpResponse(json.dumps(dictFetchAll(cursor)), content_type="application/json")
+
+    listeningHistory = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).select_related(
+        "songID").values('timePlayed', 'songID__name', 'songID__trackLength')
+
+    return JsonResponse(list(listeningHistory), safe=False)
 
 
 def songs(request: requests.request):

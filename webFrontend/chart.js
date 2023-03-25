@@ -157,7 +157,7 @@ window.onload = function () {
 };
 function topSongs() {
   $.ajax({
-    url: "/analytics/songs",
+    url: "/analytics/songs/",
     method: "GET",
     success(data) {
       $(document).ready(() => {
@@ -617,7 +617,7 @@ function listeningHistory(data) {
       pageLength: 10,
       columns: [
         { data: "timePlayed", title: "Time Played", width: "135" },
-        { data: "name", title: "Song Name" },
+        { data: "songID__name", title: "Song Name" },
       ],
     });
   });
