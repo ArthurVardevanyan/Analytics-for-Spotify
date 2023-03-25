@@ -242,15 +242,13 @@ def songs(request: requests.request):
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
-    query = "SELECT songs.name as 'name', playCount.playCount, GROUP_CONCAT(artists.name  SEPARATOR', ') as 'artists' FROM songArtists \
-    INNER JOIN songs ON songs.id=songArtists.songID \
-    INNER JOIN artists ON artists.id = songArtists.artistID \
-    INNER JOIN playCount ON playCount.songID = songs.id WHERE playCount.user = '"+spotifyID + "'\
-    GROUP BY songs.id, songs.name, playCount.playCount"
-    cursor = connection.cursor()
-    cursor.execute(query)
-    json_data = dictFetchAll(cursor)
-    return HttpResponse(json.dumps(json_data), content_type="application/json")
+
+    # TODO: FIX UNDO OF GROUP_CONCAT(artists.name  SEPARATOR', ')
+    playCount = models.PlayCount.objects.filter(
+        user=str(spotifyID)).select_related().values(
+        'songID__name', 'playCount', 'songID__artists__name')
+
+    return JsonResponse(list(playCount), safe=False)
 
 
 def playlistSubmission(request: requests.request):
@@ -353,8 +351,8 @@ def playlistSongs(request: requests.request):
         GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"
         FROM playlistSongs
         INNER JOIN songs ON songs.id =playlistSongs.songID
-        INNER JOIN songArtists ON songs.id=songArtists.songID
-        INNER JOIN artists ON artists.id=songArtists.artistID
+        INNER JOIN songs_artists ON songs.id=songs_artists.songs_id
+        INNER JOIN artists ON artists.id=songs_artists.artists_id
         INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID
         INNER JOIN playCount ON playCount.songID = songs.id
         RIGHT JOIN (

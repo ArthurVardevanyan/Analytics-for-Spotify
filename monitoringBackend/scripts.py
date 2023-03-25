@@ -54,9 +54,9 @@ def getHistory(user: str):
             if songL[0] == None:
                 songL.pop(0)
                 songL.insert(0, 990200212040000)
-            query = 'SELECT songArtists.songID, songArtists.artistID, artists.name from songArtists \
-            INNER JOIN artists on songArtists.artistID = artists.id\
-            WHERE songArtists.songID = ' + '"' + song[1] + '"'
+            query = 'SELECT songs_artists.songs_id, songs_artists.artists_id, artists.name from songs_artists \
+            INNER JOIN artists on songs_artists.artists_id = artists.id\
+            WHERE songs_artists.songs_id = ' + '"' + song[1] + '"'
             cursor.execute(query)
             artists = ''
             for artist in cursor:
@@ -132,7 +132,7 @@ def databaseUpdate(history: set, user: str):
                 query = "DELETE FROM `playCount` WHERE `songID` ='" + \
                     item + "' AND `user` ='" + user + "'"
                 cursor.execute(query)
-                query = "DELETE IGNORE FROM `songArtists` WHERE `songID` ='" + item + "'"
+                query = "DELETE IGNORE FROM `songs_artists` WHERE `songID` ='" + item + "'"
                 cursor.execute(query)
                 query = "DELETE IGNORE FROM `songs` WHERE `id` ='" + item + "'"
                 cursor.execute(query)

@@ -57,7 +57,7 @@ def createWorker():
 
 def user_status(user: str, detailed: int = 0):
     """
-    Add Artist to Artist List
+    Return Status of User
 
     Parameters:
         user        (str)  : User ID
@@ -125,8 +125,8 @@ def add_song_artists(spotify: dict, cursor: connection.cursor):
         int: unused return
     """
     for iter in spotify.get("item").get("artists"):
-        add_song_artist = ("INSERT IGNORE INTO songArtists"
-                           "(songID,artistID)"
+        add_song_artist = ("INSERT IGNORE INTO songs_artists"
+                           "(songs_id,artists_id)"
                            "VALUES (%s, %s)")
         data_song_artist = (
             spotify.get("item").get("id"),

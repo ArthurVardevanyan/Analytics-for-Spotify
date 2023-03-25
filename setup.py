@@ -70,6 +70,9 @@ def setup(API: dict):
     if not (len(connection.introspection.table_names())):
         os.system("python3 manage.py migrate")
 
+    if (os.environ.get('MIGRATE') == "true"):
+        os.system("python3 manage.py migrate")
+
     SpotifyAPI.objects.all()
     SpotifyAPI.objects.all().delete()
     SpotifyAPI.objects.create(api=json.dumps(API))
