@@ -243,12 +243,37 @@ def songs(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    # TODO: FIX UNDO OF GROUP_CONCAT(artists.name  SEPARATOR', ')
-    playCount = models.PlayCount.objects.filter(
-        user=str(spotifyID)).select_related().values(
-        'songID__name', 'playCount', 'songID__artists__name')
+    # Get Song Play Count without Artists
+    playCount = models.PlayCount.objects.select_related().values(
+        'songID', 'songID__name', 'playCount', )
 
-    return JsonResponse(list(playCount), safe=False)
+    # Get SongID, Artist Name Combo
+    playCountArtist = models.PlayCount.objects.select_related().values(
+        'songID', 'songID__artists__name')
+
+    # Group Concat Artist with Comma onto SongIDs
+    playCountArtistDict = {}
+    playCountArtistList = list(playCountArtist)
+    for artist in playCountArtistList:
+        try:
+            playCountArtistDict[artist["songID"]] = str(
+                playCountArtistDict[artist["songID"]]) + ", " + str(artist["songID__artists__name"])
+        except:
+            playCountArtistDict[artist["songID"]
+                                ] = artist["songID__artists__name"]
+
+    # Add Comma Separated Artists to Song Play Count
+    playCountGroupConcat = []
+    for song in list(playCount):
+        playCountGroupConcat.append(
+            {
+                "songID__name": song['songID__name'],
+                "playCount": song['playCount'],
+                "songID__artists__name": playCountArtistDict[song["songID"]]
+            }
+        )
+
+    return JsonResponse(playCountGroupConcat, safe=False)
 
 
 def playlistSubmission(request: requests.request):
