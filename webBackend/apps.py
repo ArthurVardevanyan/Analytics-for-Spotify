@@ -8,7 +8,7 @@ def boot():
     log = logging.getLogger(__name__)
 
     try:
-        if(os.environ.get('TEST') == "test"):
+        if(os.environ.get('TEST') == "test" or os.environ.get('MIGRATIONS') == "true"):
             log.info("Testing Environment")
         else:
             spotify.main()

@@ -1,4 +1,6 @@
 #!/bin/bash
 cd /home/www/analytics-for-spotify/
-python3 setup.py
+#export MIGRATIONS='true'
+#python3 setup.py
+#export MIGRATIONS='false'
 exec "$@"

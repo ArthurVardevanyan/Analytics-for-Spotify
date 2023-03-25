@@ -29,6 +29,60 @@ spec:
       # runAsGroup: 30000
       # fsGroup: 20000
       automountServiceAccountToken: false
+      initContainers:
+        - name: setup
+          image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
+          command: ["python3", "/home/www/analytics-for-spotify/setup.py"]
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            runAsNonRoot: true
+            # runAsUser: 10033
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - all
+          env:
+            - name: MIGRATIONS
+              value: "true"
+            - name: CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: CLIENT_ID
+                  name: env
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: CLIENT_SECRET
+                  name: env
+            - name: DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: DATABASE
+                  name: env
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: DB_HOST
+                  name: env
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: DB_PASSWORD
+                  name: env
+            - name: REDIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  key: REDIRECT_URL
+                  name: env
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: DB_USER
+                  name: env
       containers:
         - securityContext:
             allowPrivilegeEscalation: false
@@ -84,23 +138,11 @@ spec:
               cpu: 50m
               memory: 125Mi
           env:
-            - name: CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: CLIENT_ID
-                  name: env
-            - name: CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: CLIENT_SECRET
-                  name: env
             - name: DATABASE
               valueFrom:
                 secretKeyRef:
                   key: DATABASE
                   name: env
-            - name: DOCKER
-              value: "YES"
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -110,11 +152,6 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: DB_PASSWORD
-                  name: env
-            - name: REDIRECT_URL
-              valueFrom:
-                secretKeyRef:
-                  key: REDIRECT_URL
                   name: env
             - name: DB_USER
               valueFrom:
