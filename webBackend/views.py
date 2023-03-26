@@ -151,11 +151,11 @@ def start(request: requests.request):
         user=str(spotifyID)).update(enabled=1)
     user = database.user_status(spotifyID, 1)
 
-    if(user[2] == 0):
+    if(user.statusSong == 0):
         spotify.SpotifyThread(user)
-        spotify.songIdUpdaterThread(user)
-    if(user[3] == 0):
-        spotify.playlistSongThread(spotifyID[0])
+        spotify.songIdUpdaterThread(user.user)
+    if(user.statusPlaylist == 0):
+        spotify.playlistSongThread(spotifyID)
 
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")

@@ -63,19 +63,14 @@ def user_status(user: str, detailed: int = 0):
         user        (str)  : User ID
         detailed    (int)  : Whether to Return Detailed output or not.
     Returns:
-        Tuple | Literal[0]: Depends on if Detailed Output or not.
+        models.Users | str: Depends on if Detailed Output or not.
     """
-    with connection.cursor() as cursor:
-        users = "SELECT * from users where user ='" + user + "'"
-        cursor.execute(users)
-        if(detailed):
-            for s in cursor:
-                return s
-        else:
-            status = 0
-            for s in cursor:
-                status = s[1]
-            return status
+
+    users = models.Users.objects.filter(user=str(user))
+    if(detailed):
+        return users.first()
+    else:
+        return users.first().enabled
 
 
 def add_artists(spotify: dict, cursor: connection.cursor):
@@ -233,13 +228,15 @@ def get_playlists(user: str):
     Returns:
         list: List of Playlists
     """
-    with connection.cursor() as cursor:
-        query = "SELECT playlists.playlistID, name, playlists.lastUpdated from playlists  INNER JOIN playlistsUsers ON playlistsUsers.playlistID = playlists.playlistID    where user = '"+user+"'"
-        cursor.execute(query)
-        playlists = []
-        for playlist in cursor:
-            playlists.append((playlist[0], playlist[1], playlist[2]))
-        return playlists
+
+    playlistsList = models.PlaylistsUsers.objects.filter(
+        user_id=user).select_related('playlistID').values('playlistID', 'playlistID__name', 'playlistID__lastUpdated')
+
+    playlists = []
+    for playlist in playlistsList:
+        playlists.append(
+            (playlist['playlistID'], playlist['playlistID__name'], playlist['playlistID__lastUpdated']))
+    return playlists
 
 
 def add_playlist(playlist: str):
@@ -251,42 +248,44 @@ def add_playlist(playlist: str):
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        utc_time = datetime.utcnow()
-        lastUpdated = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+    utc_time = datetime.utcnow()
+    lastUpdated = utc_time.strftime("%Y-%m-%d %H:%M:%S")
 
-        sql = "DELETE FROM playlistSongs WHERE playlistID = '" + \
-            playlist+"'"
-        cursor.execute(sql)
+    models.PlaylistSongs.objects.filter(playlistID=playlist).delete()
+    models.Playlists.objects.filter(
+        playlistID=playlist).update(lastUpdated=lastUpdated)
 
-        addPlaylist = " UPDATE playlists SET lastUpdated = '"+lastUpdated+"' WHERE playlistID = '" + \
-            playlist+"'"
-        cursor.execute(addPlaylist)
     return 0
 
 
-def add_playlist_songs(cursor: connection.cursor, song: str, playlist: str, status: str):
+def add_playlist_songs(song: str, playlist: str, status: str):
     """
     Input Songs from Playlist into all PlayList Fields
 
     Parameters:
-        cursor      (cursor): Database Connection
         playlist    (str)   : Which Playlist to Insert Song Into
         status      (str)   : local/playable/unplayable
     Returns:
         int: unused return
     """
-    addPlaylist = ("INSERT IGNORE INTO  playlistSongs"
-                   "(playlistID, songID, songStatus)"
-                   "VALUES (%s, %s, %s)")
-    dataPlaylist = (
-        playlist,
-        song.get("item").get("id"),
-        status
-    )
-    cursor.execute(addPlaylist, dataPlaylist)
+    songExists = models.PlaylistSongs.objects.filter(
+        songID=str(song.get("item").get("id")),
+        playlistID=str(playlist)).count()
 
-    if (int(cursor.rowcount) == 0):
+    if 0 == songExists:
+        models.PlaylistSongs.objects.update_or_create(
+            songStatus=status,
+            songID=models.Songs.objects.get(
+                id=str(song.get("item").get("id"))),
+            playlistID=models.Playlists.objects.get(
+                playlistID=str(playlist))
+        )
+    else:
+        dataPlaylist = (
+            playlist,
+            song.get("item").get("id"),
+            status
+        )
         logging.warning("Duplicate Playlist Song: " + str(dataPlaylist))
     return 0
 
@@ -332,5 +331,5 @@ def playlist_input(user: str, spotify: dict, playlist: str, status: str):
         add_artists(spotify, cursor)
         add_song(spotify, cursor)
         add_song_count(user, spotify, cursor, 0)
-        add_playlist_songs(cursor, spotify,  playlist, status)
+        add_playlist_songs(spotify,  playlist, status)
     return 0
