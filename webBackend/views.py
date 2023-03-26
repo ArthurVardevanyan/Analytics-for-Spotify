@@ -226,7 +226,7 @@ def listeningHistory(request: requests.request):
 
     listeningHistory = models.ListeningHistory.objects.filter(
         user=str(spotifyID)).select_related(
-        "songID").values('timePlayed', 'songID__name', 'songID__trackLength')
+        "songID").values('timePlayed', 'songID__name', 'songID__trackLength').order_by('timePlayed')
 
     return JsonResponse(list(listeningHistory), safe=False)
 
