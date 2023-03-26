@@ -300,24 +300,19 @@ def playlistSubmission(request: requests.request):
     except:
         return HttpResponse(status=401)
 
-    add = ("INSERT IGNORE INTO playlists"
-           "(playlistID, name, lastUpdated)"
-           "VALUES (%s, %s, %s)")
-    data = (
-        playlist,
-        response.get('name'),
-        "N/A",
-    )
-    cursor = connection.cursor()
-    cursor.execute(add, data)
-    add = ("INSERT IGNORE INTO playlistsUsers"
-           "(user, playlistID)"
-           "VALUES (%s, %s)")
-    data = (
-        spotifyID,
-        playlist,
-    )
-    cursor.execute(add, data)
+    playlists = models.Playlists.objects.filter(
+        playlistID=playlist).count()
+    if playlists == 0:
+        models.Playlists.objects.create(
+            playlistID=playlist, name=response.get('name'), lastUpdated="N/A",)
+
+    playlistUsers = models.PlaylistsUsers.objects.filter(
+        playlistID=playlist).count()
+    if playlistUsers == 0:
+        models.PlaylistsUsers.objects.create(
+            playlistID=models.Playlists.objects.get(playlistID=str(playlist)),
+            user=models.Users.objects.get(user=str(spotifyID)))
+
     status = database.user_status(spotifyID, 1)
     if(status[3] > 0):
         spotify.playlistSongThread(spotifyID, 1)
@@ -339,19 +334,13 @@ def deletePlaylist(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
     playlist = request.POST.get("playlist")
-    cursor = connection.cursor()
-    cursor.execute(
-        "DELETE FROM `playlistSongs` WHERE playlistID = %s",  (playlist, ))
-    cursor.execute(
-        "DELETE FROM `playlistsUsers` WHERE user = %s and  playlistID = %s", (spotifyID, playlist, ))
-    cursor.execute(
-        "SELECT * from playlistsUsers WHERE playlistID = %s",  (playlist, ))
-    playlists = 0
-    for p in cursor:
-        playlist += 1
+    models.PlaylistSongs.objects.filter(playlistID=playlist).delete()
+    models.PlaylistsUsers.objects.filter(
+        user=spotifyID, playlistID=playlist).delete()
+    playlists = models.PlaylistsUsers.objects.filter(
+        playlistID=playlist).count()
     if playlists == 0:
-        cursor.execute(
-            "DELETE FROM `playlists` WHERE playlistID = %s",  (playlist, ))
+        models.Playlists.objects.filter(playlistID=playlist).delete()
     url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
     return HttpResponse(url, content_type="text/html")
 
