@@ -132,7 +132,7 @@ def databaseUpdate(history: set, user: str):
                 query = "DELETE FROM `playCount` WHERE `songID` ='" + \
                     item + "' AND `user` ='" + user + "'"
                 cursor.execute(query)
-                query = "DELETE IGNORE FROM `songs_artists` WHERE `songID` ='" + item + "'"
+                query = "DELETE IGNORE FROM `songs_artists` WHERE `songs_id` ='" + item + "'"
                 cursor.execute(query)
                 query = "DELETE IGNORE FROM `songs` WHERE `id` ='" + item + "'"
                 cursor.execute(query)

@@ -314,7 +314,7 @@ def playlistSubmission(request: requests.request):
             user=models.Users.objects.get(user=str(spotifyID)))
 
     status = database.user_status(spotifyID, 1)
-    if(status[3] > 0):
+    if(status.statusPlaylist > 0):
         spotify.playlistSongThread(spotifyID, 1)
     else:
         spotify.playlistSongThread(spotifyID)

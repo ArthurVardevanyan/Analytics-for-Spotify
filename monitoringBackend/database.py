@@ -83,8 +83,13 @@ def add_artists(spotify: dict):
         int: unused return
     """
     for iter in spotify.get("item").get("artists"):
-        models.Artists.objects.get_or_create(
-            id=iter.get("id"), name=iter.get("name"))
+        count = models.Artists.objects.filter(id=iter.get("id")).count()
+        if count == 0:
+            models.Artists.objects.create(
+                id=iter.get("id"), name=iter.get("name"))
+        else:
+            models.Artists.objects.filter(id=iter.get(
+                "id")).update(name=iter.get("name"))
     return 0
 
 
@@ -152,11 +157,26 @@ def add_song(spotify: dict):
     Returns:
         int: unused return
     """
-    song = models.Songs.objects.get_or_create(
-        id=spotify.get("item").get("id"),
-        name=spotify.get("item").get("name"),
-        trackLength=spotify.get("item").get("duration_ms")
-    )[0]
+
+    song = None
+    songID = spotify.get("item").get("id")
+    count = models.Songs.objects.filter(id=songID).count()
+
+    if count == 0:
+        song = models.Songs.objects.create(
+            id=songID,
+            name=spotify.get("item").get("name"),
+            trackLength=spotify.get("item").get("duration_ms")
+        )
+    else:
+        models.Songs.objects.filter(
+            id=songID,
+        ).update(
+            name=spotify.get("item").get("name"),
+            trackLength=spotify.get("item").get("duration_ms")
+        )
+
+        song = models.Songs.objects.get(id=songID)
 
     add_song_artists(spotify, song)
 
