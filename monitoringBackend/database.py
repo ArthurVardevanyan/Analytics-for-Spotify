@@ -163,30 +163,33 @@ def add_song(spotify: dict):
     return 0
 
 
-def listening_history(user: str, spotify: dict, cursor: connection.cursor):
+def listening_history(user: str, spotify: dict):
     """
     Add Song to Listening History
 
     Parameters:
         user        (str)   : User ID
-        cursor      (cursor): Database Connection
         spotify     (dict)  : Dictionary Containing Song Details
     Returns:
         bool: Whether Song is Duplicate or Not.
     """
-    add_play = ("INSERT IGNORE INTO listeningHistory"
-                "(user, timestamp,timePlayed, songID)"
-                "VALUES (%s, %s, %s, %s)")
-    data_play = (
-        user,
-        spotify.get('utc_timestamp'),
-        spotify.get('utc_timePlayed'),
-        spotify.get("item").get("id"),
-    )
-    cursor.execute(add_play, data_play)
+    songID = str(spotify.get("item").get("id"),)
+    utc_timestamp = int(spotify.get("utc_timestamp")),
+    utc_timePlayed = str(spotify.get("utc_timePlayed")),
 
-    if (int(cursor.rowcount) == 0):
-        logging.warning("Duplicate History Song: " + str(data_play[:-1]))
+    # This shouldn't be needed, but the Dictionary is Returning a Tuple when it shouldn't be.
+    utc_timestamp = utc_timestamp[0]
+    utc_timePlayed = utc_timePlayed[0]
+
+    listeningHistory = models.ListeningHistory.objects.get_or_create(
+        user=models.Users.objects.get(user=str(user)),
+        songID=models.Songs.objects.get(id=songID),
+        timestamp=utc_timestamp,
+        timePlayed=utc_timePlayed
+    )
+
+    if (listeningHistory[1] == False):
+        logging.warning("Duplicate History Song: " + songID)
         return False
     return True
 
@@ -275,7 +278,7 @@ def database_input(user: str, spotify: dict):
     with connection.cursor() as cursor:
         add_artists(spotify)
         add_song(spotify)
-        if(listening_history(user, spotify, cursor) == True):
+        if(listening_history(user, spotify) == True):
             add_song_count(user, spotify, cursor)
     return spotify
 
