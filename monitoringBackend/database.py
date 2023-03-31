@@ -73,43 +73,22 @@ def user_status(user: str, detailed: int = 0):
         return users.first().enabled
 
 
-def add_artists(spotify: dict, cursor: connection.cursor):
+def add_artists(spotify: dict):
     """
     Add Artist to Artist List
 
     Parameters:
-        cursor      (cursor): Database Connection
         spotify     (dict)  : Dictionary Containing Song Details
     Returns:
         int: unused return
     """
-    artists = "SELECT * from artists"
-    cursor.execute(artists)
-    artists = []
-    for id in cursor:
-        artists.append(id[0])
     for iter in spotify.get("item").get("artists"):
-        exists = False
-        for i in artists:
-            if iter.get("id") == i:
-                exists = True
-        if not exists:
-            data_artist = (
-                iter.get("id"),
-                iter.get("name")
-            )
-            add_artist = ("INSERT IGNORE INTO artists"
-                          "(id,name)"
-                          "VALUES (%s, %s)")
-            data_artist = (
-                iter.get("id"),
-                iter.get("name")
-            )
-            cursor.execute(add_artist, data_artist)
+        models.Artists.objects.get_or_create(
+            id=iter.get("id"), name=iter.get("name"))
     return 0
 
 
-def add_song_artists(spotify: dict, cursor: connection.cursor):
+def add_song_artists(spotify: dict, song: models.Songs):
     """
     Add Song / Artist to Song / Artist List
 
@@ -120,14 +99,8 @@ def add_song_artists(spotify: dict, cursor: connection.cursor):
         int: unused return
     """
     for iter in spotify.get("item").get("artists"):
-        add_song_artist = ("INSERT IGNORE INTO songs_artists"
-                           "(songs_id,artists_id)"
-                           "VALUES (%s, %s)")
-        data_song_artist = (
-            spotify.get("item").get("id"),
-            iter.get("id")
-        )
-        cursor.execute(add_song_artist, data_song_artist)
+        song.artists.add(models.Artists.objects.get(
+            id=str(iter.get("id"))))
     return 0
 
 
@@ -143,8 +116,9 @@ def add_song_count(user: str, spotify: dict, cursor: connection.cursor, count: i
     Returns:
         int: unused return
     """
+    song = str(spotify.get("item").get("id"))
     playCount = "SELECT `playCount` from `playCount` WHERE songID = '" + \
-        spotify.get("item").get("id") + "' and  user = '" + user + "'"
+        song + "' and  user = '" + user + "'"
     cursor.execute(playCount)
     playCount = -1
     for id in cursor:
@@ -155,20 +129,20 @@ def add_song_count(user: str, spotify: dict, cursor: connection.cursor, count: i
                     "VALUES (%s, %s, %s)")
         data_song = (
             user,
-            spotify.get("item").get("id"),
+            song,
             count,
         )
         cursor.execute(add_song, data_song)
-        add_song_artists(spotify, cursor)  # Function
+        add_song_artists(spotify, models.Songs.objects.get(id=song))
     else:
         playCount = playCount + count
         add_song = ("UPDATE playCount SET playCount = '" + str(playCount) +
-                    "' WHERE songID = '" + spotify.get("item").get("id") + "' and  user = '" + user + "'")
+                    "' WHERE songID = '" + song + "' and  user = '" + user + "'")
         cursor.execute(add_song)
     return 0
 
 
-def add_song(spotify: dict, cursor: connection.cursor):
+def add_song(spotify: dict):
     """
     Add Song to Song List
 
@@ -178,16 +152,14 @@ def add_song(spotify: dict, cursor: connection.cursor):
     Returns:
         int: unused return
     """
-    add_song = ("INSERT IGNORE INTO songs"
-                "(id,name,trackLength)"
-                "VALUES (%s, %s, %s)")
-    data_song = (
-        spotify.get("item").get("id"),
-        spotify.get("item").get("name"),
-        spotify.get("item").get("duration_ms")
-    )
-    cursor.execute(add_song, data_song)
-    add_song_artists(spotify, cursor)
+    song = models.Songs.objects.get_or_create(
+        id=spotify.get("item").get("id"),
+        name=spotify.get("item").get("name"),
+        trackLength=spotify.get("item").get("duration_ms")
+    )[0]
+
+    add_song_artists(spotify, song)
+
     return 0
 
 
@@ -301,8 +273,8 @@ def database_input(user: str, spotify: dict):
         bool: Dictionary Containing Song Details
     """
     with connection.cursor() as cursor:
-        add_artists(spotify, cursor)
-        add_song(spotify, cursor)
+        add_artists(spotify)
+        add_song(spotify)
         if(listening_history(user, spotify, cursor) == True):
             add_song_count(user, spotify, cursor)
     return spotify
@@ -328,8 +300,8 @@ def playlist_input(user: str, spotify: dict, playlist: str, status: str):
             for i in range(0, len(spotify.get("item").get("artists"))):
                 spotify["item"]["artists"][i]["id"] = (
                     (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
-        add_artists(spotify, cursor)
-        add_song(spotify, cursor)
+        add_artists(spotify)
+        add_song(spotify)
         add_song_count(user, spotify, cursor, 0)
         add_playlist_songs(spotify,  playlist, status)
     return 0
