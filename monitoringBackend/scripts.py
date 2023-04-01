@@ -1,4 +1,5 @@
 from django.db import connection
+import webBackend.models as models
 import logging
 import sys
 sys.path.append("..")
@@ -97,6 +98,7 @@ def duplicateFinder(history: list):
         newHistory2.append(tuple(temp))
     newHistory2 = set(newHistory2)
     logging.info("Songs with duplicate new ID's: " + str(len(newHistory2)))
+    logging.info(newHistory2)
     return newHistory2
 
 
@@ -120,23 +122,23 @@ def databaseUpdate(history: set, user: str):
         oldIDS = []
         for i in range(0, len(song)-1):
             oldIDS.append(song[i][1])
-        with connection.cursor() as cursor:
-            query = "UPDATE `playCount` SET `playCount`=" + \
-                str(newPlayCount) + " WHERE `songID` ='" + \
-                newID + "' AND `user` ='" + user + "'"
-            cursor.execute(query)
-            for item in oldIDS:
-                query = "UPDATE `listeningHistory` SET `songID`='" + \
-                    newID + "' WHERE `songID` ='" + item + "' AND `user` ='" + user + "'"
-                cursor.execute(query)
-                query = "DELETE FROM `playCount` WHERE `songID` ='" + \
-                    item + "' AND `user` ='" + user + "'"
-                cursor.execute(query)
-                query = "DELETE IGNORE FROM `songs_artists` WHERE `songs_id` ='" + item + "'"
-                cursor.execute(query)
-                query = "DELETE IGNORE FROM `songs` WHERE `id` ='" + item + "'"
-                cursor.execute(query)
-    connection.commit()
+        newSongID = models.Songs.objects.get(id=str(newID))
+        userObject = models.Users.objects.get(user=str(user))
+        models.PlayCount.objects.filter(
+            songID=newSongID, user=userObject
+        ).update(playCount=str(newPlayCount))
+
+        for item in oldIDS:
+            oldSongID = models.Songs.objects.get(id=str(item))
+            models.ListeningHistory.objects.filter(
+                songID=oldSongID, user=userObject).update(
+                songID=newSongID
+            )
+            models.PlayCount.objects.filter(
+                songID=oldSongID, user=userObject).delete()
+
+            oldSongID.artists.clear()
+            oldSongID.delete()
     return trimmedHistory
 
 
