@@ -199,19 +199,6 @@ def deleteUser(request: requests.request):
     return HttpResponse(url, content_type="text/html")
 
 
-def dictFetchAll(cursor: connection.cursor):
-    """
-
-    Parameters:
-        cursor:    (cursor): DB Query Output Connection
-    Returns:
-        dict: Song Objects
-    """
-    # https://stackoverflow.com/a/58969129
-    columns = [col[0] for col in cursor.description]
-    return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-
 def listeningHistory(request: requests.request):
     """
 
@@ -243,12 +230,15 @@ def songs(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
+    userObject = models.Users.objects.get(
+        user=str(spotifyID))
+
     # Get Song Play Count without Artists
-    playCount = models.PlayCount.objects.select_related().values(
+    playCount = models.PlayCount.objects.filter(user=userObject).select_related().values(
         'songID', 'songID__name', 'playCount', )
 
     # Get SongID, Artist Name Combo
-    playCountArtist = models.PlayCount.objects.select_related().values(
+    playCountArtist = models.PlayCount.objects.filter(user=userObject).select_related().values(
         'songID', 'songID__artists__name')
 
     # Group Concat Artist with Comma onto SongIDs
@@ -358,35 +348,50 @@ def playlistSongs(request: requests.request):
         return HttpResponse(status=401)
     playlistsData = []
     playlists = database.get_playlists(spotifyID)
+
+    userObject = models.Users.objects.get(
+        user=str(spotifyID))
+
+    playCount = list(models.PlayCount.objects.filter(user=userObject).select_related().values(
+        'songID', 'playCount'))
+    playCountDict = {}
+    for pc in playCount:
+        playCountDict[pc['songID']] = pc.get('playCount', 0)
+
+    listeningHistory = list(models.ListeningHistory.objects.filter(
+        user=userObject).select_related().values(
+            'songID', 'timePlayed').order_by('timePlayed'))
+    listeningHistoryLatest = {}
+    for lh in listeningHistory:
+        listeningHistoryLatest[lh['songID']] = lh['timePlayed']
+
     for playlist in playlists:
         playlistDict = {}
-        query = """SELECT playlistSongs.songStatus, songs.name as "name", playCount.playCount,
-        DATE_FORMAT(played1.timePlayed, "%%Y-%%m-%%d") as timePlayed,
-        GROUP_CONCAT(artists.name  SEPARATOR", ") as "artists"
-        FROM playlistSongs
-        INNER JOIN songs ON songs.id =playlistSongs.songID
-        INNER JOIN songs_artists ON songs.id=songs_artists.songs_id
-        INNER JOIN artists ON artists.id=songs_artists.artists_id
-        INNER JOIN playlists ON playlists.playlistID=playlistSongs.playlistID
-        INNER JOIN playCount ON playCount.songID = songs.id
-        RIGHT JOIN (
-            SELECT lastPlayed_id.songId, listeningHistory.timePlayed
-            FROM `listeningHistory`
-                RIGHT JOIN (
-                    SELECT distinct songID,  max(id) as "id" FROM `listeningHistory` GROUP BY songID)
-                    AS lastPlayed_id
-                    ON lastPlayed_id.id =listeningHistory.id  )
-                    AS played1 ON played1.songID = songs.id\
-        WHERE playCount.user  =  %s
-        and playlists.playlistID = %s
-        GROUP BY songs.id, playlistSongs.songStatus, spotify.songs.name,spotify.playCount.playCount
-        ORDER BY `timePlayed`  ASC"""
-        cursor = connection.cursor()
-        cursor.execute(query, (str(spotifyID),  str(playlist[0])))
-        json_data = dictFetchAll(cursor)
+
+        playlistSongs = list(models.PlaylistSongs.objects.select_related(
+            'songID').filter(playlistID=playlist).values('songID', 'songStatus', 'songID__name'))
+
+        playlistData = []
+        for ps in playlistSongs:
+
+            songArtist = models.Songs.objects.select_related().filter(
+                id=str(ps['songID'])).values('id', 'artists__id', 'artists__name')
+            artists = ''
+            for artist in songArtist:
+                artists += artist.get('artists__name', "")
+
+            playlistData.append({
+                "songStatus": ps['songStatus'],
+                "name": ps['songID__name'],
+                "playCount": playCountDict.get(ps['songID'], 0),
+                "timePlayed": listeningHistoryLatest.get(ps['songID'], "1970-01-01").split(" ")[0],
+                "artists": artists.rstrip(',')
+            })
+
         playlistDict["id"] = playlist[0]
         playlistDict["name"] = playlist[1]
         playlistDict["lastUpdated"] = playlist[2]
-        playlistDict["tracks"] = json_data
+        playlistDict["tracks"] = sorted(
+            playlistData, key=lambda x: x['timePlayed'])
         playlistsData.append(playlistDict)
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")

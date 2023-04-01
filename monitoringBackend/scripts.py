@@ -48,7 +48,7 @@ def getHistory(user: str):
             id=str(songID)).values('id', 'artists__id', 'artists__name')
         artists = ''
         for artist in songArtist:
-            artists += artist['artists__name'] + ","
+            artists += artist.get('artists__name', "") + ","
         history.append((
             timestamp,
             songID,
@@ -57,8 +57,7 @@ def getHistory(user: str):
             artists,
             play['songID__name']+"_"+artists
         ))
-    print("Total Songs: " + str(len(history)))
-
+    logging.info("Total Songs: " + str(len(history)))
     return history
 
 

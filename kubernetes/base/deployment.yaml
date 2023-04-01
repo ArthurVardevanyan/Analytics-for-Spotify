@@ -132,7 +132,7 @@ spec:
             - containerPort: 8080
           resources:
             limits:
-              cpu: 250m
+              cpu: 350m
               memory: 250Mi
             requests:
               cpu: 50m
