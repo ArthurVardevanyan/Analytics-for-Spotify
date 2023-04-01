@@ -28,7 +28,7 @@ def getHistory(user: str):
         user   (str): User to Scan
     Returns:
         list: List of Changed Song IDs
-"""
+    """
     userObject = models.Users.objects.get(
         user=str(user))
     listeningHistory = list(models.ListeningHistory.objects.filter(
@@ -41,30 +41,25 @@ def getHistory(user: str):
         'songID', 'songID__name', 'playCount'))
     history = []
     for play in playCount:
-        timestamp = listeningHistoryLatest.get(play['songID'], None)
-        if timestamp:
-            history.append((
-                timestamp,
-                play['songID'],
-                play['songID__name'],
-                play['playCount']
-            ))
-    logging.info("Total Songs: " + str(len(history)))
-    songHistory = []
-    for song in history:
-        songL = list(song)
-        if songL[0] == None:
-            songL.pop(0)
-            songL.insert(0, 990200212040000)
+        songID = play['songID']
+        timestamp = listeningHistoryLatest.get(songID, 990200212040000)
+
         songArtist = models.Songs.objects.select_related().filter(
-            id=str(song[1])).values('id', 'artists__id', 'artists__name')
+            id=str(songID)).values('id', 'artists__id', 'artists__name')
         artists = ''
         for artist in songArtist:
             artists += artist['artists__name'] + ","
-        songL.append(artists)
-        songL.append(songL[2]+"_"+artists)
-        songHistory.append(songL)
-    return songHistory
+        history.append((
+            timestamp,
+            songID,
+            play['songID__name'],
+            play['playCount'],
+            artists,
+            play['songID__name']+"_"+artists
+        ))
+    print("Total Songs: " + str(len(history)))
+
+    return history
 
 
 def duplicateFinder(history: list):
