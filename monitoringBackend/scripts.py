@@ -1,4 +1,3 @@
-from django.db import connection
 import webBackend.models as models
 import logging
 import sys
@@ -29,42 +28,42 @@ def getHistory(user: str):
         user   (str): User to Scan
     Returns:
         list: List of Changed Song IDs
-    """
-    with connection.cursor() as cursor:
-        query = 'SELECT played1.timestamp, songs.ID, songs.name, playCount.playCount, user\
-                FROM songs\
-                INNER JOIN playCount ON playCount.songID = songs.id\
-                LEFT JOIN (\
-                SELECT `songID`, `timestamp`\
-                FROM(SELECT `songID`, `timestamp`,\
-                (ROW_NUMBER() OVER (PARTITION BY songID ORDER BY timestamp DESC)) as rn\
-                FROM `listeningHistory`  )\
-                AS played0 WHERE `rn` = 1  ORDER BY `played0`.`timestamp`  ASC )\
-                AS played1 ON played1.songID = songs.id'
-        cursor.execute(query)
-
-        history = []
-        for song in cursor:
-            if(song[4] == user):
-                history.append(song)
-        logging.info("Total Songs: " + str(len(history)))
-        songHistory = []
-        for song in history:
-            songL = list(song)
-            songL.pop(4)
-            if songL[0] == None:
-                songL.pop(0)
-                songL.insert(0, 990200212040000)
-            query = 'SELECT songs_artists.songs_id, songs_artists.artists_id, artists.name from songs_artists \
-            INNER JOIN artists on songs_artists.artists_id = artists.id\
-            WHERE songs_artists.songs_id = ' + '"' + song[1] + '"'
-            cursor.execute(query)
-            artists = ''
-            for artist in cursor:
-                artists += artist[2] + ","
-            songL.append(artists)
-            songL.append(songL[2]+"_"+artists)
-            songHistory.append(songL)
+"""
+    userObject = models.Users.objects.get(
+        user=str(user))
+    listeningHistory = list(models.ListeningHistory.objects.filter(
+        user=userObject).values(
+            'songID', 'timestamp').order_by('timestamp'))
+    listeningHistoryLatest = {}
+    for lh in listeningHistory:
+        listeningHistoryLatest[lh['songID']] = lh['timestamp']
+    playCount = list(models.PlayCount.objects.filter(user=userObject).select_related().values(
+        'songID', 'songID__name', 'playCount'))
+    history = []
+    for play in playCount:
+        timestamp = listeningHistoryLatest.get(play['songID'], None)
+        if timestamp:
+            history.append((
+                timestamp,
+                play['songID'],
+                play['songID__name'],
+                play['playCount']
+            ))
+    logging.info("Total Songs: " + str(len(history)))
+    songHistory = []
+    for song in history:
+        songL = list(song)
+        if songL[0] == None:
+            songL.pop(0)
+            songL.insert(0, 990200212040000)
+        songArtist = models.Songs.objects.select_related().filter(
+            id=str(song[1])).values('id', 'artists__id', 'artists__name')
+        artists = ''
+        for artist in songArtist:
+            artists += artist['artists__name'] + ","
+        songL.append(artists)
+        songL.append(songL[2]+"_"+artists)
+        songHistory.append(songL)
     return songHistory
 
 
