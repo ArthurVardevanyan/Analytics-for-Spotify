@@ -58,6 +58,7 @@
         "tokenreviews",
         "traefik",
         "triggerbindings",
-        "triggertemplates"
+        "triggertemplates",
+        "venv"
     ],
 }

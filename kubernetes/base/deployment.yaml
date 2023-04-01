@@ -32,7 +32,13 @@ spec:
       initContainers:
         - name: setup
           image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
-          command: ["python3", "/home/www/analytics-for-spotify/setup.py"]
+          command:
+            - /bin/bash
+            - "-c"
+            - |
+              cd /home/www/analytics-for-spotify/
+              source .venv/bin/activate
+              python3 /home/www/analytics-for-spotify/setup.py
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

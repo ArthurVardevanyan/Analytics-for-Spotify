@@ -375,7 +375,7 @@ def playlistSongs(request: requests.request):
         for ps in playlistSongs:
 
             songArtist = models.Songs.objects.select_related().filter(
-                id=str(ps['songID'])).values('id', 'artists__id', 'artists__name')
+                id=str(ps['songID'])).values('artists__name')
             artists = ''
             for artist in songArtist:
                 artists += artist.get('artists__name', "")
