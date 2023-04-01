@@ -365,6 +365,14 @@ def playlistSongs(request: requests.request):
     for lh in listeningHistory:
         listeningHistoryLatest[lh['songID']] = lh['timePlayed']
 
+    songArtists = list(models.Songs.objects.select_related(
+    ).all().values('id', 'artists__name'))
+
+    songArtistsDict = {}
+    for artist in songArtists:
+        songArtistsDict[
+            artist['id']] = str(artist["artists__name"]) + ", " + str(songArtistsDict.get(artist['id'], " "))
+
     for playlist in playlists:
         playlistDict = {}
 
@@ -374,18 +382,12 @@ def playlistSongs(request: requests.request):
         playlistData = []
         for ps in playlistSongs:
 
-            songArtist = models.Songs.objects.select_related().filter(
-                id=str(ps['songID'])).values('artists__name')
-            artists = ''
-            for artist in songArtist:
-                artists += artist.get('artists__name', "")
-
             playlistData.append({
                 "songStatus": ps['songStatus'],
                 "name": ps['songID__name'],
                 "playCount": playCountDict.get(ps['songID'], 0),
                 "timePlayed": listeningHistoryLatest.get(ps['songID'], "1970-01-01").split(" ")[0],
-                "artists": artists.rstrip(',')
+                "artists": str(songArtistsDict.get(ps['songID'], "")).rstrip(', ')
             })
 
         playlistDict["id"] = playlist[0]
