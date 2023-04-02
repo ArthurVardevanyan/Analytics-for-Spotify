@@ -1,4 +1,4 @@
-from django.db import connection
+import webBackend.models as models
 import logging
 import sys
 sys.path.append("..")
@@ -29,42 +29,36 @@ def getHistory(user: str):
     Returns:
         list: List of Changed Song IDs
     """
-    with connection.cursor() as cursor:
-        query = 'SELECT played1.timestamp, songs.ID, songs.name, playCount.playCount, user\
-                FROM songs\
-                INNER JOIN playCount ON playCount.songID = songs.id\
-                LEFT JOIN (\
-                SELECT `songID`, `timestamp`\
-                FROM(SELECT `songID`, `timestamp`,\
-                (ROW_NUMBER() OVER (PARTITION BY songID ORDER BY timestamp DESC)) as rn\
-                FROM `listeningHistory`  )\
-                AS played0 WHERE `rn` = 1  ORDER BY `played0`.`timestamp`  ASC )\
-                AS played1 ON played1.songID = songs.id'
-        cursor.execute(query)
+    userObject = models.Users.objects.get(
+        user=str(user))
+    listeningHistory = list(models.ListeningHistory.objects.filter(
+        user=userObject).values(
+            'songID', 'timestamp').order_by('timestamp'))
+    listeningHistoryLatest = {}
+    for lh in listeningHistory:
+        listeningHistoryLatest[lh['songID']] = lh['timestamp']
+    playCount = list(models.PlayCount.objects.filter(user=userObject).select_related().values(
+        'songID', 'songID__name', 'playCount'))
+    history = []
+    for play in playCount:
+        songID = play['songID']
+        timestamp = listeningHistoryLatest.get(songID, 990200212040000)
 
-        history = []
-        for song in cursor:
-            if(song[4] == user):
-                history.append(song)
-        logging.info("Total Songs: " + str(len(history)))
-        songHistory = []
-        for song in history:
-            songL = list(song)
-            songL.pop(4)
-            if songL[0] == None:
-                songL.pop(0)
-                songL.insert(0, 990200212040000)
-            query = 'SELECT songArtists.songID, songArtists.artistID, artists.name from songArtists \
-            INNER JOIN artists on songArtists.artistID = artists.id\
-            WHERE songArtists.songID = ' + '"' + song[1] + '"'
-            cursor.execute(query)
-            artists = ''
-            for artist in cursor:
-                artists += artist[2] + ","
-            songL.append(artists)
-            songL.append(songL[2]+"_"+artists)
-            songHistory.append(songL)
-    return songHistory
+        songArtist = models.Songs.objects.select_related().filter(
+            id=str(songID)).values('id', 'artists__id', 'artists__name')
+        artists = ''
+        for artist in songArtist:
+            artists += str(artist.get('artists__name', "")) + ","
+        history.append((
+            timestamp,
+            songID,
+            play['songID__name'],
+            play['playCount'],
+            artists,
+            play['songID__name']+"_"+artists
+        ))
+    logging.info("Total Songs: " + str(len(history)))
+    return history
 
 
 def duplicateFinder(history: list):
@@ -97,6 +91,8 @@ def duplicateFinder(history: list):
         newHistory2.append(tuple(temp))
     newHistory2 = set(newHistory2)
     logging.info("Songs with duplicate new ID's: " + str(len(newHistory2)))
+    logging.debug(newHistory)
+    logging.debug(newHistory2)
     return newHistory2
 
 
@@ -120,23 +116,29 @@ def databaseUpdate(history: set, user: str):
         oldIDS = []
         for i in range(0, len(song)-1):
             oldIDS.append(song[i][1])
-        with connection.cursor() as cursor:
-            query = "UPDATE `playCount` SET `playCount`=" + \
-                str(newPlayCount) + " WHERE `songID` ='" + \
-                newID + "' AND `user` ='" + user + "'"
-            cursor.execute(query)
-            for item in oldIDS:
-                query = "UPDATE `listeningHistory` SET `songID`='" + \
-                    newID + "' WHERE `songID` ='" + item + "' AND `user` ='" + user + "'"
-                cursor.execute(query)
-                query = "DELETE FROM `playCount` WHERE `songID` ='" + \
-                    item + "' AND `user` ='" + user + "'"
-                cursor.execute(query)
-                query = "DELETE IGNORE FROM `songArtists` WHERE `songID` ='" + item + "'"
-                cursor.execute(query)
-                query = "DELETE IGNORE FROM `songs` WHERE `id` ='" + item + "'"
-                cursor.execute(query)
-    connection.commit()
+        newSongID = models.Songs.objects.get(id=str(newID))
+        userObject = models.Users.objects.get(user=str(user))
+        models.PlayCount.objects.filter(
+            songID=newSongID, user=userObject
+        ).update(playCount=str(newPlayCount))
+
+        for item in oldIDS:
+            oldSongID = models.Songs.objects.get(id=str(item))
+            models.ListeningHistory.objects.filter(
+                songID=oldSongID, user=userObject).update(
+                songID=newSongID
+            )
+            models.PlayCount.objects.filter(
+                songID=oldSongID, user=userObject).delete()
+            try:
+                oldSongID.artists.clear()
+                oldSongID.delete()
+            except:
+                logging.warning(
+                    "Song ID Updater: Couldn't Delete: " + str(item))
+                logging.warning(
+                    "Song ID Updater: Couldn't Delete: " + str(song))
+
     return trimmedHistory
 
 

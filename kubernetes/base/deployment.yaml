@@ -29,46 +29,31 @@ spec:
       # runAsGroup: 30000
       # fsGroup: 20000
       automountServiceAccountToken: false
-      containers:
-        - securityContext:
+      initContainers:
+        - name: setup
+          image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
+          command:
+            - /bin/bash
+            - "-c"
+            - |
+              cd /home/www/analytics-for-spotify/
+              source .venv/bin/activate
+              python3 /home/www/analytics-for-spotify/setup.py
+          imagePullPolicy: IfNotPresent
+          securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            privileged: false
             runAsNonRoot: true
             # runAsUser: 10033
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - all
-          livenessProbe:
-            httpGet:
-              path: /analytics/health/
-              port: 8080
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
-            periodSeconds: 60
-            successThreshold: 1
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /analytics/health/
-              port: 8080
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
-            periodSeconds: 60
-            successThreshold: 1
-            failureThreshold: 3
-          image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
-          imagePullPolicy: IfNotPresent
-          name: analytics-for-spotify
-          ports:
-            - containerPort: 8080
-          resources:
-            limits:
-              cpu: 150m
-              memory: 250Mi
-            requests:
-              cpu: 50m
-              memory: 125Mi
           env:
+            - name: MIGRATIONS
+              value: "true"
             - name: CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -84,8 +69,6 @@ spec:
                 secretKeyRef:
                   key: DATABASE
                   name: env
-            - name: DOCKER
-              value: "YES"
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -106,3 +89,91 @@ spec:
                 secretKeyRef:
                   key: DB_USER
                   name: env
+      containers:
+        - securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            runAsNonRoot: true
+            # runAsUser: 10033
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - all
+          livenessProbe:
+            httpGet:
+              path: /analytics/health/
+              port: 8080
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+            periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /analytics/health/
+              port: 8080
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+            periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /analytics/health/
+              port: 8080
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+            periodSeconds: 15
+            successThreshold: 1
+            failureThreshold: 5
+          image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
+          imagePullPolicy: IfNotPresent
+          name: analytics-for-spotify
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 350m
+              memory: 250Mi
+            requests:
+              cpu: 50m
+              memory: 125Mi
+          env:
+            - name: DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: DATABASE
+                  name: env
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: DB_HOST
+                  name: env
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: DB_PASSWORD
+                  name: env
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: DB_USER
+                  name: env
+          volumeMounts:
+            - name: certs
+              mountPath: "/home/root/cert"
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: analytics-for-spotify-cert
+            items:
+              - key: "tls.crt"
+                path: "tls.crt"
+              - key: "tls.key"
+                path: "tls.key"

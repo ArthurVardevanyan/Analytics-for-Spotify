@@ -1,6 +1,6 @@
-from django.db import connection
-import json
+import webBackend.models as models
 import requests
+import json
 import time
 
 
@@ -13,12 +13,7 @@ def getUserJson(userID: str):
     Returns:
         dict: User Json
     """
-    userData = ""
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * from users  WHERE user = '" + userID + "'")
-        for user in cursor:
-            userData = user
-    return json.loads(userData[4])
+    return json.loads(models.Users.objects.get(user=str(userID)).cache)
 
 
 def getUser(auth: dict):
@@ -47,10 +42,7 @@ def getAPI():
     Returns:
         dict: Spotify API Configuration
     """
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT `api` from spotifyAPI")
-        for api in cursor:
-            return json.loads(api[0])
+    return json.loads(models.SpotifyAPI.objects.get().api)
 
 
 def refresh_token(userID: str):
@@ -75,11 +67,8 @@ def refresh_token(userID: str):
         auth["expires_at"] = int(time.time()) + expire
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
-        cursor = connection.cursor()
-        query = """UPDATE users SET cache = '""" + \
-            json.dumps(auth) + """' WHERE user = '""" + userID + "'"
-        query = query.replace("\\", "")
-        cursor.execute(query)
+        models.Users.objects.filter(
+            user=str(userID)).update(cache=json.dumps(auth))
         return auth.get("access_token")
     else:
         return access.get("access_token")
@@ -121,11 +110,16 @@ def setSession(request: requests.request, CODE: str):
     userID = ""
     userID = getUser(auth)
     request.session['spotify'] = userID  # SESSION
-    query = 'INSERT IGNORE INTO users (`user`, `enabled`, `statusSong`, `statusPlaylist`, `realTime`, `cache`) VALUES ("' + \
-        userID + '", 0, 0, 0, 0,' + "'" + json.dumps(auth) + "')"
-    cursor = connection.cursor()
-    cursor.execute(query)
-    query = "UPDATE users SET cache = '" + \
-        json.dumps(auth) + "' WHERE user = '" + userID + "'"
-    cursor.execute(query)
+    try:
+        models.Users.objects.get(user=str(userID))
+        models.Users.objects.filter(
+            user=str(userID)).update(cache=json.dumps(auth))
+    except:
+        models.Users.objects.create(
+            user=str(userID),
+            enabled=0,
+            statusSong=0,
+            statusPlaylist=0,
+            realtime=0,
+            cache=json.dumps(auth))
     return True

@@ -1,4 +1,5 @@
 import logging
+import webBackend.models as models
 import monitoringBackend.playlistSongs as playlistSongs
 import monitoringBackend.database as database
 from monitoringBackend.scripts import songIdUpdater
@@ -7,7 +8,6 @@ import requests
 import time
 import threading
 from datetime import datetime, timezone
-from django.db import connection
 import math
 import sys
 sys.path.append("..")
@@ -62,36 +62,32 @@ def spawnThreads(workerCount: int):
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        global WORKER
-        global KILL
-        global THREADS
-        cursor.execute("SELECT COUNT(*) from users where enabled = 1")
-        users = cursor.fetchone()[0]
-        usersPerWorker = int(math.ceil(users/workerCount))
-        usersOnThisWorker = []
-        for thread in THREADS:
-            usersOnThisWorker.append(thread[0])
-        usersOnThisWorker = set(usersOnThisWorker)
+    global WORKER
+    global KILL
+    global THREADS
+    users = models.Users.objects.filter(enabled=1).count()
+    usersPerWorker = int(math.ceil(users/workerCount))
+    usersOnThisWorker = []
+    for thread in THREADS:
+        usersOnThisWorker.append(thread[0])
+    usersOnThisWorker = set(usersOnThisWorker)
 
-        if len(usersOnThisWorker) < usersPerWorker:
-            log.info("Users On Worker : " + str(len(usersOnThisWorker)))
-            log.info("Users Per Worker: " + str(usersPerWorker))
-            users = "SELECT * FROM `users` WHERE `worker` IS NULL and enabled = 1;"
-            cursor.execute(users)
-            count = len(usersOnThisWorker)
+    if len(usersOnThisWorker) < usersPerWorker:
+        log.info("Users On Worker : " + str(len(usersOnThisWorker)))
+        log.info("Users Per Worker: " + str(usersPerWorker))
+        users = models.Users.objects.filter(enabled=1, worker=None)
+        count = len(usersOnThisWorker)
 
-            for user in cursor:
-                if count < usersPerWorker:
-                    sql = "UPDATE users SET worker = " + \
-                        str(WORKER) + " WHERE user = '" + str(user[0]) + "'"
-                    cursor.execute(sql)
-                    log.info("Creating User: " + str(user[0]))
-                    playlistSongThread(user[0])
-                    SpotifyThread(user)
-                    songIdUpdaterThread(user)
-                    time.sleep(5)
-                    count += 1
+        for user in users:
+            if count < usersPerWorker:
+                models.Users.objects.filter(
+                    user=str(user.user)).update(worker=str(WORKER))
+                log.info("Creating User: " + str(user.user))
+                playlistSongThread(user.user)
+                SpotifyThread(user)
+                songIdUpdaterThread(user.user)
+                time.sleep(5)
+                count += 1
     return 0
 
 
@@ -106,51 +102,47 @@ def killThreads(workerCount: int, user: str):
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        global WORKER
-        global KILL
-        global THREADS
-        cursor.execute("SELECT COUNT(*) from users where enabled = 1")
-        users = cursor.fetchone()[0]
-        usersPerWorker = int(math.ceil(users/workerCount))
-        usersOnThisWorker = []
+    global WORKER
+    global KILL
+    global THREADS
+    users = models.Users.objects.filter(enabled=1).count()
+    usersPerWorker = int(math.ceil(users/workerCount))
+    usersOnThisWorker = []
+    for thread in THREADS:
+        usersOnThisWorker.append(thread[0])
+    usersOnThisWorker = set(usersOnThisWorker)
+
+    userInfo = models.Users.objects.filter(
+        user=str(user)).values('worker').first()['worker']
+    if userInfo != WORKER:
+        log.info("User Doesn't Match Worker")
+        newThread = []
         for thread in THREADS:
-            usersOnThisWorker.append(thread[0])
-        usersOnThisWorker = set(usersOnThisWorker)
+            if thread[0] == user:
+                log.info("Killing: " + str(user))
+                KILL[str(user)+"playlistSongThread"] = 1
+                KILL[str(user)+"SpotifyThread"] = 1
+                KILL[str(user)+"songIdUpdaterThread"] = 1
+            else:
+                newThread.append(thread)
+        THREADS = newThread
+        return 0
 
-        cursor.execute(
-            "SELECT worker from users WHERE user = '" + str(user) + "'")
-        userInfo = cursor.fetchone()[0]
-        if userInfo != WORKER:
-            log.info("User Doesn't Match Worker")
-            newThread = []
-            for thread in THREADS:
-                if thread[0] == user:
-                    log.info("Killing: " + str(user))
-                    KILL[str(user)+"playlistSongThread"] = 1
-                    KILL[str(user)+"SpotifyThread"] = 1
-                    KILL[str(user)+"songIdUpdaterThread"] = 1
-                else:
-                    newThread.append(thread)
-            THREADS = newThread
-            return 0
-
-        if len(usersOnThisWorker) > usersPerWorker:
-            log.info("Users On Worker : " + str(len(usersOnThisWorker)))
-            log.info("Users Per Worker: " + str(usersPerWorker))
-            newThread = []
-            for thread in THREADS:
-                if thread[0] == user:
-                    log.info("Killing: " + str(user))
-                    KILL[str(user)+"playlistSongThread"] = 1
-                    KILL[str(user)+"SpotifyThread"] = 1
-                    KILL[str(user)+"songIdUpdaterThread"] = 1
-                    sql = "UPDATE users SET worker = NULL WHERE user = '" + \
-                        str(user) + "'"
-                    cursor.execute(sql)
-                else:
-                    newThread.append(thread)
-            THREADS = newThread
+    if len(usersOnThisWorker) > usersPerWorker:
+        log.info("Users On Worker : " + str(len(usersOnThisWorker)))
+        log.info("Users Per Worker: " + str(usersPerWorker))
+        newThread = []
+        for thread in THREADS:
+            if thread[0] == user:
+                log.info("Killing: " + str(user))
+                KILL[str(user)+"playlistSongThread"] = 1
+                KILL[str(user)+"SpotifyThread"] = 1
+                KILL[str(user)+"songIdUpdaterThread"] = 1
+                models.Users.objects.filter(
+                    user=str(user)).update(worker=None)
+            else:
+                newThread.append(thread)
+        THREADS = newThread
     return 0
 
 
@@ -166,9 +158,14 @@ def update_status(user: str, status: str, value: int):
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        cursor.execute("UPDATE users SET  `" + status + "` = " +
-                       str(value) + " where user ='" + user + "'")
+    if status == "statusPlaylist":
+        models.Users.objects.filter(user=str(user)).update(
+            statusPlaylist=str(value))
+    elif status == "statusSong":
+        models.Users.objects.filter(
+            user=str(user)).update(statusSong=str(value))
+    else:
+        return 1
     return 0
 
 
@@ -196,18 +193,17 @@ def playlistSongsChecker(user: str, once: int = 0):
         local_time = utc_time.astimezone()
         lastUpdated = local_time.strftime("%Y-%m-%d")
         if previousDay != lastUpdated:
-            with connection.cursor() as cursor:
-                playlists = database.get_playlists(user)
-                count = 0
-                for playlist in playlists:
-                    playlistSongs.main(user, playlist)
-                    count = count + 1
-                if(count == 0):
-                    update_status(user, "statusPlaylist", 0)
-                    return
-                if(once == 1):
-                    update_status(user, "statusPlaylist", 1)
-                    return
+            playlists = database.get_playlists(user)
+            count = 0
+            for playlist in playlists:
+                playlistSongs.main(user, playlist)
+                count = count + 1
+            if(count == 0):
+                update_status(user, "statusPlaylist", 0)
+                return
+            if(once == 1):
+                update_status(user, "statusPlaylist", 1)
+                return
             previousDay = lastUpdated
             update_status(user, "statusPlaylist", 1)
             time.sleep(3600)
@@ -242,41 +238,41 @@ def playlistSongThread(user: str, once: int = 0):
     return 0
 
 
-def SpotifyThread(user: str):
+def SpotifyThread(user: models.Users):
     """
     Incepts Thread for monitoring Spotify User Playback History
     Depending on Flag Defined in Database, either uses
     History Mode, Realtime Mode, or Hybrid Mode.
 
     Parameters:
-        user    (str): User ID
+        user    (models.Users): User Object
     Returns:
         int: unused return
     """
     try:
         S = []
-        if(user[5] == 1):
+        if(user.realtime == 1):
             hybrid = False
-            log.info("realTimeSpotifyThread: " + user[0])
+            log.info("realTimeSpotifyThread: " + user.user)
             S.append(threading.Thread(
-                target=realTimeSpotify, args=(user[0], hybrid,)))
-        elif(user[5] == 0):
-            log.info("historySpotifyThread: " + user[0])
-            S.append(threading.Thread(target=historySpotify, args=(user[0],)))
-        elif(user[5] == 2):
-            log.info("hybrid+historySpotifyThread: " + user[0])
-            S.append(threading.Thread(target=historySpotify, args=(user[0],)))
+                target=realTimeSpotify, args=(user.user, hybrid,)))
+        elif(user.realtime == 0):
+            log.info("historySpotifyThread: " + user.user)
+            S.append(threading.Thread(target=historySpotify, args=(user.user,)))
+        elif(user.realtime == 2):
+            log.info("hybrid+historySpotifyThread: " + user.user)
+            S.append(threading.Thread(target=historySpotify, args=(user.user,)))
             hybrid = True
-            log.info("hybrid+realTimeSpotifyThread: " + user[0])
+            log.info("hybrid+realTimeSpotifyThread: " + user.user)
             S.append(threading.Thread(
-                target=realTimeSpotify, args=(user[0], hybrid,)))
+                target=realTimeSpotify, args=(user.user, hybrid,)))
         global THREADS
-        thread = [user[0]]
+        thread = [user.user]
         S[0].start()
         thread.append(S[0])
         THREADS.append(thread)
         if len(S) > 1:
-            thread = [user[0]]
+            thread = [user.user]
             S[1].start()
             thread.append(S[1])
             THREADS.append(thread)
@@ -320,41 +316,39 @@ def historySpotify(user: str):
                 else:
                     newSongs = False
                     response = response.json()
-                    query = "SELECT id,timestamp,timePlayed,songID,user FROM `listeningHistory`  where user ='" + user + \
-                        "' ORDER BY `listeningHistory`.`timePlayed`  DESC  LIMIT 50"
-                    listeningHistory = []
-                    with connection.cursor() as cursor:
-                        cursor.execute(query)
-                        listenTemp = []
-                        for song in cursor:
-                            for listened in response.get("items"):
-                                utc_time = datetime.fromisoformat(
-                                    listened.get('played_at').split(".")[0].replace("Z", ""))
-                                timestamp = utc_time.strftime("%Y%m%d%H%M%S")
-                                # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
-                                listened["utc_timestamp"] = utc_time.strftime(
-                                    "%Y%m%d%H%M%S")
-                                listened["utc_timePlayed"] = utc_time.strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                if(int(timestamp) == song[1]):
-                                    listenTemp.append(listened)
+                    listeningHistory = models.ListeningHistory.objects.filter(
+                        user=str(user)).values('timestamp').order_by('-timePlayed')[0:50]
+
+                    listenTemp = []
+                    for song in listeningHistory:
                         for listened in response.get("items"):
-                            tracked = False
-                            for temp in listenTemp:
-                                if(listened.get('played_at') == temp.get('played_at')):
-                                    tracked = True
-                            if(not tracked):
-                                utc_time = datetime.fromisoformat(
-                                    listened.get('played_at').split(".")[0].replace("Z", ""))
-                                # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
-                                listened["utc_timestamp"] = utc_time.strftime(
-                                    "%Y%m%d%H%M%S")
-                                listened["utc_timePlayed"] = utc_time.strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                listened["item"] = listened.get("track")
-                                log.info("History: " + str(user) + ": " +
-                                         database.database_input(user, listened).get("track").get("name"))
-                                newSongs = True
+                            utc_time = datetime.fromisoformat(
+                                listened.get('played_at').split(".")[0].replace("Z", ""))
+                            timestamp = utc_time.strftime("%Y%m%d%H%M%S")
+                            # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
+                            listened["utc_timestamp"] = utc_time.strftime(
+                                "%Y%m%d%H%M%S")
+                            listened["utc_timePlayed"] = utc_time.strftime(
+                                "%Y-%m-%d %H:%M:%S")
+                            if(int(timestamp) == song['timestamp']):
+                                listenTemp.append(listened)
+                    for listened in response.get("items"):
+                        tracked = False
+                        for temp in listenTemp:
+                            if(listened.get('played_at') == temp.get('played_at')):
+                                tracked = True
+                        if(not tracked):
+                            utc_time = datetime.fromisoformat(
+                                listened.get('played_at').split(".")[0].replace("Z", ""))
+                            # https://stackoverflow.com/questions/3682748/converting-unix-timestamp-string-to-readable-date/40769643#40769643
+                            listened["utc_timestamp"] = utc_time.strftime(
+                                "%Y%m%d%H%M%S")
+                            listened["utc_timePlayed"] = utc_time.strftime(
+                                "%Y-%m-%d %H:%M:%S")
+                            listened["item"] = listened.get("track")
+                            log.info("History: " + str(user) + ": " +
+                                     database.database_input(user, listened).get("track").get("name"))
+                            newSongs = True
                     if (newSongs == False):
                         log.debug("No New Songs: " + str(user))
                 update_status(user, "statusSong", 1)
@@ -490,11 +484,11 @@ def songIdUpdaterThread(user: str, once: int = 0):
         int: unused return
     """
     try:
-        log.info("songIdUpdaterThread: " + user[0])
+        log.info("songIdUpdaterThread: " + user)
         USC = threading.Thread(
-            target=songIdUpdaterChecker, args=(user[0], once,))
+            target=songIdUpdaterChecker, args=(user, once,))
         USC.start()
-        thread = [user[0]]
+        thread = [user]
         thread.append(USC)
         global THREADS
         THREADS.append(thread)
@@ -547,18 +541,16 @@ def boot():
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        global WORKER
-        WORKER = database.createWorker()
-        workerCount = database.scanWorkers(WORKER)
-        log.info("Worker ID: " + str(WORKER))
-        log.info("Workers  : " + str(workerCount))
-        cursor.execute("SELECT COUNT(*) from users where enabled = 1")
-        users = cursor.fetchone()[0]
-        log.info("Users : " + str(users))
-        usersPerWorker = int(math.ceil(users/workerCount))
-        log.info("Users Per Worker: " + str(usersPerWorker))
-        return 0
+    global WORKER
+    WORKER = database.createWorker()
+    workerCount = database.scanWorkers(WORKER)
+    log.info("Worker ID: " + str(WORKER))
+    log.info("Workers  : " + str(workerCount))
+    users = models.Users.objects.filter(enabled=1).count()
+    log.info("Users : " + str(users))
+    usersPerWorker = int(math.ceil(users/workerCount))
+    log.info("Users Per Worker: " + str(usersPerWorker))
+    return 0
 
 
 def main():

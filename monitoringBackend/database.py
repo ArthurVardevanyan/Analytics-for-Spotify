@@ -1,5 +1,4 @@
 from datetime import datetime
-from django.db import connection
 import sys
 from random import randint
 import logging
@@ -57,169 +56,161 @@ def createWorker():
 
 def user_status(user: str, detailed: int = 0):
     """
-    Add Artist to Artist List
+    Return Status of User
 
     Parameters:
         user        (str)  : User ID
         detailed    (int)  : Whether to Return Detailed output or not.
     Returns:
-        Tuple | Literal[0]: Depends on if Detailed Output or not.
+        models.Users | str: Depends on if Detailed Output or not.
     """
-    with connection.cursor() as cursor:
-        users = "SELECT * from users where user ='" + user + "'"
-        cursor.execute(users)
-        if(detailed):
-            for s in cursor:
-                return s
-        else:
-            status = 0
-            for s in cursor:
-                status = s[1]
-            return status
+
+    users = models.Users.objects.filter(user=str(user))
+    if(detailed):
+        return users.first()
+    else:
+        return users.first().enabled
 
 
-def add_artists(spotify: dict, cursor: connection.cursor):
+def add_artists(spotify: dict):
     """
     Add Artist to Artist List
 
     Parameters:
-        cursor      (cursor): Database Connection
         spotify     (dict)  : Dictionary Containing Song Details
     Returns:
         int: unused return
     """
-    artists = "SELECT * from artists"
-    cursor.execute(artists)
-    artists = []
-    for id in cursor:
-        artists.append(id[0])
     for iter in spotify.get("item").get("artists"):
-        exists = False
-        for i in artists:
-            if iter.get("id") == i:
-                exists = True
-        if not exists:
-            data_artist = (
-                iter.get("id"),
-                iter.get("name")
-            )
-            add_artist = ("INSERT IGNORE INTO artists"
-                          "(id,name)"
-                          "VALUES (%s, %s)")
-            data_artist = (
-                iter.get("id"),
-                iter.get("name")
-            )
-            cursor.execute(add_artist, data_artist)
+        count = models.Artists.objects.filter(id=iter.get("id")).count()
+        if count == 0:
+            models.Artists.objects.create(
+                id=iter.get("id"), name=iter.get("name"))
+        else:
+            models.Artists.objects.filter(id=iter.get(
+                "id")).update(name=iter.get("name"))
     return 0
 
 
-def add_song_artists(spotify: dict, cursor: connection.cursor):
+def add_song_artists(spotify: dict, song: models.Songs):
     """
     Add Song / Artist to Song / Artist List
 
     Parameters:
-        cursor      (cursor): Database Connection
         spotify     (dict)  : Dictionary Containing Song Details
     Returns:
         int: unused return
     """
     for iter in spotify.get("item").get("artists"):
-        add_song_artist = ("INSERT IGNORE INTO songArtists"
-                           "(songID,artistID)"
-                           "VALUES (%s, %s)")
-        data_song_artist = (
-            spotify.get("item").get("id"),
-            iter.get("id")
-        )
-        cursor.execute(add_song_artist, data_song_artist)
+        song.artists.add(models.Artists.objects.get(
+            id=str(iter.get("id"))))
     return 0
 
 
-def add_song_count(user: str, spotify: dict, cursor: connection.cursor, count: int = 1):
+def add_song_count(user: str, spotify: dict, count: int = 1):
     """
     Add Song / Artist to Song / Artist List
 
     Parameters:
         user        (str)   : User ID
         spotify     (dict)  : Dictionary Containing Song Details
-        cursor      (cursor): Database Connection
         count       (int)   : PlayCount is set to 0 when inputting unplayed songs from playlist.
     Returns:
         int: unused return
     """
-    playCount = "SELECT `playCount` from `playCount` WHERE songID = '" + \
-        spotify.get("item").get("id") + "' and  user = '" + user + "'"
-    cursor.execute(playCount)
+    song = str(spotify.get("item").get("id"))
+    songID = models.Songs.objects.get(id=str(song))
+    userObject = models.Users.objects.get(user=str(user))
+
+    songPlayCount = models.PlayCount.objects.filter(
+        songID=songID,
+        user=userObject
+    )
+
     playCount = -1
-    for id in cursor:
-        playCount = int(id[0])
+    if songPlayCount.count() != 0:
+        playCount = int(songPlayCount.values('playCount').first()['playCount'])
     if playCount < 0:
-        add_song = ("INSERT IGNORE INTO playCount "
-                    "(user,songID,playCount) "
-                    "VALUES (%s, %s, %s)")
-        data_song = (
-            user,
-            spotify.get("item").get("id"),
-            count,
+        models.PlayCount.objects.create(
+            user=userObject,
+            songID=songID,
+            playCount=count
         )
-        cursor.execute(add_song, data_song)
-        add_song_artists(spotify, cursor)  # Function
+        add_song_artists(spotify, songID)
     else:
         playCount = playCount + count
-        add_song = ("UPDATE playCount SET playCount = '" + str(playCount) +
-                    "' WHERE songID = '" + spotify.get("item").get("id") + "' and  user = '" + user + "'")
-        cursor.execute(add_song)
+
+        models.PlayCount.objects.filter(
+            user=userObject,
+            songID=songID,
+        ).update(
+            playCount=str(playCount)
+        )
     return 0
 
 
-def add_song(spotify: dict, cursor: connection.cursor):
+def add_song(spotify: dict):
     """
     Add Song to Song List
 
     Parameters:
-        cursor      (cursor): Database Connection
         spotify     (dict)  : Dictionary Containing Song Details
     Returns:
         int: unused return
     """
-    add_song = ("INSERT IGNORE INTO songs"
-                "(id,name,trackLength)"
-                "VALUES (%s, %s, %s)")
-    data_song = (
-        spotify.get("item").get("id"),
-        spotify.get("item").get("name"),
-        spotify.get("item").get("duration_ms")
-    )
-    cursor.execute(add_song, data_song)
-    add_song_artists(spotify, cursor)
+
+    song = None
+    songID = spotify.get("item").get("id")
+    count = models.Songs.objects.filter(id=songID).count()
+
+    if count == 0:
+        song = models.Songs.objects.create(
+            id=songID,
+            name=spotify.get("item").get("name"),
+            trackLength=spotify.get("item").get("duration_ms")
+        )
+    else:
+        models.Songs.objects.filter(
+            id=songID,
+        ).update(
+            name=spotify.get("item").get("name"),
+            trackLength=spotify.get("item").get("duration_ms")
+        )
+
+        song = models.Songs.objects.get(id=songID)
+
+    add_song_artists(spotify, song)
+
     return 0
 
 
-def listening_history(user: str, spotify: dict, cursor: connection.cursor):
+def listening_history(user: str, spotify: dict):
     """
     Add Song to Listening History
 
     Parameters:
         user        (str)   : User ID
-        cursor      (cursor): Database Connection
         spotify     (dict)  : Dictionary Containing Song Details
     Returns:
         bool: Whether Song is Duplicate or Not.
     """
-    add_play = ("INSERT IGNORE INTO listeningHistory"
-                "(user, timestamp,timePlayed, songID)"
-                "VALUES (%s, %s, %s, %s)")
-    data_play = (
-        user,
-        spotify.get('utc_timestamp'),
-        spotify.get('utc_timePlayed'),
-        spotify.get("item").get("id"),
-    )
-    cursor.execute(add_play, data_play)
+    songID = str(spotify.get("item").get("id"),)
+    utc_timestamp = int(spotify.get("utc_timestamp")),
+    utc_timePlayed = str(spotify.get("utc_timePlayed")),
 
-    if (int(cursor.rowcount) == 0):
-        logging.warning("Duplicate History Song: " + str(data_play[:-1]))
+    # This shouldn't be needed, but the Dictionary is Returning a Tuple when it shouldn't be.
+    utc_timestamp = utc_timestamp[0]
+    utc_timePlayed = utc_timePlayed[0]
+
+    listeningHistory = models.ListeningHistory.objects.get_or_create(
+        user=models.Users.objects.get(user=str(user)),
+        songID=models.Songs.objects.get(id=songID),
+        timestamp=utc_timestamp,
+        timePlayed=utc_timePlayed
+    )
+
+    if (listeningHistory[1] == False):
+        logging.warning("Duplicate History Song: " + songID)
         return False
     return True
 
@@ -233,13 +224,15 @@ def get_playlists(user: str):
     Returns:
         list: List of Playlists
     """
-    with connection.cursor() as cursor:
-        query = "SELECT playlists.playlistID, name, playlists.lastUpdated from playlists  INNER JOIN playlistsUsers ON playlistsUsers.playlistID = playlists.playlistID    where user = '"+user+"'"
-        cursor.execute(query)
-        playlists = []
-        for playlist in cursor:
-            playlists.append((playlist[0], playlist[1], playlist[2]))
-        return playlists
+
+    playlistsList = models.PlaylistsUsers.objects.filter(
+        user_id=user).select_related('playlistID').values('playlistID', 'playlistID__name', 'playlistID__lastUpdated')
+
+    playlists = []
+    for playlist in playlistsList:
+        playlists.append(
+            (playlist['playlistID'], playlist['playlistID__name'], playlist['playlistID__lastUpdated']))
+    return playlists
 
 
 def add_playlist(playlist: str):
@@ -251,43 +244,46 @@ def add_playlist(playlist: str):
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        utc_time = datetime.utcnow()
-        lastUpdated = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+    utc_time = datetime.utcnow()
+    lastUpdated = utc_time.strftime("%Y-%m-%d %H:%M:%S")
 
-        sql = "DELETE FROM playlistSongs WHERE playlistID = '" + \
-            playlist+"'"
-        cursor.execute(sql)
+    models.PlaylistSongs.objects.filter(playlistID=playlist).delete()
+    models.Playlists.objects.filter(
+        playlistID=playlist).update(lastUpdated=lastUpdated)
 
-        addPlaylist = " UPDATE playlists SET lastUpdated = '"+lastUpdated+"' WHERE playlistID = '" + \
-            playlist+"'"
-        cursor.execute(addPlaylist)
     return 0
 
 
-def add_playlist_songs(cursor: connection.cursor, song: str, playlist: str, status: str):
+def add_playlist_songs(song: str, playlist: str, status: str):
     """
     Input Songs from Playlist into all PlayList Fields
 
     Parameters:
-        cursor      (cursor): Database Connection
         playlist    (str)   : Which Playlist to Insert Song Into
         status      (str)   : local/playable/unplayable
     Returns:
         int: unused return
     """
-    addPlaylist = ("INSERT IGNORE INTO  playlistSongs"
-                   "(playlistID, songID, songStatus)"
-                   "VALUES (%s, %s, %s)")
-    dataPlaylist = (
-        playlist,
-        song.get("item").get("id"),
-        status
-    )
-    cursor.execute(addPlaylist, dataPlaylist)
+    songExists = models.PlaylistSongs.objects.filter(
+        songID=str(song.get("item").get("id")),
+        playlistID=str(playlist)).count()
 
-    if (int(cursor.rowcount) == 0):
-        logging.warning("Duplicate Playlist Song: " + str(dataPlaylist))
+    if 0 == songExists:
+        models.PlaylistSongs.objects.update_or_create(
+            songStatus=status,
+            songID=models.Songs.objects.get(
+                id=str(song.get("item").get("id"))),
+            playlistID=models.Playlists.objects.get(
+                playlistID=str(playlist))
+        )
+    else:
+        dataPlaylist = (
+            playlist,
+            song.get("item").get("id"),
+            status
+        )
+        logging.warning("Duplicate Playlist Song: " +
+                        str(dataPlaylist) + str(song.get("item").get("name")))
     return 0
 
 
@@ -301,11 +297,10 @@ def database_input(user: str, spotify: dict):
     Returns:
         bool: Dictionary Containing Song Details
     """
-    with connection.cursor() as cursor:
-        add_artists(spotify, cursor)
-        add_song(spotify, cursor)
-        if(listening_history(user, spotify, cursor) == True):
-            add_song_count(user, spotify, cursor)
+    add_artists(spotify)
+    add_song(spotify)
+    if(listening_history(user, spotify) == True):
+        add_song_count(user, spotify)
     return spotify
 
 
@@ -321,16 +316,15 @@ def playlist_input(user: str, spotify: dict, playlist: str, status: str):
     Returns:
         int: unused return
     """
-    with connection.cursor() as cursor:
-        spotify["item"] = spotify.get("track")
-        if(spotify.get("item").get("is_local")):
-            spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
-                "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
-            for i in range(0, len(spotify.get("item").get("artists"))):
-                spotify["item"]["artists"][i]["id"] = (
-                    (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
-        add_artists(spotify, cursor)
-        add_song(spotify, cursor)
-        add_song_count(user, spotify, cursor, 0)
-        add_playlist_songs(cursor, spotify,  playlist, status)
+    spotify["item"] = spotify.get("track")
+    if(spotify.get("item").get("is_local")):
+        spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
+            "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
+        for i in range(0, len(spotify.get("item").get("artists"))):
+            spotify["item"]["artists"][i]["id"] = (
+                (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+    add_artists(spotify)
+    add_song(spotify)
+    add_song_count(user, spotify, 0)
+    add_playlist_songs(spotify,  playlist, status)
     return 0

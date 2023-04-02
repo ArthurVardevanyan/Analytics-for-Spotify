@@ -8,8 +8,20 @@ spec:
     - name: data
 
   sidecars:
-    - image: mariadb:latest
+    - image: mariadb:10.10
       name: mariadb
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        privileged: false
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        # seccompProfile:
+        #   type: RuntimeDefault
+        capabilities:
+          drop:
+            - MKNOD
+            - ALL
       resources:
         requests:
           memory: 125Mi
@@ -24,9 +36,28 @@ spec:
           value: spotify
         - name: MARIADB_DATABASE
           value: spotify
+      volumeMounts:
+        - name: mysql
+          mountPath: /var/lib/mysql/
+        - name: tmp
+          mountPath: /tmp
+        - name: run-mysqld
+          mountPath: /run/mysqld
   steps:
     - name: unit-test
       image: "registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:base"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        privileged: false
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        # seccompProfile:
+        #   type: RuntimeDefault
+        capabilities:
+          drop:
+            - MKNOD
+            - ALL
       env:
         - name: WORKSPACE_DATA_PATH
           value: $(workspaces.data.path)
@@ -53,3 +84,13 @@ spec:
 
         coverage run --source='./monitoringBackend,./webBackend'  manage.py test
         coverage report -m
+  volumes:
+    - name: mysql
+      emptyDir:
+        sizeLimit: 200Mi
+    - name: tmp
+      emptyDir:
+        sizeLimit: 1Mi
+    - name: run-mysqld
+      emptyDir:
+        sizeLimit: 1Mi

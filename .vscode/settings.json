@@ -39,6 +39,7 @@
         "kubernetes",
         "Kustomization",
         "kustomize",
+        "letsencrypt",
         "loadbalancers",
         "nodeports",
         "nounset",
@@ -57,6 +58,7 @@
         "tokenreviews",
         "traefik",
         "triggerbindings",
-        "triggertemplates"
+        "triggertemplates",
+        "venv"
     ],
 }

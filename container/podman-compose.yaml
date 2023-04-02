@@ -12,15 +12,16 @@
 # DB_PASSWORD=spotify
 # DEBUG=True
 
-version: "3"
+version: "3.4.4"
 
 services:
   mariadb:
     container_name: mariadb
-    image: docker.io/mariadb:latest
+    hostname: mariadb
+    image: docker.io/mariadb:10.10
+    network_mode: host
     ports:
       - 3306:3306
-      - "8081:8081"
     environment:
       MYSQL_ROOT_PASSWORD: "spotify"
       MARIADB_DATABASE: "spotify"
@@ -29,11 +30,15 @@ services:
 
   phpMyAdmin:
     container_name: phpMyAdmin
-    image: docker.io/bitnami/phpmyadmin
-    restart: always
-    network_mode: "service:mariadb"
+    hostname: phpMyAdmin
+    image: docker.io/bitnami/phpmyadmin:latest
+    network_mode: host
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mariadb
     environment:
-      DATABASE_HOST: "127.0.0.1"
+      DATABASE_HOST: "10.0.0.17" # TODO FIX
       APACHE_HTTP_PORT_NUMBER: "8081"
 
   # analytics-for-spotify:

@@ -4,9 +4,9 @@ metadata:
   name: data
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 100Mi
-  storageClassName: longhorn-single
+  storageClassName: longhorn
   volumeMode: Filesystem

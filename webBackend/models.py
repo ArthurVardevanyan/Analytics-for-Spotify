@@ -48,23 +48,11 @@ class Songs(models.Model):
     id = models.CharField(primary_key=True, max_length=22)
     name = models.TextField()
     trackLength = models.BigIntegerField(db_column='trackLength')
+    artists = models.ManyToManyField(Artists)
 
     class Meta:
         managed = True
         db_table = 'songs'
-
-
-class SongArtists(models.Model):
-
-    songID = models.OneToOneField(
-        'Songs', models.RESTRICT, db_column='songID', primary_key=True)
-    artistID = models.ForeignKey(
-        Artists, models.RESTRICT, db_column='artistID')
-
-    class Meta:
-        managed = True
-        db_table = 'songArtists'
-        unique_together = (('songID', 'artistID'),)
 
 
 class PlayCount(models.Model):

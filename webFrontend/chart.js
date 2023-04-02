@@ -157,7 +157,7 @@ window.onload = function () {
 };
 function topSongs() {
   $.ajax({
-    url: "/analytics/songs",
+    url: "/analytics/songs/",
     method: "GET",
     success(data) {
       $(document).ready(() => {
@@ -172,8 +172,8 @@ function topSongs() {
           order: [[2, "desc"]],
           pageLength: 10,
           columns: [
-            { data: "name", title: "Song Name" },
-            { data: "artists", title: "Artists" },
+            { data: "songID__name", title: "Song Name" },
+            { data: "songID__artists__name", title: "Artists" },
             { data: "playCount", title: "Count" },
           ],
         });
@@ -617,7 +617,7 @@ function listeningHistory(data) {
       pageLength: 10,
       columns: [
         { data: "timePlayed", title: "Time Played", width: "135" },
-        { data: "name", title: "Song Name" },
+        { data: "songID__name", title: "Song Name" },
       ],
     });
   });
@@ -626,7 +626,7 @@ function stats(data) {
   timeListened = 0;
   SongsListenedTo = data.length;
   for (const i in data) {
-    timeListened = timeListened += parseInt(data[i].trackLength);
+    timeListened = timeListened += parseInt(data[i].songID__trackLength);
   }
   timeListened = Math.round((timeListened / 60000 / 60) * 10) / 10;
   document.getElementById(

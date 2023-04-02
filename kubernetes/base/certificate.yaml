@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: analytics-for-spotify-cert
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  secretName: analytics-for-spotify-cert
+  dnsNames:
+    - "analytics-for-spotify.apps.okd.<path:secret/data/homelab/domain#url>"
+    - "spotify.<path:secret/data/homelab/domain#url>"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
