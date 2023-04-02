@@ -282,7 +282,8 @@ def add_playlist_songs(song: str, playlist: str, status: str):
             song.get("item").get("id"),
             status
         )
-        logging.warning("Duplicate Playlist Song: " + str(dataPlaylist))
+        logging.warning("Duplicate Playlist Song: " +
+                        str(dataPlaylist) + str(song.get("item").get("name")))
     return 0
 
 

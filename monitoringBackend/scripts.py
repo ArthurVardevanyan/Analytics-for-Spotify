@@ -48,7 +48,7 @@ def getHistory(user: str):
             id=str(songID)).values('id', 'artists__id', 'artists__name')
         artists = ''
         for artist in songArtist:
-            artists += artist.get('artists__name', "") + ","
+            artists += str(artist.get('artists__name', "")) + ","
         history.append((
             timestamp,
             songID,
@@ -91,7 +91,8 @@ def duplicateFinder(history: list):
         newHistory2.append(tuple(temp))
     newHistory2 = set(newHistory2)
     logging.info("Songs with duplicate new ID's: " + str(len(newHistory2)))
-    logging.info(newHistory2)
+    logging.debug(newHistory)
+    logging.debug(newHistory2)
     return newHistory2
 
 
@@ -129,9 +130,15 @@ def databaseUpdate(history: set, user: str):
             )
             models.PlayCount.objects.filter(
                 songID=oldSongID, user=userObject).delete()
+            try:
+                oldSongID.artists.clear()
+                oldSongID.delete()
+            except:
+                logging.warning(
+                    "Song ID Updater: Couldn't Delete: " + str(item))
+                logging.warning(
+                    "Song ID Updater: Couldn't Delete: " + str(song))
 
-            oldSongID.artists.clear()
-            oldSongID.delete()
     return trimmedHistory
 
 

@@ -259,7 +259,7 @@ def songs(request: requests.request):
             {
                 "songID__name": song['songID__name'],
                 "playCount": song['playCount'],
-                "songID__artists__name": playCountArtistDict[song["songID"]]
+                "songID__artists__name": playCountArtistDict.get(song["songID"], "")
             }
         )
 
@@ -347,17 +347,22 @@ def playlistSongs(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
     playlistsData = []
+
+    # Get List of Playlists Belonging to User
     playlists = database.get_playlists(spotifyID)
 
+    # Get User Object
     userObject = models.Users.objects.get(
         user=str(spotifyID))
 
+    # Get Play Count History for User
     playCount = list(models.PlayCount.objects.filter(user=userObject).select_related().values(
         'songID', 'playCount'))
     playCountDict = {}
     for pc in playCount:
         playCountDict[pc['songID']] = pc.get('playCount', 0)
 
+    # Get Listening History for User, and Store only Last Played
     listeningHistory = list(models.ListeningHistory.objects.filter(
         user=userObject).select_related().values(
             'songID', 'timePlayed').order_by('timePlayed'))
@@ -365,23 +370,27 @@ def playlistSongs(request: requests.request):
     for lh in listeningHistory:
         listeningHistoryLatest[lh['songID']] = lh['timePlayed']
 
+    # Get List of all Song <--> Artist Relationships
     songArtists = list(models.Songs.objects.select_related(
     ).all().values('id', 'artists__name'))
 
+    # MYSQL GROUP_CONCAT Logic in Python
     songArtistsDict = {}
     for artist in songArtists:
         songArtistsDict[
             artist['id']] = str(artist["artists__name"]) + ", " + str(songArtistsDict.get(artist['id'], " "))
 
+    # For Each Playlist, build data for Table
     for playlist in playlists:
         playlistDict = {}
 
+        # Get All Songs In Playlist
         playlistSongs = list(models.PlaylistSongs.objects.select_related(
             'songID').filter(playlistID=playlist).values('songID', 'songStatus', 'songID__name'))
 
         playlistData = []
         for ps in playlistSongs:
-
+            # Append All Information Gathered Previously
             playlistData.append({
                 "songStatus": ps['songStatus'],
                 "name": ps['songID__name'],
