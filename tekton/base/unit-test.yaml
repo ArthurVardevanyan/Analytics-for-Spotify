@@ -24,11 +24,11 @@ spec:
             - ALL
       resources:
         requests:
-          memory: 125Mi
+          memory: 192Mi
           cpu: 100m
         limits:
-          memory: 250Mi
-          cpu: 200m
+          memory: 384Mi
+          cpu: 300m
       ports:
         - containerPort: 3306
       env:
@@ -79,8 +79,12 @@ spec:
         set -o pipefail
 
         echo "Waiting for Database to Start"
-        sleep 15
+        #sleep 15
         cd $(workspaces.data.path)
+
+        python3 -m venv .venv && \
+        source .venv/bin/activate && \
+        python3 -m pip install -r requirements.txt
 
         coverage run --source='./monitoringBackend,./webBackend'  manage.py test
         coverage report -m

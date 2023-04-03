@@ -72,7 +72,7 @@ def user_status(user: str, detailed: int = 0):
         return users.first().enabled
 
 
-def add_artists(spotify: dict):
+def add_artists(spotify: dict, playlist: bool = False):
     """
     Add Artist to Artist List
 
@@ -81,15 +81,28 @@ def add_artists(spotify: dict):
     Returns:
         int: unused return
     """
+    artistBulkCreate = []
+    artistBulkUpdate = []
     for iter in spotify.get("item").get("artists"):
-        count = models.Artists.objects.filter(id=iter.get("id")).count()
-        if count == 0:
-            models.Artists.objects.create(
-                id=iter.get("id"), name=iter.get("name"))
-        else:
-            models.Artists.objects.filter(id=iter.get(
-                "id")).update(name=iter.get("name"))
-    return 0
+        artist = str(iter.get("name"))
+        try:
+            model = models.Artists.objects.get(id=iter.get("id"))
+            model.name = artist
+            if playlist:
+                artistBulkUpdate.append(model)
+            else:
+                model.save(update_fields=['name'])
+        except models.Artists.DoesNotExist:
+            model = models.Artists(id=iter.get("id"), name=artist)
+            if playlist:
+                artistBulkCreate.append(model)
+            else:
+                model.save()
+
+    if playlist:
+        return artistBulkCreate, artistBulkUpdate
+    else:
+        return 0
 
 
 def add_song_artists(spotify: dict, song: models.Songs):
@@ -107,7 +120,7 @@ def add_song_artists(spotify: dict, song: models.Songs):
     return 0
 
 
-def add_song_count(user: str, spotify: dict, count: int = 1):
+def add_song_count(user: str, spotify: dict, count: int = 1, playlist: bool = False, songObject: models.Songs = None, userObject: models.Users = None):
     """
     Add Song / Artist to Song / Artist List
 
@@ -119,37 +132,45 @@ def add_song_count(user: str, spotify: dict, count: int = 1):
         int: unused return
     """
     song = str(spotify.get("item").get("id"))
-    songID = models.Songs.objects.get(id=str(song))
-    userObject = models.Users.objects.get(user=str(user))
+    if songObject == None:
+        songID = models.Songs.objects.get(id=str(song))
+    else:
+        songID = songObject
+    if songObject == None:
+        userObject = models.Users.objects.get(user=str(user))
+    else:
+        userObject = userObject
 
-    songPlayCount = models.PlayCount.objects.filter(
-        songID=songID,
-        user=userObject
-    )
+    createModel = None
+    updateModel = None
 
-    playCount = -1
-    if songPlayCount.count() != 0:
-        playCount = int(songPlayCount.values('playCount').first()['playCount'])
-    if playCount < 0:
-        models.PlayCount.objects.create(
+    try:
+        updateModel = models.PlayCount.objects.get(
+            songID=songID,
+            user=userObject
+        )
+        updateModel.playCount = str(int(updateModel.playCount) + count)
+        if not playlist:
+            updateModel.save(update_fields=['playCount'])
+
+    except models.PlayCount.DoesNotExist:
+        createModel = models.PlayCount(
             user=userObject,
             songID=songID,
             playCount=count
         )
-        add_song_artists(spotify, songID)
+        if not playlist:
+            createModel.save()
+            # Temp# TODO: Bulk Input Support
+            add_song_artists(spotify, songID)
+
+    if playlist:
+        return createModel, updateModel
     else:
-        playCount = playCount + count
-
-        models.PlayCount.objects.filter(
-            user=userObject,
-            songID=songID,
-        ).update(
-            playCount=str(playCount)
-        )
-    return 0
+        return 0
 
 
-def add_song(spotify: dict):
+def add_song(spotify: dict, playlist: bool = False):
     """
     Add Song to Song List
 
@@ -159,29 +180,32 @@ def add_song(spotify: dict):
         int: unused return
     """
 
-    song = None
     songID = spotify.get("item").get("id")
-    count = models.Songs.objects.filter(id=songID).count()
+    name = spotify.get("item").get("name"),
+    trackLength = spotify.get("item").get("duration_ms")
 
-    if count == 0:
-        song = models.Songs.objects.create(
-            id=songID,
-            name=spotify.get("item").get("name"),
-            trackLength=spotify.get("item").get("duration_ms")
-        )
+    createModel = None
+    updateModel = None
+
+    try:
+        updateModel = models.Songs.objects.get(id=songID)
+        updateModel.name = name[0]
+        updateModel.trackLength = trackLength
+        if not playlist:
+            updateModel.save(update_fields=['name', 'trackLength'])
+            add_song_artists(spotify, updateModel)  # TODO: Bulk Input Support
+    except models.Songs.DoesNotExist:
+        createModel = models.Songs(
+            id=songID, name=name[0], trackLength=trackLength)
+        if not playlist:
+            createModel.save()
+            # Temp# TODO: Bulk Input Support
+            add_song_artists(spotify, createModel)
+
+    if playlist:
+        return createModel, updateModel
     else:
-        models.Songs.objects.filter(
-            id=songID,
-        ).update(
-            name=spotify.get("item").get("name"),
-            trackLength=spotify.get("item").get("duration_ms")
-        )
-
-        song = models.Songs.objects.get(id=songID)
-
-    add_song_artists(spotify, song)
-
-    return 0
+        return 0
 
 
 def listening_history(user: str, spotify: dict):
@@ -254,7 +278,7 @@ def add_playlist(playlist: str):
     return 0
 
 
-def add_playlist_songs(song: str, playlist: str, status: str):
+def add_playlist_songs(song: str, playlistObject: models.Playlists, status: str, songObject: models.Songs = None):
     """
     Input Songs from Playlist into all PlayList Fields
 
@@ -264,27 +288,26 @@ def add_playlist_songs(song: str, playlist: str, status: str):
     Returns:
         int: unused return
     """
-    songExists = models.PlaylistSongs.objects.filter(
-        songID=str(song.get("item").get("id")),
-        playlistID=str(playlist)).count()
+    songID = str(song.get("item").get("id"))
+    if songObject == None:
+        songObject = models.Songs.objects.get(id=songID)
 
-    if 0 == songExists:
-        models.PlaylistSongs.objects.update_or_create(
-            songStatus=status,
-            songID=models.Songs.objects.get(
-                id=str(song.get("item").get("id"))),
-            playlistID=models.Playlists.objects.get(
-                playlistID=str(playlist))
-        )
-    else:
-        dataPlaylist = (
-            playlist,
-            song.get("item").get("id"),
-            status
-        )
+    createModel = None
+
+    try:
+        models.PlaylistSongs.objects.get(
+            songID=songObject, playlistID=playlistObject)
+        dataPlaylist = (playlistObject.playlistID, songID, status)
         logging.warning("Duplicate Playlist Song: " +
                         str(dataPlaylist) + str(song.get("item").get("name")))
-    return 0
+    except models.PlaylistSongs.DoesNotExist:
+        createModel = models.PlaylistSongs(
+            songStatus=status,
+            songID=songObject,
+            playlistID=playlistObject
+        )
+
+    return createModel
 
 
 def database_input(user: str, spotify: dict):
@@ -304,7 +327,7 @@ def database_input(user: str, spotify: dict):
     return spotify
 
 
-def playlist_input(user: str, spotify: dict, playlist: str, status: str):
+def playlist_input(user: str, playlist: str, playlistDB: list):
     """
     Input Songs from Playlist into all Database Fields
 
@@ -316,15 +339,80 @@ def playlist_input(user: str, spotify: dict, playlist: str, status: str):
     Returns:
         int: unused return
     """
-    spotify["item"] = spotify.get("track")
-    if(spotify.get("item").get("is_local")):
-        spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
-            "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
-        for i in range(0, len(spotify.get("item").get("artists"))):
-            spotify["item"]["artists"][i]["id"] = (
-                (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
-    add_artists(spotify)
-    add_song(spotify)
-    add_song_count(user, spotify, 0)
-    add_playlist_songs(spotify,  playlist, status)
+    artistDB = []
+    songDB = []
+    playCountDB = []
+    playListSongsDB = []
+
+    userObject = models.Users.objects.get(user=str(user))
+    playlistObject = models.Playlists.objects.get(playlistID=playlist)
+
+    for song in playlistDB:
+        spotify = song[0]
+        status = song[1]
+        spotify["item"] = spotify.get("track")
+        if(spotify.get("item").get("is_local")):
+            spotify["item"]["id"] = ":" + spotify.get("item").get("uri").replace("%2C", "").replace(
+                "+", "").replace("%28", "").replace(":", "")[12:30] + spotify.get("item").get("uri")[-3:]
+            for i in range(0, len(spotify.get("item").get("artists"))):
+                spotify["item"]["artists"][i]["id"] = (
+                    (":" + (spotify.get("item").get("artists")[i].get("name"))).zfill(22))[:22]
+
+        artistDB.append(add_artists(spotify, True))
+
+        songTuple = add_song(spotify, True)
+        if songTuple[0] != None:
+            songObject = songTuple[0]
+        else:
+            songObject = songTuple[1]
+        songDB.append(songTuple)
+
+        playCountDB.append(add_song_count(
+            user, spotify, count=0, playlist=True, songObject=songObject, userObject=userObject))
+        playListSongsDB.append(add_playlist_songs(
+            spotify,  playlistObject, status, songObject))
+
+    artistCreate = []
+    artistUpdate = []
+    for song in artistDB:
+        for artist in song[0]:
+            artistCreate.append(artist)
+        for artist in song[1]:
+            artistUpdate.append(artist)
+
+    models.Artists.objects.bulk_create(artistCreate, ignore_conflicts=True)
+    models.Artists.objects.bulk_update(artistUpdate, ['name'])
+
+    songCreate = []
+    songUpdate = []
+    for song in songDB:
+        if song[0] != None:
+            songCreate.append(song[0])
+        if song[1] != None:
+            songUpdate.append(song[1])
+
+    models.Songs.objects.bulk_create(songCreate, ignore_conflicts=True)
+    models.Songs.objects.bulk_update(songUpdate, ['name', 'trackLength'])
+
+    playCountCreate = []
+    playCountUpdate = []
+    for playCount in playCountDB:
+        if playCount[0] != None:
+            playCountCreate.append(playCount[0])
+        if playCount[1] != None:
+            playCountUpdate.append(playCount[1])
+
+    models.PlayCount.objects.bulk_create(
+        playCountCreate, ignore_conflicts=True)
+    models.PlayCount.objects.bulk_update(
+        playCountUpdate, ['playCount'])
+
+    playListSongCreate = []
+    for playListSong in playListSongsDB:
+        if playListSong != None:
+            playListSongCreate.append(playListSong)
+
+    models.PlaylistSongs.objects.bulk_create(
+        playListSongCreate, ignore_conflicts=True)
+
     return 0
