@@ -1,0 +1,108 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: analytics-for-spotify
+  annotations:
+    pipelinesascode.tekton.dev/max-keep-runs: "1"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      (target_branch == "develop")
+    # event == "pull_request" &&
+    pipelinesascode.tekton.dev/target-namespace: "analytics-for-spotify"
+    pipelinesascode.tekton.dev/task: "[tekton/base/unit-test.yaml]"
+spec:
+  params:
+    - name: git-url
+      value: "{{ repo_url }}"
+    - name: git-commit
+      value: "{{ revision }}"
+    - name: DOCKERFILE
+      value: "./containerfile"
+    - name: IMAGE
+      value: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:{{ revision }}"
+  pipelineSpec:
+    params:
+      - name: git-url
+        description: Repository URL to clone from.
+        type: string
+      - name: git-commit
+        type: string
+      - name: IMAGE
+        description: Reference of the image buildah will produce.
+      - name: DOCKERFILE
+        description: Path to the Dockerfile to build.
+        type: string
+        default: ./Dockerfile
+
+    workspaces:
+      - name: data
+
+    tasks:
+      - name: git-clone
+        taskRef:
+          name: git-clone
+          kind: ClusterTask
+        params:
+          - name: url
+            value: $(params.git-url)
+          - name: revision
+            value: $(params.git-commit)
+        workspaces:
+          - name: output
+            workspace: data
+
+      - name: unit-test
+        runAfter:
+          - git-clone
+        taskRef:
+          name: unit-test
+          kind: Task
+        workspaces:
+          - name: data
+            workspace: data
+
+      - name: buildah
+        runAfter:
+          - unit-test
+        taskRef:
+          name: buildah
+          kind: ClusterTask
+        params:
+          - name: IMAGE
+            value: $(params.IMAGE)
+          - name: DOCKERFILE
+            value: $(params.DOCKERFILE)
+        workspaces:
+          - name: source
+            workspace: data
+
+      - name: deploy
+        runAfter:
+          - buildah
+        taskRef:
+          name: deploy
+          kind: ClusterTask
+        workspaces:
+          - name: data
+            workspace: data
+        params:
+          - name: git-commit
+            value: $(params.git-commit)
+          - name: vault-path
+            value: analytics-for-spotify
+
+  serviceAccountName: pipeline
+  workspaces:
+    - name: data
+      volumeClaimTemplate:
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: "250Mi"
+          storageClassName: longhorn

@@ -49,14 +49,20 @@ def main(user: str, playlist: str):
         else:
             url = response.get("next")
 
+    playListDB = []
     for section in playlistSections:
-        for song in section:
-            if song.get("is_local"):
-                database.playlist_input(user, song, playlist, "local")
-            elif song.get("track").get("is_playable"):
-                database.playlist_input(user, song, playlist, "playable")
-            else:
-                database.playlist_input(user, song, playlist, "unplayable")
+        if section != None:
+            for song in section:
+                if song.get("track") != None:
+                    if song.get("is_local"):
+                        playListDB.append((song, "local"))
+                    elif song.get("track").get("is_playable"):
+                        playListDB.append((song, "playable"))
+                    else:
+                        playListDB.append((song, "unplayable"))
+
+    database.playlist_input(user, playlist, playListDB)
+
     return True
 
 
