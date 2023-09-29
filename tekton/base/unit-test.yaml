@@ -45,7 +45,14 @@ spec:
           mountPath: /run/mysqld
   steps:
     - name: unit-test
-      image: "registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:base"
+      image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base"
+      resources:
+        requests:
+          memory: 192Mi
+          cpu: 100m
+        limits:
+          memory: 384Mi
+          cpu: 300m
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
