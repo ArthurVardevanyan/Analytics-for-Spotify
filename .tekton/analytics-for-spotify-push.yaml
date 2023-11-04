@@ -2,14 +2,15 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: analytics-for-spotify
+  name: analytics-for-spotify-push
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "1"
     pipelinesascode.tekton.dev/on-cel-expression: |
-      (target_branch == "develop")
-    # event == "pull_request" &&
+      event == "push" && (target_branch == "refs/heads/production" || target_branch == "production")
     pipelinesascode.tekton.dev/target-namespace: "analytics-for-spotify"
-    pipelinesascode.tekton.dev/task: "[tekton/base/unit-test.yaml]"
+    pipelinesascode.tekton.dev/task: "tekton/base/unit-test.yaml"
+    pipelinesascode.tekton.dev/task-1: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/git-clone/0.9.1/raw"
+    pipelinesascode.tekton.dev/task-2: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/buildah/0.5.1/raw"
 spec:
   params:
     - name: git-url
@@ -36,12 +37,13 @@ spec:
 
     workspaces:
       - name: data
+      - name: git_auth_secret
 
     tasks:
       - name: git-clone
         taskRef:
           name: git-clone
-          kind: ClusterTask
+          kind: Task
         params:
           - name: url
             value: $(params.git-url)
@@ -50,6 +52,8 @@ spec:
         workspaces:
           - name: output
             workspace: data
+          - name: basic-auth
+            workspace: git_auth_secret
 
       - name: unit-test
         runAfter:
@@ -66,7 +70,7 @@ spec:
           - unit-test
         taskRef:
           name: buildah
-          kind: ClusterTask
+          kind: Task
         params:
           - name: IMAGE
             value: $(params.IMAGE)
@@ -81,7 +85,7 @@ spec:
           - buildah
         taskRef:
           name: deploy
-          kind: ClusterTask
+          kind: Task
         workspaces:
           - name: data
             workspace: data
@@ -106,3 +110,6 @@ spec:
             requests:
               storage: "250Mi"
           storageClassName: longhorn
+    - name: git_auth_secret
+      secret:
+        secretName: "{{ git_auth_secret }}"

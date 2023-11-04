@@ -2,13 +2,15 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: base-image
+  name: analytics-for-spotify-pr
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "1"
     pipelinesascode.tekton.dev/on-cel-expression: |
-      (target_branch == "develop") && "container/containerfile".pathChanged()
-    # event == "pull_request" &&
+      event == "pull_request"  && (target_branch == "refs/heads/production" || target_branch == "production")
     pipelinesascode.tekton.dev/target-namespace: "analytics-for-spotify"
+    pipelinesascode.tekton.dev/task: "tekton/base/unit-test.yaml"
+    pipelinesascode.tekton.dev/task-1: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/git-clone/0.9.1/raw"
+    pipelinesascode.tekton.dev/task-2: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/buildah/0.5.1/raw"
 spec:
   params:
     - name: git-url
@@ -16,9 +18,9 @@ spec:
     - name: git-commit
       value: "{{ revision }}"
     - name: DOCKERFILE
-      value: "./container/containerfile"
+      value: "./containerfile"
     - name: IMAGE
-      value: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base"
+      value: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:{{ revision }}"
   pipelineSpec:
     params:
       - name: git-url
@@ -41,7 +43,7 @@ spec:
       - name: git-clone
         taskRef:
           name: git-clone
-          kind: ClusterTask
+          kind: Task
         params:
           - name: url
             value: $(params.git-url)
@@ -53,12 +55,22 @@ spec:
           - name: basic-auth
             workspace: git_auth_secret
 
-      - name: buildah
+      - name: unit-test
         runAfter:
           - git-clone
         taskRef:
+          name: unit-test
+          kind: Task
+        workspaces:
+          - name: data
+            workspace: data
+
+      - name: buildah
+        runAfter:
+          - unit-test
+        taskRef:
           name: buildah
-          kind: ClusterTask
+          kind: Task
         params:
           - name: IMAGE
             value: $(params.IMAGE)
@@ -81,7 +93,7 @@ spec:
             - ReadWriteOnce
           resources:
             requests:
-              storage: "100Mi"
+              storage: "250Mi"
           storageClassName: longhorn
     - name: git_auth_secret
       secret:
