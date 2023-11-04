@@ -11,6 +11,7 @@ metadata:
     pipelinesascode.tekton.dev/task: "tekton/base/unit-test.yaml"
     pipelinesascode.tekton.dev/task-1: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/git-clone/0.9.1/raw"
     pipelinesascode.tekton.dev/task-2: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/buildah/0.5.1/raw"
+    pipelinesascode.tekton.dev/task-3: "https://tekton-hub-api-openshift-pipelines.apps.okd.arthurvardevanyan.com/v1/resource/homelab/task/deployment/0.1.1/raw"
 spec:
   params:
     - name: git-url
@@ -85,7 +86,7 @@ spec:
           - buildah
         taskRef:
           name: deploy
-          kind: Task
+          kind: k8s-deploy
         workspaces:
           - name: data
             workspace: data
