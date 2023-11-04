@@ -48,6 +48,7 @@
         "phpmyadmin",
         "pipefail",
         "pipelineruns",
+        "pipelinesascode",
         "resourcetemplates",
         "SAST",
         "seccomp",
