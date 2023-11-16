@@ -5,6 +5,3 @@ resources:
   # - resource-quota.yaml
   # - limit-range.yaml
   - secret.yaml
-  - service.yaml
-  - deployment.yaml
-  - certificate.yaml

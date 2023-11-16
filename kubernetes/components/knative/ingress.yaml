@@ -1,0 +1,24 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: analytics-for-spotify
+  namespace: knative-serving
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  ingressClassName: openshift-default
+  tls:
+    - hosts:
+        - spotify.<path:secret/data/homelab/domain#url>
+      secretName: analytics-for-spotify-cert
+  rules:
+    - host: spotify.<path:secret/data/homelab/domain#url>
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kourier
+                port:
+                  number: 80
