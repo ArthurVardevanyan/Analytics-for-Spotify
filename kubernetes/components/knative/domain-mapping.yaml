@@ -1,0 +1,12 @@
+apiVersion: serving.knative.dev/v1beta1
+kind: DomainMapping
+metadata:
+  name: spotify.arthurvardevanyan.com
+  namespace: analytics-for-spotify
+spec:
+  ref:
+    name: analytics-for-spotify
+    kind: Service
+    apiVersion: serving.knative.dev/v1
+  tls:
+    secretName: analytics-for-spotify-cert

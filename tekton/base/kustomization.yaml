@@ -11,3 +11,4 @@ resources:
   #- triggers/binding.yaml
   #- triggers/template.yaml
   #- triggers/route.yaml
+  - knative-rbac.yaml
