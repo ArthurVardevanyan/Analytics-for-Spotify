@@ -1,12 +1,18 @@
-FROM debian:bookworm-slim@sha256:94882f177083c7fa6764b9ef2a86ed3c29c99593b34d5441648a7fb3c0cd10ec
+FROM debian:sid-slim@sha256:1cd92e6273839644591c6857fb28faf285130e5ac1d26c1e981301f3f9042882
 
-RUN echo "deb http://deb.debian.org/debian/ bullseye main" >>  /etc/apt/sources.list && \
-  echo "deb-src http://deb.debian.org/debian/ bullseye main" >>  /etc/apt/sources.list && \
+RUN echo "deb http://deb.debian.org/debian/ sid main" >>  /etc/apt/sources.list && \
+  echo "deb-src http://deb.debian.org/debian/ sid main" >>  /etc/apt/sources.list && \
   apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y && \
-  apt-get install -y python3 python3-pip python3-venv libapache2-mod-wsgi-py3 libmariadb-dev gcc \
+  apt-get install -y python3 python3-pip python3-venv libapache2-mod-wsgi-py3 libmariadb-dev gcc pkg-config\
   apache2 apache2-data apache2-bin apache2-utils --allow-downgrades && \
   apt-get autoremove -y && apt-get clean && \
-  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+  cp /usr/bin/dpkg /tmp/dpkg && \
+  /tmp/dpkg -P --force-remove-essential --force-depends apt dpkg && \
+  rm -rf \
+  /tmp/dpkg /var/log/apt \
+  /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+  /var/lib/dpkg/updates /var/lib/dpkg/info /var/lib/dpkg/alternatives /etc/dpkg/dpkg.cfg.d /etc/alternatives
 
 # Ports, Custom Apache Logs & Supress Apache Server Name Error
 RUN echo 'LogFormat "%{%a %b %d %H:%M:%S %Y}t %H %m %U" customLog' >> /etc/apache2/apache2.conf  && \
@@ -36,10 +42,3 @@ RUN sed -i "s,USER=www-data,USER=nobody,g" /etc/apache2/envvars && \
 # https://salsa.debian.org/apache-team/apache2/-/pipelines/395609
 # https://www.mail-archive.com/debian-bugs-dist@lists.debian.org/msg1860285.html
 # https://salsa.debian.org/apache-team/apache2/-/commit/41653076a91038f63b6fa4895a5add262f34f051
-
-RUN cp /usr/bin/dpkg /tmp/dpkg && \
-  /tmp/dpkg -P --force-remove-essential --force-depends apt dpkg && \
-  rm -rf \
-  /tmp/dpkg /var/log/apt \
-  /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-  /var/lib/dpkg/updates /var/lib/dpkg/info /var/lib/dpkg/alternatives /etc/dpkg/dpkg.cfg.d /etc/alternatives

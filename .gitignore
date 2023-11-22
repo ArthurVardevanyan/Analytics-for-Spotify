@@ -16,3 +16,4 @@ pyvenv.cfg
 .noseids
 nosetests.xml
 secrets
+.venv
