@@ -78,6 +78,13 @@ spec:
           value: spotify
         - name: TEST
           value: test
+      volumeMounts:
+        - name: cache
+          mountPath: /.cache/
+          subPath: .cache
+        - name: cache
+          mountPath: /.local/
+          subPath: .local
       script: |
         #!/bin/bash
 
@@ -88,6 +95,8 @@ spec:
         echo "Waiting for Database to Start"
         #sleep 15
         cd $(workspaces.data.path)
+
+        python3 -m pip install -r requirements.txt --break-system-packages
 
         python3 -m venv .venv && \
         source .venv/bin/activate && \
@@ -105,3 +114,6 @@ spec:
     - name: run-mysqld
       emptyDir:
         sizeLimit: 1Mi
+    - name: cache
+      persistentVolumeClaim:
+        claimName: cache
