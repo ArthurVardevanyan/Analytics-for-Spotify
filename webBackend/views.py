@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 import os
 from django.http import HttpResponse, JsonResponse
-
 from django.db import connection
+from django.db.models import F
 import json
 import requests
 import monitoringBackend.database as database
@@ -213,10 +213,28 @@ def listeningHistory(request: requests.request):
 
     listeningHistory = models.ListeningHistory.objects.filter(
         user=str(spotifyID)).select_related(
-        "songID").values('timePlayed', 'songID__name', 'songID__trackLength').order_by('timePlayed')
+        "songID").values(t=F("timePlayed"),n=F("songID__name")).order_by('t')
 
     return JsonResponse(list(listeningHistory), safe=False)
 
+
+def listeningHistoryStats(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    listeningHistory = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).select_related(
+        "songID").values(t=F("timePlayed"),l=F("songID__trackLength")).order_by('t')
+
+    return JsonResponse(list(listeningHistory), safe=False)
 
 def songs(request: requests.request):
     """
@@ -257,9 +275,9 @@ def songs(request: requests.request):
     for song in list(playCount):
         playCountGroupConcat.append(
             {
-                "songID__name": song['songID__name'],
-                "playCount": song['playCount'],
-                "songID__artists__name": playCountArtistDict.get(song["songID"], "")
+                "n": song['songID__name'],
+                "pc": song['playCount'],
+                "a": playCountArtistDict.get(song["songID"], "")
             }
         )
 
@@ -392,17 +410,17 @@ def playlistSongs(request: requests.request):
         for ps in playlistSongs:
             # Append All Information Gathered Previously
             playlistData.append({
-                "songStatus": ps['songStatus'],
-                "name": ps['songID__name'],
-                "playCount": playCountDict.get(ps['songID'], 0),
-                "timePlayed": listeningHistoryLatest.get(ps['songID'], "1970-01-01").split(" ")[0],
-                "artists": str(songArtistsDict.get(ps['songID'], "")).rstrip(', ')
+                "ss": ps['songStatus'],
+                "n": ps['songID__name'],
+                "pc": playCountDict.get(ps['songID'], 0),
+                "t": listeningHistoryLatest.get(ps['songID'], "1970-01-01").split(" ")[0],
+                "a": str(songArtistsDict.get(ps['songID'], "")).rstrip(', ')
             })
 
         playlistDict["id"] = playlist[0]
         playlistDict["name"] = playlist[1]
         playlistDict["lastUpdated"] = playlist[2]
         playlistDict["tracks"] = sorted(
-            playlistData, key=lambda x: x['timePlayed'])
+            playlistData, key=lambda x: x['t'])
         playlistsData.append(playlistDict)
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")

@@ -144,7 +144,7 @@ window.onload = function () {
   topSongs();
 
   $.ajax({
-    url: "/analytics/listeningHistory/",
+    url: "/analytics/listeningHistoryStats/",
     method: "GET",
     success(data) {
       playlistSongs();
@@ -172,9 +172,9 @@ function topSongs() {
           order: [[2, "desc"]],
           pageLength: 10,
           columns: [
-            { data: "songID__name", title: "Song Name" },
-            { data: "songID__artists__name", title: "Artists" },
-            { data: "playCount", title: "Count" },
+            { data: "n", title: "Song Name" },
+            { data: "a", title: "Artists" },
+            { data: "pc", title: "Count" },
           ],
         });
       });
@@ -219,11 +219,11 @@ function playlistSongs() {
               order: [[3, "desc"]],
               pageLength: 10,
               columns: [
-                { data: "name", title: "Song Name" },
-                { data: "artists", title: "Artists" },
-                { data: "timePlayed", title: "LastPlayed" },
-                { data: "songStatus", title: "Status" },
-                { data: "playCount", title: "Count" },
+                { data: "n", title: "Song Name" },
+                { data: "a", title: "Artists" },
+                { data: "t", title: "LastPlayed" },
+                { data: "ss", title: "Status" },
+                { data: "pc", title: "Count" },
               ],
             });
           }
@@ -237,12 +237,12 @@ function playlistSongs() {
             const plays = [];
 
             for (const i in aDemoItems) {
-              if (aDemoItems[i].timePlayed != null) {
+              if (aDemoItems[i].t != null) {
                 localTime = new Date(
-                  aDemoItems[i].timePlayed + "T" + "00:00:00" + "+00:00"
+                  aDemoItems[i].t + "T" + "00:00:00" + "+00:00"
                 );
               } else {
-                localTime = new Date(aDemoItems[i].timePlayed);
+                localTime = new Date(aDemoItems[i].t);
               }
               day = `${localTime.getFullYear()}-${`0${
                 localTime.getMonth() + 1
@@ -321,7 +321,7 @@ function summaryLineChart(data) {
   const plays = [];
 
   for (const i in data) {
-    var time = data[i].timePlayed.split(" ");
+    var time = data[i].t.split(" ");
     localTime = new Date(time[0] + "T" + time[1] + "+00:00");
     day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1}`.slice(
       -2
@@ -492,10 +492,10 @@ function hourlyLineChart(data) {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
   for (const i in data) {
-    var time = data[i].timePlayed.split(" ");
+    var time = data[i].t.split(" ");
     localTime = new Date(time[0] + "T" + time[1] + "+00:00");
     hour = `0${String(localTime.getHours())}`.slice(-2);
-    // hour = data[i].timePlayed.slice(11, 13);
+    // hour = data[i].t.slice(11, 13);
     for (let j = 0; j < songs.length; j++) {
       if (hour === songs[j]) {
         plays[j] = plays[j] + 1;
@@ -570,7 +570,7 @@ function hourlyLineChart(data) {
     ];
 
     for (const i in data) {
-      localTime = new Date(`${data[i].timePlayed}`);
+      localTime = new Date(`${data[i].t}`);
       day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1}`.slice(
         -2
       )}-${`0${localTime.getDate()}`.slice(-2)}`;
@@ -589,44 +589,52 @@ function hourlyLineChart(data) {
     hourlyLineChart.update();
   });
 }
-function listeningHistory(data) {
-  $(document).ready(() => {
-    // https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
+function listeningHistory() {
+  $.ajax({
+    url: "/analytics/listeningHistory/",
+    method: "GET",
+    success(data) {
+      $(document).ready(() => {
+        // https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables
 
-    for (let i = 0; i < data.length; i++) {
-      var time = data[i].timePlayed.split(" ");
-      lt = new Date(time[0] + "T" + time[1] + "+00:00");
-      localDateTime = `${lt.getFullYear()}-${`0${lt.getMonth() + 1}`.slice(
-        -2
-      )}-${`0${lt.getDate()}`.slice(-2)} ${`0${lt.getHours()}`.slice(
-        -2
-      )}:${`0${lt.getMinutes()}`.slice(-2)}:${`0${lt.getSeconds()}`.slice(-2)}`;
-      data[i].timePlayed = localDateTime;
-    }
+        for (let i = 0; i < data.length; i++) {
+          var time = data[i].t.split(" ");
+          lt = new Date(time[0] + "T" + time[1] + "+00:00");
+          localDateTime = `${lt.getFullYear()}-${`0${lt.getMonth() + 1}`.slice(
+            -2
+          )}-${`0${lt.getDate()}`.slice(-2)} ${`0${lt.getHours()}`.slice(
+            -2
+          )}:${`0${lt.getMinutes()}`.slice(-2)}:${`0${lt.getSeconds()}`.slice(
+            -2
+          )}`;
+          data[i].t = localDateTime;
+        }
 
-    const aDemoItems = data;
+        const aDemoItems = data;
 
-    // Load  data table
-    if ($.fn.DataTable.isDataTable("#listeningHistory")) {
-      $("#listeningHistory").DataTable().destroy();
-    }
-    const oTblReport = $("#listeningHistory");
-    oTblReport.DataTable({
-      data: aDemoItems,
-      order: [[0, "desc"]],
-      pageLength: 10,
-      columns: [
-        { data: "timePlayed", title: "Time Played", width: "135" },
-        { data: "songID__name", title: "Song Name" },
-      ],
-    });
+        // Load  data table
+        if ($.fn.DataTable.isDataTable("#listeningHistory")) {
+          $("#listeningHistory").DataTable().destroy();
+        }
+        const oTblReport = $("#listeningHistory");
+        oTblReport.DataTable({
+          data: aDemoItems,
+          order: [[0, "desc"]],
+          pageLength: 10,
+          columns: [
+            { data: "t", title: "Time Played", width: "135" },
+            { data: "n", title: "Song Name" },
+          ],
+        });
+      });
+    },
   });
 }
 function stats(data) {
   timeListened = 0;
   SongsListenedTo = data.length;
   for (const i in data) {
-    timeListened = timeListened += parseInt(data[i].songID__trackLength);
+    timeListened = timeListened += parseInt(data[i].l);
   }
   timeListened = Math.round((timeListened / 60000 / 60) * 10) / 10;
   document.getElementById(
