@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 import os
 from django.http import HttpResponse, JsonResponse
-
 from django.db import connection
+from django.db.models import F
 import json
 import requests
 import monitoringBackend.database as database
@@ -213,10 +213,28 @@ def listeningHistory(request: requests.request):
 
     listeningHistory = models.ListeningHistory.objects.filter(
         user=str(spotifyID)).select_related(
-        "songID").values('timePlayed', 'songID__name', 'songID__trackLength').order_by('timePlayed')
+        "songID").values(t=F("timePlayed"),n=F("songID__name")).order_by('t')
 
     return JsonResponse(list(listeningHistory), safe=False)
 
+
+def listeningHistoryStats(request: requests.request):
+    """
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        HttpResponse: HTTP response
+    """
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    listeningHistory = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).select_related(
+        "songID").values(t=F("timePlayed"),l=F("songID__trackLength")).order_by('t')
+
+    return JsonResponse(list(listeningHistory), safe=False)
 
 def songs(request: requests.request):
     """

@@ -16,6 +16,7 @@ urlpatterns = [
     path('stop/', views.stop),
     path('deleteUser/', views.deleteUser),
     path('listeningHistory/', views.listeningHistory, name='listeningHistory'),
+    path('listeningHistoryStats/', views.listeningHistoryStats, name='listeningHistoryStats'),
     path('songs/', views.songs, name='songs'),
     path('playlistSubmission/', views.playlistSubmission),
     path('deletePlaylist/', views.deletePlaylist),
