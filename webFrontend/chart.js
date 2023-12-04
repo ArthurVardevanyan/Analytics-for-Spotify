@@ -172,9 +172,9 @@ function topSongs() {
           order: [[2, "desc"]],
           pageLength: 10,
           columns: [
-            { data: "songID__name", title: "Song Name" },
-            { data: "songID__artists__name", title: "Artists" },
-            { data: "playCount", title: "Count" },
+            { data: "n", title: "Song Name" },
+            { data: "a", title: "Artists" },
+            { data: "pc", title: "Count" },
           ],
         });
       });
@@ -219,11 +219,11 @@ function playlistSongs() {
               order: [[3, "desc"]],
               pageLength: 10,
               columns: [
-                { data: "name", title: "Song Name" },
-                { data: "artists", title: "Artists" },
-                { data: "timePlayed", title: "LastPlayed" },
-                { data: "songStatus", title: "Status" },
-                { data: "playCount", title: "Count" },
+                { data: "n", title: "Song Name" },
+                { data: "a", title: "Artists" },
+                { data: "t", title: "LastPlayed" },
+                { data: "ss", title: "Status" },
+                { data: "pc", title: "Count" },
               ],
             });
           }
@@ -237,12 +237,12 @@ function playlistSongs() {
             const plays = [];
 
             for (const i in aDemoItems) {
-              if (aDemoItems[i].timePlayed != null) {
+              if (aDemoItems[i].t != null) {
                 localTime = new Date(
-                  aDemoItems[i].timePlayed + "T" + "00:00:00" + "+00:00"
+                  aDemoItems[i].t + "T" + "00:00:00" + "+00:00"
                 );
               } else {
-                localTime = new Date(aDemoItems[i].timePlayed);
+                localTime = new Date(aDemoItems[i].t);
               }
               day = `${localTime.getFullYear()}-${`0${
                 localTime.getMonth() + 1
@@ -591,7 +591,7 @@ function hourlyLineChart(data) {
 }
 function listeningHistory() {
   $.ajax({
-    url: "/analytics/listeningHistoryStats/",
+    url: "/analytics/listeningHistory/",
     method: "GET",
     success(data) {
       $(document).ready(() => {
