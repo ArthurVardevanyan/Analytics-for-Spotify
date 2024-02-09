@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: analytics-for-spotify
+  namespace: analytics-for-spotify
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  destination:
+    namespace: analytics-for-spotify
+    server: https://kubernetes.default.svc
+  project: analytics-for-spotify
+  source:
+    path: kubernetes/overlays/okd
+    repoURL: https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify
+    targetRevision: argocd
+  syncPolicy:
+    syncOptions:
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: serving.knative.dev
+      kind: Service
+      jsonPointers:
+        - /spec/template/spec/containers/0/image
+        - /spec/template/spec/initContainers/0/image
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: knative-serving
+  namespace: analytics-for-spotify
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  destination:
+    namespace: knative-serving
+    server: https://kubernetes.default.svc
+  project: analytics-for-spotify
+  source:
+    path: kubernetes/overlays/okd-knative
+    repoURL: https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify
+    targetRevision: argocd

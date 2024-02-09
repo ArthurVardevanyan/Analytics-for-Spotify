@@ -4,15 +4,14 @@ metadata:
   name: analytics-for-spotify
   namespace: knative-serving
   labels:
-    app.kubernetes.io/instance: analytics-for-spotify
 spec:
   ingressClassName: openshift-default
   tls:
     - hosts:
-        - spotify.<path:secret/data/homelab/domain#url>
+        - spotify.arthurvardevanyan.com
       secretName: analytics-for-spotify-cert
   rules:
-    - host: spotify.<path:secret/data/homelab/domain#url>
+    - host: spotify.arthurvardevanyan.com
       http:
         paths:
           - path: /

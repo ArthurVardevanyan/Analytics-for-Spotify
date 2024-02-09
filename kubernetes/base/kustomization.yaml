@@ -4,4 +4,5 @@ resources:
   # - namespace.yaml
   # - resource-quota.yaml
   # - limit-range.yaml
-  - secret.yaml
+  # - secret.yaml
+  - application.yaml
