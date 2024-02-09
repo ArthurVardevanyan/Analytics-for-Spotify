@@ -4,7 +4,6 @@ metadata:
   namespace: analytics-for-spotify
   name: analytics-for-spotify
   labels:
-    app.kubernetes.io/instance: analytics-for-spotify
 spec:
   ports:
     - protocol: TCP

@@ -3,7 +3,6 @@ kind: Service
 metadata:
   labels:
     app: analytics-for-spotify
-    app.kubernetes.io/instance: analytics-for-spotify
   name: analytics-for-spotify
   namespace: analytics-for-spotify
 spec:

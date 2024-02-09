@@ -4,12 +4,11 @@ metadata:
   name: analytics-for-spotify-cert
   namespace: analytics-for-spotify
   labels:
-    app.kubernetes.io/instance: analytics-for-spotify
 spec:
   secretName: analytics-for-spotify-cert
   dnsNames:
-    - "analytics-for-spotify.apps.okd.<path:secret/data/homelab/domain#url>"
-    - "spotify.<path:secret/data/homelab/domain#url>"
+    - "analytics-for-spotify.apps.okd.arthurvardevanyan.com"
+    - "spotify.arthurvardevanyan.com"
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt
