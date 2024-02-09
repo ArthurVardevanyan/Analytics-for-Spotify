@@ -3,3 +3,4 @@ kind: Namespace
 metadata:
   name: analytics-for-spotify
   labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify

@@ -4,6 +4,7 @@ metadata:
   name: analytics-for-spotify-cert
   namespace: analytics-for-spotify
   labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   secretName: analytics-for-spotify-cert
   dnsNames:

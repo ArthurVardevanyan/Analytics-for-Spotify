@@ -4,6 +4,7 @@ metadata:
   name: https-redirect
   namespace: analytics-for-spotify
   labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   redirectScheme:
     scheme: https
@@ -15,6 +16,7 @@ metadata:
   name: analytics-for-spotify
   namespace: analytics-for-spotify
   labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   entryPoints:
     - web

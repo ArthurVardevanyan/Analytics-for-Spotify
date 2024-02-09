@@ -5,6 +5,7 @@ metadata:
   namespace: analytics-for-spotify
   labels:
     app: analytics-for-spotify
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   host: spotify.<path:secret/data/homelab/domain#url>
   to:

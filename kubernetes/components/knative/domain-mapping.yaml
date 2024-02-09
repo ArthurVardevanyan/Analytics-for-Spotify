@@ -3,6 +3,8 @@ kind: DomainMapping
 metadata:
   name: spotify.arthurvardevanyan.com
   namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   ref:
     name: analytics-for-spotify

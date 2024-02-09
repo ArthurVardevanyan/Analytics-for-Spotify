@@ -5,6 +5,8 @@ metadata:
   namespace: analytics-for-spotify
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   destination:
     namespace: analytics-for-spotify
@@ -29,6 +31,8 @@ kind: Application
 metadata:
   name: knative-serving
   namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
