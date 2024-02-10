@@ -15,7 +15,7 @@ spec:
   source:
     path: kubernetes/overlays/okd
     repoURL: https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify
-    targetRevision: argocd
+    targetRevision: HEAD
   syncPolicy:
     syncOptions:
       - RespectIgnoreDifferences=true
@@ -43,4 +43,4 @@ spec:
   source:
     path: kubernetes/overlays/okd-knative
     repoURL: https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify
-    targetRevision: argocd
+    targetRevision: HEAD
