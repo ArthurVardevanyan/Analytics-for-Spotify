@@ -8,7 +8,7 @@ spec:
     - name: data
 
   sidecars:
-    - image: mariadb:10.10.6@sha256:9a717ee78826cb922c9c1789d801578e4b1af060f80b7ce69749182021ee41b6
+    - image: mariadb:10.11.6@sha256:e846701e66dcc95a3f90d161cc3dfc2e4ff96f0699ee4fb93b0bfdab94158570
       name: mariadb
       securityContext:
         runAsNonRoot: true
