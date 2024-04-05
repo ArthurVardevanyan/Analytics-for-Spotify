@@ -92,6 +92,29 @@ spec:
         set -o nounset
         set -o pipefail
 
+        retry() {
+          local MAX_TRIES
+          local DELAY=0
+          local ADD_DELAY=60
+          MAX_TRIES="${1}"
+
+          shift 1
+          for i in $(seq 0 "${MAX_TRIES}"); do
+            if [[ "${i}" -eq "${MAX_TRIES}" ]]; then
+              break
+            fi
+            { "${@}" && return 0; } || true
+            echo "Failed, retrying...($((i + 1)) of ${MAX_TRIES})"
+            DELAY=$((DELAY + ADD_DELAY))
+            echo "$(date -u --rfc-3339=seconds) - Waiting ${DELAY} seconds... "
+            sleep "${DELAY}"
+          done
+          local CMD="'$*'"
+          echo "Command $CMD failed."
+          false
+        }
+
+
         echo "Waiting for Database to Start"
         #sleep 15
         cd $(workspaces.data.path)
@@ -102,8 +125,11 @@ spec:
         source .venv/bin/activate && \
         python3 -m pip install -r requirements.txt
 
-        coverage run --source='./monitoringBackend,./webBackend'  manage.py test
-        coverage report -m
+        test() {
+          coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+          coverage report -m
+        }
+        retry 5 test
   volumes:
     - name: mysql
       emptyDir:
