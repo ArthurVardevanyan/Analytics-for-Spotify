@@ -1,4 +1,4 @@
-FROM debian:sid-slim@sha256:1cd92e6273839644591c6857fb28faf285130e5ac1d26c1e981301f3f9042882
+FROM debian:sid-slim@sha256:137b8a04b532f294a58fab48632a53e6d731e4b5f61178ff894d70d5e1ac92fd
 
 RUN echo "deb http://deb.debian.org/debian/ sid main" >>  /etc/apt/sources.list && \
   echo "deb-src http://deb.debian.org/debian/ sid main" >>  /etc/apt/sources.list && \
