@@ -1,10 +1,10 @@
 asgiref==3.8.1
 certifi==2024.2.2
 charset-normalizer==3.3.2
-coverage==7.4.4
+coverage==7.5.0
 Django==5.0.4
 django-cors-headers==4.3.1
-idna==3.6
+idna==3.7
 mysqlclient==2.2.4
 requests==2.31.0
 sqlparse==0.5.0
