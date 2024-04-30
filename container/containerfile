@@ -35,6 +35,7 @@ RUN sed -i "s,ErrorLog \${APACHE_LOG_DIR}/error.log,ErrorLog /proc/self/fd/1,g" 
 RUN sed -i "s,USER=www-data,USER=nobody,g" /etc/apache2/envvars && \
   sed -i "s,GROUP=www-data,GROUP=nogroup,g" /etc/apache2/envvars && \
   chown -R 65534:65534 /var/log/apache2/ && \
+  chmod -R 777 /var/log/apache2/ && \
   chown -R 65534:65534 /var/run/apache2/ && \
   chown -R 65534:65534 /proc/self/fd/1 && \
   sed -i "s,.*/socks.*,,g" /usr/sbin/apachectl
