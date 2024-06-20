@@ -3,7 +3,7 @@
 # Base OS & Dependencies
 FROM registry.arthurvardevanyan.com/apps/analytics-for-spotify:base
 
-ARG quay_expiration=24h
+ARG quay_expiration=90d
 LABEL quay.expires-after=${quay_expiration}
 
 # Setup Analytics For Spotify
