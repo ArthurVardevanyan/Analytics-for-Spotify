@@ -1,7 +1,7 @@
 asgiref==3.8.1
 certifi==2024.7.4
 charset-normalizer==3.3.2
-coverage==7.5.4
+coverage==7.6.0
 Django==5.0.7
 django-cors-headers==4.4.0
 idna==3.7
