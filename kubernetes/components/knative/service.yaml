@@ -131,6 +131,13 @@ spec:
                   name: env
           image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
           name: setup
+          resources:
+            limits:
+              cpu: 350m
+              memory: 250Mi
+            requests:
+              cpu: 50m
+              memory: 125Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

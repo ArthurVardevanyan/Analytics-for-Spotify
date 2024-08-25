@@ -32,6 +32,13 @@ spec:
       initContainers:
         - name: setup
           image: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:<VERSION>
+          resources:
+            limits:
+              cpu: 350m
+              memory: 250Mi
+            requests:
+              cpu: 50m
+              memory: 125Mi
           command:
             - /bin/bash
             - "-c"

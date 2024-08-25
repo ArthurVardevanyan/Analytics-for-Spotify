@@ -5,6 +5,10 @@ metadata:
   namespace: analytics-for-spotify
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    notifications.argoproj.io/subscribe.on-sync-succeeded.github: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.github: ""
+    notifications.argoproj.io/subscribe.on-sync-status-unknown: ""
+    notifications.argoproj.io/subscribe.on-health-degraded.github: ""
   labels:
     app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
@@ -35,6 +39,10 @@ metadata:
     app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    notifications.argoproj.io/subscribe.on-sync-succeeded.github: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.github: ""
+    notifications.argoproj.io/subscribe.on-sync-status-unknown: ""
+    notifications.argoproj.io/subscribe.on-health-degraded.github: ""
 spec:
   destination:
     namespace: knative-serving
@@ -44,3 +52,23 @@ spec:
     path: kubernetes/overlays/okd-knative
     repoURL: https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify
     targetRevision: HEAD
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd
+  namespace: analytics-for-spotify
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+  - kind: ServiceAccount
+    name: argocd-apps-argocd-application-controller
+    namespace: argocd-apps
+  # - kind: ServiceAccount
+  #   name: argocd-apps-argocd-server
+  #   namespace: argocd-apps
+  # - kind: ServiceAccount
+  #   name: argocd-apps-argocd-notifications-controller
+  #   namespace: argocd-apps
