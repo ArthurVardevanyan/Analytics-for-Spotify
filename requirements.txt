@@ -4,7 +4,7 @@ charset-normalizer==3.3.2
 coverage==7.6.1
 Django==5.1
 django-cors-headers==4.4.0
-idna==3.7
+idna==3.8
 mysqlclient==2.2.4
 requests==2.32.3
 sqlparse==0.5.1
