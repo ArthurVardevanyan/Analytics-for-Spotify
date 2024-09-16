@@ -3,6 +3,8 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: analytics-for-spotify
   namespace: knative-serving
+  annotations:
+    externaldns.k8s.io: pihole
   labels:
     app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
