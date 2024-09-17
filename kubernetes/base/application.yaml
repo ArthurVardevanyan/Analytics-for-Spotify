@@ -5,10 +5,10 @@ metadata:
   namespace: analytics-for-spotify
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    notifications.argoproj.io/subscribe.on-sync-succeeded.github: ""
-    notifications.argoproj.io/subscribe.on-sync-failed.github: ""
-    notifications.argoproj.io/subscribe.on-sync-status-unknown: ""
-    notifications.argoproj.io/subscribe.on-health-degraded.github: ""
+    notifications.argoproj.io/subscribe.on-sync-succeeded.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-sync-status-unknown.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-health-degraded.gh-tenant: ""
   labels:
     app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
@@ -39,10 +39,10 @@ metadata:
     app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    notifications.argoproj.io/subscribe.on-sync-succeeded.github: ""
-    notifications.argoproj.io/subscribe.on-sync-failed.github: ""
-    notifications.argoproj.io/subscribe.on-sync-status-unknown: ""
-    notifications.argoproj.io/subscribe.on-health-degraded.github: ""
+    notifications.argoproj.io/subscribe.on-sync-succeeded.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-sync-status-unknown.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-health-degraded.gh-tenant: ""
 spec:
   destination:
     namespace: knative-serving
