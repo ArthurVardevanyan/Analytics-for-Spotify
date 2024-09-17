@@ -3,14 +3,14 @@ kind: Application
 metadata:
   name: analytics-for-spotify
   namespace: analytics-for-spotify
+  labels:
+    test: test
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     notifications.argoproj.io/subscribe.on-sync-succeeded.gh-tenant: ""
     notifications.argoproj.io/subscribe.on-sync-failed.gh-tenant: ""
     notifications.argoproj.io/subscribe.on-sync-status-unknown.gh-tenant: ""
     notifications.argoproj.io/subscribe.on-health-degraded.gh-tenant: ""
-  labels:
-    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
   destination:
     namespace: analytics-for-spotify
@@ -36,7 +36,7 @@ metadata:
   name: knative-serving
   namespace: analytics-for-spotify
   labels:
-    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
+    test: test
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     notifications.argoproj.io/subscribe.on-sync-succeeded.gh-tenant: ""
