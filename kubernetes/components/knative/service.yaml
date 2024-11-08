@@ -16,6 +16,10 @@ spec:
         networking.knative.dev/httpOption: redirected
         serving.knative.openshift.io/disableRoute: "true"
         enable.version-checker.io/analytics-for-spotify: "false"
+        queue.sidecar.serving.knative.dev/cpu-resource-request: "5m"
+        queue.sidecar.serving.knative.dev/cpu-resource-limit: "50m"
+        queue.sidecar.serving.knative.dev/memory-resource-request: "12Mi"
+        queue.sidecar.serving.knative.dev/memory-resource-limit: "24Mi"
     spec:
       containerConcurrency: 0
       containers:
@@ -69,10 +73,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 250Mi
+              memory: 256Mi
             requests:
-              cpu: 50m
-              memory: 125Mi
+              cpu: 10m
+              memory: 128Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -134,10 +138,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 250Mi
+              memory: 256Mi
             requests:
-              cpu: 50m
-              memory: 125Mi
+              cpu: 10m
+              memory: 128Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
