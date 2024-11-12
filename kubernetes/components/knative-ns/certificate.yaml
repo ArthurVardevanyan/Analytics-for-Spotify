@@ -8,7 +8,7 @@ metadata:
 spec:
   secretName: analytics-for-spotify-cert
   dnsNames:
-    - "analytics-for-spotify.apps.okd.arthurvardevanyan.com"
+    #- "analytics-for-spotify.apps.okd.arthurvardevanyan.com"
     - "spotify.arthurvardevanyan.com"
   issuerRef:
     kind: ClusterIssuer
