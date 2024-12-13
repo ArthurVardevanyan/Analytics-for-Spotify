@@ -21,9 +21,15 @@ def scanWorkers(workerID: int):
     """
     utc_time = datetime.now()
     currentEpoch = int(utc_time.astimezone().timestamp())
-    models.Workers.objects.filter(worker=str(workerID)).update(
-        lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
     count = 0
+
+    try:
+        models.Workers.objects.filter(worker=str(workerID)).update(
+         lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
+    except:
+        log.exception("Scan Worker DB Error")
+        return -1
+
     for worker in models.Workers.objects.all():
         if currentEpoch - worker.lastUpdated > 90:
             models.Workers.objects.filter(

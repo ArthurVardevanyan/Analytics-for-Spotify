@@ -12,6 +12,7 @@ import math
 import sys
 sys.path.append("..")
 
+WORKER_HEALTHY=True
 WORKER = None
 THREADS = []
 KILL = {}
@@ -28,11 +29,18 @@ def keepAlive():
     Returns:
         None
     """
+    global WORKER_HEALTHY
     global WORKER
     while(1 == 1):
         time.sleep(75)
-        spawnThreads(database.scanWorkers(WORKER))
-
+        workerCount = database.scanWorkers(WORKER)
+        if workerCount == -1:
+            WORKER_HEALTHY = False
+            log.exception("KeepAlive: DB Error: Skipping")
+            continue
+        else:
+            WORKER_HEALTHY = True
+            spawnThreads(workerCount)
 
 def keepAliveThread():
     """
@@ -65,6 +73,12 @@ def spawnThreads(workerCount: int):
     global WORKER
     global KILL
     global THREADS
+
+
+    if workerCount == -1:
+        log.exception("Spawn Threads: DB Error: Skipping")
+        return 0
+
     users = models.Users.objects.filter(enabled=1).count()
     usersPerWorker = int(math.ceil(users/workerCount))
     usersOnThisWorker = []
@@ -105,6 +119,11 @@ def killThreads(workerCount: int, user: str):
     global WORKER
     global KILL
     global THREADS
+
+    if workerCount == -1:
+        log.exception("Kill Threads: DB Error: Skipping")
+        return 0
+
     users = models.Users.objects.filter(enabled=1).count()
     usersPerWorker = int(math.ceil(users/workerCount))
     usersOnThisWorker = []

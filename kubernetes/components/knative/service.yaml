@@ -151,4 +151,4 @@ spec:
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
-      timeoutSeconds: 300
+      timeoutSeconds: 30
