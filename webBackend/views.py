@@ -40,13 +40,15 @@ def health(request: requests.request):
     """
     try:
         if connection.ensure_connection():
-            return HttpResponse(status=503)
+            return HttpResponse(spotify.WORKER, status=503)
         else:
-            return HttpResponse(status=200)
+            if spotify.WORKER_HEALTHY and spotify.WORKER != None:
+                return HttpResponse(spotify.WORKER, status=200)
+            else:
+                return HttpResponse(spotify.WORKER, status=503)
     except:
         log.exception("DB Error")
-        return HttpResponse(status=500)
-
+        return HttpResponse(spotify.WORKER, status=500)
 
 @require_GET
 @ensure_csrf_cookie
