@@ -612,7 +612,7 @@ function listeningHistory() {
           order: [[0, "desc"]],
           pageLength: 10,
           columns: [
-            { data: "t", title: "Time Played", width: "135" },
+            { data: "t", title: "Time Played", width: "170px" },
             { data: "n", title: "Song Name" },
           ],
         });
