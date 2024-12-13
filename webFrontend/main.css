@@ -51,6 +51,10 @@ a:active {
   font-family: Roboto;
 }
 
+div.dt-layout-row{
+  font-family: Roboto;
+}
+
 table {
   width: 100%;
   font-family: Roboto;
@@ -59,7 +63,7 @@ table {
 table,
 th,
 td {
-  border: 1px solid black;
+  border: 1.5px solid black;
   border-collapse: collapse;
 }
 
