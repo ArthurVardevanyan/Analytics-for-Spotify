@@ -194,13 +194,12 @@ function playlistSongs() {
           if (aDemoItems.length > 0) {
             var time = data[i].lastUpdated.split(" ");
             lt = new Date(time[0] + "T" + time[1] + "+00:00");
-            localDateTime = `${lt.getFullYear()}-${`0${
-              lt.getMonth() + 1
-            }`.slice(-2)}-${`0${lt.getDate()}`.slice(
-              -2
-            )} ${`0${lt.getHours()}`.slice(-2)}:${`0${lt.getMinutes()}`.slice(
-              -2
-            )}:${`0${lt.getSeconds()}`.slice(-2)}`;
+            localDateTime = `${lt.getFullYear()}-${`0${lt.getMonth() + 1
+              }`.slice(-2)}-${`0${lt.getDate()}`.slice(
+                -2
+              )} ${`0${lt.getHours()}`.slice(-2)}:${`0${lt.getMinutes()}`.slice(
+                -2
+              )}:${`0${lt.getSeconds()}`.slice(-2)}`;
 
             tableName = data[i].name.replace(/ /g, "_");
             document.getElementById(
@@ -244,9 +243,8 @@ function playlistSongs() {
               } else {
                 localTime = new Date(aDemoItems[i].t);
               }
-              day = `${localTime.getFullYear()}-${`0${
-                localTime.getMonth() + 1
-              }`.slice(-2)}-${`0${localTime.getDate()}`.slice(-2)}`;
+              day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1
+                }`.slice(-2)}-${`0${localTime.getDate()}`.slice(-2)}`;
               if (songs.includes(day)) {
                 for (let j = 0; j < songs.length; j++) {
                   if (day === songs[j]) {
@@ -298,13 +296,9 @@ function playlistSongs() {
                   text: "When Songs Where Last Played",
                 },
                 scales: {
-                  yAxes: [
-                    {
-                      ticks: {
-                        beginAtZero: true,
-                      },
-                    },
-                  ],
+                  y: {
+                    beginAtZero: true,
+                  },
                 },
               },
             });
@@ -356,14 +350,10 @@ function summaryLineChart(data) {
         text: "Listens Per Day",
       },
       scales: {
-        yAxes: [
-          {
-            ticks: {
-              beginAtZero: true,
-            },
-          },
-        ],
-      },
+        y: {
+          beginAtZero: true
+        }
+      }
     },
   });
   $("#orders_1").click(() => {

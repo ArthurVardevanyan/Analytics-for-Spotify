@@ -8,7 +8,6 @@ LABEL quay.expires-after=${quay_expiration}
 
 # Setup Analytics For Spotify
 COPY . /home/www/analytics-for-spotify/
-ADD ./webFrontend/node_modules.tar.xz /home/www/analytics-for-spotify/webFrontend/
 RUN chown -R 65534:65534 /home/www/analytics-for-spotify/
 
 RUN cd /home/www/analytics-for-spotify/ && \
