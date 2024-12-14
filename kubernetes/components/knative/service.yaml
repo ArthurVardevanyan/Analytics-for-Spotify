@@ -52,7 +52,7 @@ spec:
               port: 8080
               scheme: HTTP
             initialDelaySeconds: 15
-            periodSeconds: 60
+            periodSeconds: 45
             successThreshold: 1
             timeoutSeconds: 1
           name: analytics-for-spotify
@@ -67,7 +67,7 @@ spec:
               port: 8080
               scheme: HTTP
             initialDelaySeconds: 15
-            periodSeconds: 60
+            periodSeconds: 45
             successThreshold: 1
             timeoutSeconds: 1
           resources:

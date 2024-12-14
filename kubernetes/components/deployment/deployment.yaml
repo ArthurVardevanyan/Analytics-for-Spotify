@@ -115,7 +115,7 @@ spec:
               scheme: HTTPS
             initialDelaySeconds: 15
             timeoutSeconds: 1
-            periodSeconds: 60
+            periodSeconds: 45
             successThreshold: 1
             failureThreshold: 3
           readinessProbe:
@@ -125,7 +125,7 @@ spec:
               scheme: HTTPS
             initialDelaySeconds: 15
             timeoutSeconds: 1
-            periodSeconds: 60
+            periodSeconds: 45
             successThreshold: 1
             failureThreshold: 3
           startupProbe:
