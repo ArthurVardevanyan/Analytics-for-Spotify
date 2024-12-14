@@ -8,8 +8,10 @@ spec:
     - name: data
 
   sidecars:
-    - image: mariadb:10.11.7
-      name: mariadb
+    # - image: mariadb:10.11.7
+    #   name: mariadb
+    - image: docker.io/library/postgres:17.2@sha256:f95eacea382cb05066e978a24f7336cc82bf10c78d96ac6f02fd0bea34bd223f
+      name: postgres
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -32,17 +34,29 @@ spec:
       ports:
         - containerPort: 3306
       env:
-        - name: MARIADB_ROOT_PASSWORD
+        # - name: MARIADB_ROOT_PASSWORD
+        #   value: spotify
+        # - name: MARIADB_DATABASE
+        #   value: spotify
+        - name: POSTGRES_USER
           value: spotify
-        - name: MARIADB_DATABASE
+        - name: POSTGRES_PASSWORD
           value: spotify
+        - name: POSTGRES_DB
+          value: spotify
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
       volumeMounts:
-        - name: mysql
-          mountPath: /var/lib/mysql/
+        - name: psql
+          mountPath: /var/lib/postgresql/data
+        # - name: mysql
+        #   mountPath: /var/lib/mysql/
         - name: tmp
           mountPath: /tmp
-        - name: run-mysqld
-          mountPath: /run/mysqld
+        # - name: run-mysqld
+        #   mountPath: /run/mysqld
+        - name: run-psql
+          mountPath: "/var/run/postgresql"
   steps:
     - name: unit-test
       image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base"
@@ -73,7 +87,7 @@ spec:
         - name: DATABASE
           value: spotify
         - name: DB_USER
-          value: root
+          value: spotify #root
         - name: DB_PASSWORD
           value: spotify
         - name: TEST
@@ -131,13 +145,19 @@ spec:
         }
         retry 5 test
   volumes:
-    - name: mysql
+    - name: psql
       emptyDir:
         sizeLimit: 200Mi
+    # - name: mysql
+    #   emptyDir:
+    #     sizeLimit: 200Mi
     - name: tmp
       emptyDir:
         sizeLimit: 1Mi
-    - name: run-mysqld
+    # - name: run-mysqld
+    #   emptyDir:
+    #     sizeLimit: 1Mi
+    - name: run-psql
       emptyDir:
         sizeLimit: 1Mi
     - name: cache

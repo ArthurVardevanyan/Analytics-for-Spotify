@@ -39,9 +39,10 @@ SESSION_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'AnalyticsForSpotify.urls'
 
+ # django.db.backends.mysql
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DATABASE'),
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
