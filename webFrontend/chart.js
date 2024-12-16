@@ -341,6 +341,7 @@ function summaryLineChart(data) {
           label: "Listen History",
           borderColor: "#3e95cd",
           fill: false,
+          tension: 0.4
         },
       ],
     },
@@ -504,6 +505,7 @@ function hourlyLineChart(data) {
             label: "Average Hourly Listen History",
             borderColor: "#3e95cd",
             fill: false,
+            tension: 0.4
           },
         ],
       },
