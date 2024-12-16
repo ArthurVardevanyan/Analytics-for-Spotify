@@ -17,9 +17,9 @@ spec:
         serving.knative.openshift.io/disableRoute: "true"
         enable.version-checker.io/analytics-for-spotify: "false"
         queue.sidecar.serving.knative.dev/cpu-resource-request: "5m"
-        queue.sidecar.serving.knative.dev/cpu-resource-limit: "100m"
+        queue.sidecar.serving.knative.dev/cpu-resource-limit: "200m"
         queue.sidecar.serving.knative.dev/memory-resource-request: "12Mi"
-        queue.sidecar.serving.knative.dev/memory-resource-limit: "24Mi"
+        queue.sidecar.serving.knative.dev/memory-resource-limit: "36Mi"
     spec:
       containerConcurrency: 0
       containers:
