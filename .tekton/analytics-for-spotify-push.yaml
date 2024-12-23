@@ -1,9 +1,10 @@
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: analytics-for-spotify-push
   annotations:
+    io.kubernetes.cri-o.TrySkipVolumeSELinuxLabel: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "1"
     pipelinesascode.tekton.dev/on-cel-expression: |
       event == "push"  && (target_branch == "refs/heads/main" || target_branch == "main")
@@ -109,7 +110,12 @@ spec:
           - name: IMAGE
             value: $(params.IMAGE)
 
-  serviceAccountName: pipeline
+  taskRunTemplate:
+    serviceAccountName: pipeline
+    podTemplate:
+      runtimeClassName: selinux
+      securityContext:
+        fsGroupChangePolicy: OnRootMismatch
   workspaces:
     - name: data
       volumeClaimTemplate:
