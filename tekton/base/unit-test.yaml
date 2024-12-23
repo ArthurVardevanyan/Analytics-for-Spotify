@@ -10,7 +10,7 @@ spec:
   sidecars:
     # - image: mariadb:10.11.7
     #   name: mariadb
-    - image: docker.io/library/postgres:17.2@sha256:f95eacea382cb05066e978a24f7336cc82bf10c78d96ac6f02fd0bea34bd223f
+    - image: docker.io/library/postgres:17.2@sha256:fe4efc6901dda0d952306fd962643d8022d7bb773ffe13fe8a21551b9276e50c
       name: postgres
       securityContext:
         runAsNonRoot: true

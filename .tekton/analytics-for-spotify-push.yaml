@@ -12,6 +12,7 @@ metadata:
     pipelinesascode.tekton.dev/task-1: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/git-clone/0.9.1/git-clone.yaml"
     pipelinesascode.tekton.dev/task-2: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/buildah/0.7.1/buildah.yaml"
     pipelinesascode.tekton.dev/task-3: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/k8s-deploy/0.1.1/k8s-deploy.yaml"
+    pipelinesascode.tekton.dev/task-4: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/base/clair-action/clair-action-task.yaml"
 spec:
   params:
     - name: git-url
@@ -35,6 +36,11 @@ spec:
         description: Path to the Dockerfile to build.
         type: string
         default: ./Dockerfile
+
+    results:
+      - description: The common vulnerabilities and exposures (CVE) result
+        name: SCAN_OUTPUT
+        value: $(tasks.clair-action.results.SCAN_OUTPUT)
 
     workspaces:
       - name: data
@@ -62,9 +68,6 @@ spec:
         taskRef:
           name: unit-test
           kind: Task
-        workspaces:
-          - name: data
-            workspace: data
 
       - name: buildah
         runAfter:
@@ -96,6 +99,19 @@ spec:
           - name: vault-path
             value: analytics-for-spotify
 
+      - name: clair-action
+        runAfter:
+          - buildah
+        taskRef:
+          name: clair-action
+          kind: Task
+        params:
+          - name: IMAGE
+            value: $(params.IMAGE)
+        workspaces:
+          - name: data
+            workspace: data
+
   serviceAccountName: pipeline
   workspaces:
     - name: data
@@ -110,7 +126,7 @@ spec:
           resources:
             requests:
               storage: "250Mi"
-          storageClassName: rook-ceph-block
+          storageClassName: rook-ceph-block-ci
     - name: git_auth_secret
       secret:
         secretName: "{{ git_auth_secret }}"
