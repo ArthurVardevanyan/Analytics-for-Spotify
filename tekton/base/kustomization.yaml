@@ -13,3 +13,4 @@ resources:
   #- triggers/route.yaml
   - knative-rbac.yaml
   - cronjob-cache.yaml
+  - push-secret.yaml
