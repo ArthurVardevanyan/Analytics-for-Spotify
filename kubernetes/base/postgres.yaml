@@ -11,6 +11,11 @@ metadata:
   labels:
     app.kubernetes.io/instance: spotify
 spec:
+  # dataSource:
+  #   postgresCluster:
+  #     clusterName: spotify
+  #     repoName: repo2
+  shutdown: false
   backups:
     pgbackrest:
       configuration:

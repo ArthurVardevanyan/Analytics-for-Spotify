@@ -3,3 +3,4 @@ kind: Component
 resources:
   - service.yaml
   - domain-mapping.yaml
+  - certificate.yaml
