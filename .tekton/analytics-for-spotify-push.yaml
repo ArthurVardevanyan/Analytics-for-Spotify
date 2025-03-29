@@ -12,7 +12,7 @@ metadata:
     pipelinesascode.tekton.dev/task: "tekton/base/unit-test.yaml"
     pipelinesascode.tekton.dev/task-1: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/git-clone/0.9.1/git-clone.yaml"
     pipelinesascode.tekton.dev/task-2: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/buildah/0.7.1/buildah.yaml"
-    pipelinesascode.tekton.dev/task-3: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/k8s-deploy/0.1.1/k8s-deploy.yaml"
+    pipelinesascode.tekton.dev/task-3: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/k8s-deploy/0.2.0/k8s-deploy.yaml"
     pipelinesascode.tekton.dev/task-4: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/base/clair-action/clair-action-task.yaml"
 spec:
   params:
@@ -97,8 +97,6 @@ spec:
         params:
           - name: git-commit
             value: $(params.git-commit)
-          - name: vault-path
-            value: analytics-for-spotify
 
       - name: clair-action
         runAfter:

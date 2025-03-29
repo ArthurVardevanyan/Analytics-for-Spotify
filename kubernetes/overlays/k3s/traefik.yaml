@@ -22,7 +22,7 @@ spec:
     - web
     - websecure
   routes:
-    - match: "Host(`spotify.<path:secret/data/homelab/domain#url>`)"
+    - match: "Host(`spotify.arthurvardevanyan.com`)"
       kind: Rule
       services:
         - name: analytics-for-spotify
@@ -31,4 +31,4 @@ spec:
         - name: https-redirect
   tls:
     domains:
-      - main: spotify.<path:secret/data/homelab/domain#url>
+      - main: spotify.arthurvardevanyan.com
