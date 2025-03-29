@@ -12,10 +12,10 @@ spec:
     apiVersion: serving.knative.dev/v1
   tls:
     secretName: analytics-for-spotify-cert
----
-apiVersion: networking.internal.knative.dev/v1alpha1
-kind: ClusterDomainClaim
-metadata:
-  name: spotify.arthurvardevanyan.com
-spec:
-  namespace: analytics-for-spotify
+# ---
+# apiVersion: networking.internal.knative.dev/v1alpha1
+# kind: ClusterDomainClaim
+# metadata:
+#   name: spotify.arthurvardevanyan.com
+# spec:
+#   namespace: analytics-for-spotify

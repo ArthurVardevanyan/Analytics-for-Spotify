@@ -9,7 +9,7 @@ metadata:
     app: analytics-for-spotify
     app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
 spec:
-  host: spotify.<path:secret/data/homelab/domain#url>
+  host: spotify.arthurvardevanyan.com
   to:
     kind: Service
     name: analytics-for-spotify

@@ -40,4 +40,4 @@ spec:
           - name: git-ref
             value: $(tt.params.git-ref)
           - name: IMAGE
-            value: registry.<path:secret/data/homelab/domain#url>/apps/analytics-for-spotify:$(tt.params.git-commit)
+            value: registry.arthurvardevanyan.com/apps/analytics-for-spotify:$(tt.params.git-commit)
