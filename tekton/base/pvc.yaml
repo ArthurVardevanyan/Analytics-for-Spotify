@@ -15,7 +15,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: clair-action-vuln-store-cache
-  namespace: analytics-for-spotify
+  namespace: analytics-for-spotify-ci
 spec:
   accessModes:
     - ReadWriteMany
@@ -29,7 +29,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: cache
-  namespace: analytics-for-spotify
+  namespace: analytics-for-spotify-ci
 spec:
   accessModes:
     - ReadWriteMany

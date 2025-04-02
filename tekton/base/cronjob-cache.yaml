@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: clair-action-cache-db
-  namespace: analytics-for-spotify
+  namespace: analytics-for-spotify-ci
 spec:
   schedule: "50 */2 * * *"
   concurrencyPolicy: Replace

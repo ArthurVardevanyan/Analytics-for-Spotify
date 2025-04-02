@@ -2,7 +2,7 @@ apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerBinding
 metadata:
   name: git-push
-  namespace: analytics-for-spotify
+  namespace: analytics-for-spotify-ci
 spec:
   params:
     - name: git-url

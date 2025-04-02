@@ -8,9 +8,9 @@ roleRef:
   kind: ClusterRole
   name: edit
 subjects:
-- kind: ServiceAccount
-  name: pipeline
-  namespace: knative-serving
-- kind: ServiceAccount
-  name: pipeline
-  namespace: analytics-for-spotify
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: knative-serving
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: analytics-for-spotify-ci
