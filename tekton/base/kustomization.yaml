@@ -16,3 +16,4 @@ resources:
   - push-secret.yaml
   - namespace.yaml
   - network-policy.yaml
+  - limit-range.yaml

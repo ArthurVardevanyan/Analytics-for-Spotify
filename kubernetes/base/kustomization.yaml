@@ -6,5 +6,5 @@ resources:
   # - limit-range.yaml
   - secret.yaml
   - application.yaml
-  - push-secret.yaml
   - postgres.yaml
+  - network-policy.yaml
