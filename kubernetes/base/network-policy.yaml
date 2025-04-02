@@ -1,0 +1,296 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: analytics-for-spotify
+spec:
+  policyTypes:
+    - Ingress
+    - Egress
+  podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-openshift-monitoring
+  namespace: analytics-for-spotify
+spec:
+  policyTypes:
+    - Ingress
+  podSelector: {}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-user-workload-monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8082
+        - protocol: TCP
+          port: 8083
+        - protocol: TCP
+          port: 9001
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-traffic
+  namespace: analytics-for-spotify
+spec:
+  policyTypes:
+    - Egress
+  podSelector: {}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+          podSelector:
+            matchLabels:
+              dns.operator.openshift.io/daemonset-dns: default
+      ports:
+        - port: 5353
+          protocol: UDP
+        - port: 5353
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-server
+  namespace: analytics-for-spotify
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: openshift-kube-apiserver
+          namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-kube-apiserver
+      ports:
+        - protocol: TCP
+          port: 6443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: analytics-for-spotify-app
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  podSelector:
+    matchLabels:
+      postgres-operator.crunchydata.com/cluster: spotify
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: analytics-for-spotify
+          podSelector:
+            matchLabels:
+              serving.knative.dev/service: analytics-for-spotify
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: analytics-for-spotify-postgres
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  podSelector:
+    matchLabels:
+      postgres-operator.crunchydata.com/cluster: spotify
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: analytics-for-spotify
+          podSelector:
+            matchLabels:
+              postgres-operator.crunchydata.com/cluster: spotify
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: analytics-for-spotify
+          podSelector:
+            matchLabels:
+              postgres-operator.crunchydata.com/cluster: spotify
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-truenas-egress
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  policyTypes:
+    - Egress
+  podSelector:
+    matchLabels:
+      postgres-operator.crunchydata.com/cluster: spotify
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.101.1.6/32
+      ports:
+        - protocol: TCP
+          port: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pgdump-ingress
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  podSelector:
+    matchLabels:
+      postgres-operator.crunchydata.com/cluster: spotify
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: postgres
+          podSelector:
+            matchLabels:
+              app: pgdump-cron
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres
+  namespace: analytics-for-spotify
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  policyTypes:
+    - Egress
+  podSelector:
+    matchLabels:
+      serving.knative.dev/service: analytics-for-spotify
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: analytics-for-spotify
+          podSelector:
+            matchLabels:
+              postgres-operator.crunchydata.com/cluster: spotify
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pgadmin-ingress
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  podSelector:
+    matchLabels:
+      postgres-operator.crunchydata.com/cluster: spotify
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: postgres
+          podSelector:
+            matchLabels:
+              postgres-operator.crunchydata.com/pgadmin: pgadmin
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: knative-ingress
+  namespace: analytics-for-spotify
+spec:
+  podSelector:
+    matchLabels:
+      serving.knative.dev/service: analytics-for-spotify
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: knative-serving
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: spotify-egress
+  namespace: analytics-for-spotify
+spec:
+  podSelector:
+    matchLabels:
+      serving.knative.dev/service: analytics-for-spotify
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: knative-serving
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internet-egress
+  namespace: analytics-for-spotify
+spec:
+  policyTypes:
+    - Egress
+  podSelector:
+    matchLabels:
+      serving.knative.dev/service: analytics-for-spotify
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0 # Reduce to Spotify EndPoints?
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
