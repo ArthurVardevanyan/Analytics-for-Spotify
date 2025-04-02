@@ -2,7 +2,7 @@ kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
   name: el
-  namespace: analytics-for-spotify
+  namespace: analytics-for-spotify-ci
   labels:
     app: analytics-for-spotify
 spec:

@@ -8,7 +8,7 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "1"
     pipelinesascode.tekton.dev/on-cel-expression: |
       event == "pull_request"  && (target_branch == "refs/heads/main" || target_branch == "main")
-    pipelinesascode.tekton.dev/target-namespace: "analytics-for-spotify"
+    pipelinesascode.tekton.dev/target-namespace: "analytics-for-spotify-ci"
     pipelinesascode.tekton.dev/task: "tekton/base/unit-test.yaml"
     pipelinesascode.tekton.dev/task-1: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/git-clone/0.9.1/git-clone.yaml"
     pipelinesascode.tekton.dev/task-2: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/buildah/0.7.1/buildah.yaml"

@@ -9,4 +9,29 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: pipeline
+    namespace: analytics-for-spotify-ci
+  - kind: ServiceAccount
+    name: pipeline
     namespace: analytics-for-spotify
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openshift-pipelines-admin
+  namespace: analytics-for-spotify
+subjects:
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: analytics-for-spotify-ci
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: pipeline
+  namespace: analytics-for-spotify-ci
+secrets:
+  - name: apps-push-pull-secret
