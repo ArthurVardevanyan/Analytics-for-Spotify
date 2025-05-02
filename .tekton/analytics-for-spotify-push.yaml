@@ -12,7 +12,7 @@ metadata:
     pipelinesascode.tekton.dev/task: "tekton/base/unit-test.yaml"
     pipelinesascode.tekton.dev/task-1: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/git-clone/0.9.1/git-clone.yaml"
     pipelinesascode.tekton.dev/task-2: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/buildah/0.7.1/buildah.yaml"
-    pipelinesascode.tekton.dev/task-3: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/k8s-deploy/0.2.0/k8s-deploy.yaml"
+    pipelinesascode.tekton.dev/task-3: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/k8s-deploy/0.3.0/k8s-deploy.yaml"
     pipelinesascode.tekton.dev/task-4: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/base/clair-action/clair-action-task.yaml"
 spec:
   params:
@@ -24,6 +24,14 @@ spec:
       value: "./containerfile"
     - name: IMAGE
       value: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:{{ revision }}"
+    - name: cluster-api
+      value: https://api.okd.homelab.arthurvardevanyan.com:6443
+    - name: target-namespace
+      value: analytics-for-spotify
+    - name: target-service-account
+      value: pipeline
+    - name: token-exchange-endpoint
+      value: https://kfca.apps.okd.homelab.arthurvardevanyan.com/exchangeToken
   pipelineSpec:
     params:
       - name: git-url
@@ -37,6 +45,14 @@ spec:
         description: Path to the Dockerfile to build.
         type: string
         default: ./Dockerfile
+      - name: cluster-api
+        type: string
+      - name: target-namespace
+        type: string
+      - name: target-service-account
+        type: string
+      - name: token-exchange-endpoint
+        type: string
 
     results:
       - description: The common vulnerabilities and exposures (CVE) result
@@ -97,6 +113,14 @@ spec:
         params:
           - name: git-commit
             value: $(params.git-commit)
+          - name: cluster-api
+            value: $(params.cluster-api)
+          - name: target-namespace
+            value: $(params.target-namespace)
+          - name: target-service-account
+            value: $(params.target-service-account)
+          - name: token-exchange-endpoint
+            value: $(params.token-exchange-endpoint)
 
       - name: clair-action
         runAfter:

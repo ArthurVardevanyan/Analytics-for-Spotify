@@ -23,6 +23,9 @@ subjects:
   - kind: ServiceAccount
     name: pipeline
     namespace: analytics-for-spotify-ci
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: analytics-for-spotify
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -35,3 +38,11 @@ metadata:
   namespace: analytics-for-spotify-ci
 secrets:
   - name: apps-push-pull-secret
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: pipeline
+  namespace: analytics-for-spotify
+  annotations:
+    kfca_1: '{ "issuer": "https://storage.googleapis.com/okd-homelab-wif-oidc", "subject": "system:serviceaccount:analytics-for-spotify-ci:pipeline"}'
