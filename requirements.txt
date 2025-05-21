@@ -1,6 +1,6 @@
 asgiref==3.8.1
-certifi==2025.1.31
-charset-normalizer==3.4.1
+certifi==2025.4.26
+charset-normalizer==3.4.2
 coverage==7.8.0
 Django==5.1.7
 django-cors-headers==4.7.0
@@ -12,5 +12,5 @@ urllib3==2.4.0
 # MariaDB / MYSQL
 # mysqlclient==2.2.6
 # PostgreSQL
-psycopg==3.2.6
-psycopg-binary==3.2.6
+psycopg==3.2.7
+psycopg-binary==3.2.7
