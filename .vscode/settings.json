@@ -46,6 +46,7 @@
     "kustomize",
     "letsencrypt",
     "loadbalancers",
+    "microshift",
     "nodeports",
     "nounset",
     "openshift",
