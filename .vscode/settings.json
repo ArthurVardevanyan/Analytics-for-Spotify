@@ -35,6 +35,7 @@
     "clusterinterceptors",
     "containerfile",
     "corsheaders",
+    "crunchydata",
     "errexit",
     "eventlisteners",
     "externaldns",
