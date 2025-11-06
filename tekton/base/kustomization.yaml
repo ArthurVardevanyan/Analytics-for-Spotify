@@ -12,7 +12,6 @@ resources:
   #- triggers/template.yaml
   #- triggers/route.yaml
   - knative-rbac.yaml
-  - cronjob-cache.yaml
   - push-secret.yaml
   - namespace.yaml
   - network-policy.yaml
