@@ -1,5 +1,5 @@
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: base-image
@@ -86,7 +86,8 @@ spec:
           - name: IMAGE
             value: $(params.IMAGE)
 
-  serviceAccountName: pipeline
+  taskRunTemplate:
+    serviceAccountName: pipeline
   workspaces:
     - name: data
       volumeClaimTemplate:

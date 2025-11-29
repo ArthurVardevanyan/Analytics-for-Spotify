@@ -4,7 +4,7 @@ kind: PipelineRun
 metadata:
   name: analytics-for-spotify-push
   annotations:
-    # io.kubernetes.cri-o.TrySkipVolumeSELinuxLabel: "true"
+    io.kubernetes.cri-o.TrySkipVolumeSELinuxLabel: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "1"
     pipelinesascode.tekton.dev/on-cel-expression: |
       event == "push"  && (target_branch == "refs/heads/main" || target_branch == "main")
@@ -135,7 +135,7 @@ spec:
   taskRunTemplate:
     serviceAccountName: pipeline
     podTemplate:
-      # runtimeClassName: selinux
+      runtimeClassName: selinux
       securityContext:
         fsGroupChangePolicy: OnRootMismatch
   workspaces:

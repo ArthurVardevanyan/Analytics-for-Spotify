@@ -1,10 +1,8 @@
-## DOCS:
-## https://pipelinesascode.com/docs/guide/repositorycrd/#concurrency
 apiVersion: pipelinesascode.tekton.dev/v1alpha1
 kind: Repository
 metadata:
   name: analytics-for-spotify
   namespace: analytics-for-spotify-ci
 spec:
+  concurrency_limit: 5
   url: "https://github.com/ArthurVardevanyan/Analytics-for-Spotify"
-  concurrency_limit: 3
