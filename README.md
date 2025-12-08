@@ -24,6 +24,69 @@ Notes:
 
 Not Designed to be Public / Internet Facing.
 
+## Tech Stack
+
+- **Backend**: Django (Python)
+- **Database**: PostgreSQL
+- **Frontend**: HTML, CSS, JavaScript
+- **Containerization**: Podman/Docker
+- **Orchestration**: Kubernetes
+
+## Project Structure
+
+- `AnalyticsForSpotify`: Main Django Project Configuration
+- `webBackend`: Django App for API and Models
+- `monitoringBackend`: Background Workers for Spotify Scanning
+- `webFrontend`: Static Files (HTML, CSS, JS)
+- `kubernetes`: Kubernetes Manifests for Deployment
+- `tekton`: Tekton Pipelines for CI/CD
+
+## System Architecture
+
+```mermaid
+graph TD
+    User((User))
+
+    subgraph "Web Application"
+        Frontend[Web Frontend]
+        Backend[Django Backend]
+    end
+
+    subgraph "Data Store"
+        DB[(PostgreSQL)]
+    end
+
+    subgraph "Background Monitoring"
+        Worker[Worker Manager]
+        P_Thread[Playlist Thread]
+        H_Thread[History/Realtime Thread]
+        S_Thread[Song ID Updater]
+    end
+
+    subgraph "External Services"
+        Spotify[Spotify API]
+    end
+
+    User -->|View Analytics| Frontend
+    Frontend -->|API Requests| Backend
+    Backend <-->|Read/Write| DB
+
+    Worker -->|Spawns per User| P_Thread
+    Worker -->|Spawns per User| H_Thread
+    Worker -->|Spawns per User| S_Thread
+
+    P_Thread <-->|Fetch Playlists| Spotify
+    H_Thread <-->|Poll Playback| Spotify
+
+    P_Thread -->|Save Data| DB
+    H_Thread -->|Save Data| DB
+    S_Thread <-->|Update IDs| DB
+```
+
+## Deployment
+
+The project includes configuration for deploying on Kubernetes using Kustomize and CI/CD pipelines using Tekton. It also supports Podman Compose for local development.
+
 ## Spotify API
 
 ### Scopes
