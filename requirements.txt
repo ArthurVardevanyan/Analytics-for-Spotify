@@ -2,13 +2,13 @@ asgiref==3.11.0
 certifi==2026.1.4
 charset-normalizer==3.4.4
 coverage==7.13.1
-Django==6.0
+Django==6.0.1
 django-cors-headers==4.9.0
 idna==3.11
 requests==2.32.5
 sqlparse==0.5.5
 typing_extensions==4.15.0
-urllib3==2.6.2
+urllib3==2.6.3
 # MariaDB / MYSQL
 # mysqlclient==2.2.6
 # PostgreSQL
