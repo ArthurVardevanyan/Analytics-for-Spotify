@@ -26,8 +26,34 @@
 
         .chart-container {
             margin: 20px auto;
-            max-width: 900px;
+            max-width: 1400px;
             padding: 20px;
+        }
+
+        .filter-buttons {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .filter-buttons button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            border: 1px solid #1DB954;
+            background-color: white;
+            color: #1DB954;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .filter-buttons button.active {
+            background-color: #1DB954;
+            color: white;
+        }
+
+        .filter-buttons button:hover {
+            background-color: #1DB954;
+            color: white;
         }
     </style>
 </head>
@@ -41,12 +67,21 @@
 
     <div class="chart-container">
         <h2>Global Listening History</h2>
-        <canvas id="global-daily-chart" height="80"></canvas>
+        <div class="filter-buttons">
+            <button id="daily-month" onclick="filterDaily('month')">Month</button>
+            <button id="daily-year" class="active" onclick="filterDaily('year')">Year</button>
+            <button id="daily-all" onclick="filterDaily('all')">All</button>
+        </div>
+        <canvas id="global-daily-chart" height="60"></canvas>
     </div>
 
     <div class="chart-container">
         <h2>Global Average Hourly Listens</h2>
-        <canvas id="global-hourly-chart" height="80"></canvas>
+        <div class="filter-buttons">
+            <button id="hourly-year" class="active" onclick="filterHourly('year')">Year</button>
+            <button id="hourly-all" onclick="filterHourly('all')">All</button>
+        </div>
+        <canvas id="global-hourly-chart" height="60"></canvas>
     </div>
 
     <div style="text-align: center; margin: 20px; color: #888; font-size: 14px;">
@@ -54,6 +89,101 @@
     </div>
 
     <script>
+        let globalDailyChart = null;
+        let globalHourlyChart = null;
+        let dailyData = { songs: [], plays: [] };
+        let hourlyData = { songs: [], plays: [] };
+
+        function aggregateByWeek(songs, plays) {
+            const weekSongs = [];
+            const weekPlays = [];
+            let count = 0;
+            let temp = 0;
+            for (let index = 0; index < songs.length; index++) {
+                if (count === 7) {
+                    weekSongs.push(songs[index - 7]);
+                    weekPlays.push(temp);
+                    temp = 0;
+                    count = 0;
+                }
+                temp += plays[index];
+                count += 1;
+            }
+            if (count !== 0) {
+                weekSongs.push(songs[songs.length - count]);
+                weekPlays.push(temp);
+            }
+            return { songs: weekSongs, plays: weekPlays };
+        }
+
+        function aggregateByMonth(songs, plays) {
+            const monthMap = {};
+            for (let i = 0; i < songs.length; i++) {
+                const monthKey = songs[i].substring(0, 7); // YYYY-MM
+                if (!monthMap[monthKey]) {
+                    monthMap[monthKey] = 0;
+                }
+                monthMap[monthKey] += plays[i];
+            }
+            const monthSongs = Object.keys(monthMap).sort();
+            const monthPlays = monthSongs.map(m => monthMap[m]);
+            return { songs: monthSongs, plays: monthPlays };
+        }
+
+        function filterByDateRange(songs, plays, days) {
+            const date = new Date();
+            const cutoff = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
+            const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`;
+            
+            const filtered = { songs: [], plays: [] };
+            for (let i = 0; i < songs.length; i++) {
+                if (songs[i] >= cutoffStr) {
+                    filtered.songs.push(songs[i]);
+                    filtered.plays.push(plays[i]);
+                }
+            }
+            return filtered;
+        }
+
+        function filterDaily(period) {
+            // Update button states
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                if (btn.id.startsWith('daily-')) btn.classList.remove('active');
+            });
+            document.getElementById('daily-' + period).classList.add('active');
+
+            let processedData;
+            if (period === 'month') {
+                // Month: show by day (last 30 days)
+                processedData = filterByDateRange(dailyData.songs, dailyData.plays, 30);
+            } else if (period === 'year') {
+                // Year: show by week (last 365 days, aggregated weekly)
+                const filtered = filterByDateRange(dailyData.songs, dailyData.plays, 365);
+                processedData = aggregateByWeek(filtered.songs, filtered.plays);
+            } else {
+                // All: show by month
+                processedData = aggregateByMonth(dailyData.songs, dailyData.plays);
+            }
+
+            globalDailyChart.data.labels = processedData.songs;
+            globalDailyChart.data.datasets[0].data = processedData.plays;
+            globalDailyChart.update();
+        }
+
+        function filterHourly(period) {
+            // Update button states
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                if (btn.id.startsWith('hourly-')) btn.classList.remove('active');
+            });
+            document.getElementById('hourly-' + period).classList.add('active');
+
+            // Hourly data doesn't change with time period, just show all or year's worth
+            // For simplicity, we'll just keep it as-is since it's aggregated by hour of day
+            globalHourlyChart.data.labels = hourlyData.songs;
+            globalHourlyChart.data.datasets[0].data = hourlyData.plays;
+            globalHourlyChart.update();
+        }
+
         window.onload = function () {
             let lastUpdatedTime = null;
 
@@ -66,12 +196,19 @@
                         lastUpdatedTime = data.lastUpdated;
                     }
 
-                    const lineChart = new Chart(document.getElementById("global-daily-chart"), {
+                    // Store full data
+                    dailyData = { songs: data.songs, plays: data.plays };
+
+                    // Default to year view (aggregated by week)
+                    const filtered = filterByDateRange(data.songs, data.plays, 365);
+                    const processed = aggregateByWeek(filtered.songs, filtered.plays);
+
+                    globalDailyChart = new Chart(document.getElementById("global-daily-chart"), {
                         type: "line",
                         data: {
-                            labels: data.songs,
+                            labels: processed.songs,
                             datasets: [{
-                                data: data.plays,
+                                data: processed.plays,
                                 label: "Daily Listens (All Users)",
                                 borderColor: "#1DB954",
                                 backgroundColor: "rgba(29, 185, 84, 0.1)",
@@ -81,6 +218,7 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: true,
                             plugins: {
                                 title: {
                                     display: false
@@ -105,7 +243,10 @@
                         lastUpdatedTime = data.lastUpdated;
                     }
 
-                    const hourlyChart = new Chart(document.getElementById("global-hourly-chart"), {
+                    // Store full data
+                    hourlyData = { songs: data.songs, plays: data.plays };
+
+                    globalHourlyChart = new Chart(document.getElementById("global-hourly-chart"), {
                         type: "line",
                         data: {
                             labels: data.songs,
@@ -120,6 +261,7 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: true,
                             plugins: {
                                 title: {
                                     display: false
