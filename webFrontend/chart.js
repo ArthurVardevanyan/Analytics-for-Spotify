@@ -62,16 +62,22 @@ function stop() {
 }
 
 function deleteUser() {
-  $.ajax({
-    url: "/analytics/deleteUser/",
-    method: "POST",
-    headers: {
-      "X-CSRFToken": CSRF_TOKEN,
-    },
-    success() {
-      window.location.href = "/spotify/index.html";
-    },
-  });
+  if (
+    confirm(
+      "Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your listening history and data.",
+    )
+  ) {
+    $.ajax({
+      url: "/analytics/deleteUser/",
+      method: "POST",
+      headers: {
+        "X-CSRFToken": CSRF_TOKEN,
+      },
+      success() {
+        window.location.href = "/spotify/index.html";
+      },
+    });
+  }
 }
 
 function playlist() {
