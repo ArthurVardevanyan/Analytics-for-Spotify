@@ -351,6 +351,8 @@ function summaryLineChart(data) {
       ],
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       title: {
         display: true,
         text: "Listens Per Day",
@@ -466,10 +468,15 @@ function filterDailyAuth(period) {
 
 function hourlyLineChart(data) {
   const songs = data.songs;
-  const plays = data.plays;
+  const playsLifetime = data.playsLifetime;
+  const playsYear = data.playsYear;
 
   // Store original data globally for filtering
-  window.authHourlyData = { songs: songs, plays: plays };
+  window.authHourlyData = {
+    songs: songs,
+    playsLifetime: playsLifetime,
+    playsYear: playsYear,
+  };
 
   const hourlyLineChart = new Chart(
     document.getElementById("hourlyLine-chart"),
@@ -479,7 +486,7 @@ function hourlyLineChart(data) {
         labels: songs,
         datasets: [
           {
-            data: plays,
+            data: playsLifetime,
             label: "Average Hourly Listen History",
             borderColor: "#1DB954",
             backgroundColor: "rgba(29, 185, 84, 0.1)",
@@ -489,6 +496,8 @@ function hourlyLineChart(data) {
         ],
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         title: {
           display: true,
           text: "Average Hourly Listens",
