@@ -704,27 +704,27 @@ def globalStats(request: requests.request):
     from datetime import datetime
     import time
     from django.db import connection
-    
+
     start = time.time()
     cache_key = 'global_stats'
     cached_data = cache.get(cache_key)
-    
+
     if cached_data:
         log.debug(f"GlobalStats - Returned from cache")
         return JsonResponse(cached_data)
-    
+
     # Get listening statistics
     listening_stats = models.ListeningHistory.objects.aggregate(
         total_songs=Count('id'),
         total_time=Sum('songID__trackLength')
     )
-    
+
     # Get unique counts
     unique_artists = models.Artists.objects.count()
     unique_songs = models.Songs.objects.count()
-    
+
     log.debug(f"GlobalStats - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
-    
+
     response_data = {
         "songsListenedTo": listening_stats['total_songs'] or 0,
         "hoursListened": round((listening_stats['total_time'] or 0) / 60000 / 60 * 10) / 10,
@@ -732,8 +732,8 @@ def globalStats(request: requests.request):
         "uniqueSongs": unique_songs,
         "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    
+
     # Cache for 1 hour (3600 seconds)
     cache.set(cache_key, response_data, 3600)
-    
+
     return JsonResponse(response_data)

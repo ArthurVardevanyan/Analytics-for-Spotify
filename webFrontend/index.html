@@ -31,12 +31,12 @@
         }
 
         .chart-container canvas {
-            height: 60px !important;
+            height: 400px !important;
         }
 
         @media (max-width: 768px) {
             .chart-container canvas {
-                height: 250px !important;
+                height: 300px !important;
             }
         }
 
@@ -120,8 +120,11 @@
     <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
     <div style="text-align: center;">
         <button onclick="window.location.href = '/analytics/login/';" class="btn btn-spotify">Log In</button>
-        <p style="font-size: 12px; color: #666; margin-top: 10px;">Note: You must be whitelisted in the Spotify Developer App to use this application</p>
-        <p style="font-size: 12px; color: #666; margin-top: 5px;">Want to self-host? Visit <a href="https://github.com/ArthurVardevanyan/Analytics-for-Spotify" target="_blank" style="color: #1DB954;">GitHub</a></p>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">Note: You must be whitelisted in the Spotify
+            Developer App to use this application</p>
+        <p style="font-size: 12px; color: #666; margin-top: 5px;">Want to self-host? Visit <a
+                href="https://github.com/ArthurVardevanyan/Analytics-for-Spotify" target="_blank"
+                style="color: #1DB954;">GitHub</a></p>
     </div>
 
     <div class="global-stats">
@@ -150,12 +153,12 @@
             <button id="daily-year" class="active" onclick="filterDaily('year')">Year (by week)</button>
             <button id="daily-all" onclick="filterDaily('all')">All (by month)</button>
         </div>
-        <canvas id="global-daily-chart" height="60"></canvas>
+        <canvas id="global-daily-chart"></canvas>
     </div>
 
     <div class="chart-container">
         <h2>Global Average Hourly Listens</h2>
-        <canvas id="global-hourly-chart" height="60"></canvas>
+        <canvas id="global-hourly-chart"></canvas>
     </div>
 
     <div style="text-align: center; margin: 20px; color: #888; font-size: 14px;">
