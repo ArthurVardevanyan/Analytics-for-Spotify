@@ -340,6 +340,7 @@ def hourlyAggregation(request: requests.request):
         JsonResponse: JSON with hourly song counts
     """
     from django.db.models import Count
+    from datetime import datetime, timedelta
     import time
     from django.db import connection
 
@@ -348,9 +349,47 @@ def hourlyAggregation(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    # Use database-level hour extraction with proper timezone conversion
-    # timePlayed is stored as text in format "YYYY-MM-DD HH:MM:SS" in UTC
-    hourly_data = models.ListeningHistory.objects.filter(
+    # Check if a specific date is requested
+    date_param = request.GET.get('date', None)
+
+    if date_param:
+        # Handle single day query
+        try:
+            # Parse the date (format: MM/DD/YYYY from datepicker)
+            selected_date = datetime.strptime(date_param, '%m/%d/%Y')
+            next_date = selected_date + timedelta(days=1)
+
+            hourly_data_day = models.ListeningHistory.objects.filter(
+                user=str(spotifyID),
+                timePlayed__gte=selected_date.strftime('%Y-%m-%d'),
+                timePlayed__lt=next_date.strftime('%Y-%m-%d')
+            ).extra(
+                select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+            ).values('local_hour').annotate(
+                count=Count('id')
+            ).order_by('local_hour')
+
+            hourly_counts_day = [0] * 24
+            for item in hourly_data_day:
+                hour = int(item['local_hour'])
+                hourly_counts_day[hour] = item['count']
+
+            songs = [f"{i:02d}" for i in range(24)]
+
+            log.debug(f"HourlyAgg (date={date_param}) - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+            return JsonResponse({
+                "songs": songs,
+                "plays": hourly_counts_day
+            })
+        except ValueError:
+            return HttpResponse(status=400)
+
+    # Get one year cutoff date
+    one_year_ago = datetime.now() - timedelta(days=365)
+
+    # Use database-level hour extraction with proper timezone conversion for lifetime
+    hourly_data_lifetime = models.ListeningHistory.objects.filter(
         user=str(spotifyID)
     ).extra(
         select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
@@ -358,21 +397,38 @@ def hourlyAggregation(request: requests.request):
         count=Count('id')
     ).order_by('local_hour')
 
-    # Initialize all hours to 0
-    hourly_counts = [0] * 24
-    for item in hourly_data:
+    # Get last year's data
+    hourly_data_year = models.ListeningHistory.objects.filter(
+        user=str(spotifyID),
+        timePlayed__gte=one_year_ago
+    ).extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Initialize all hours to 0 for both datasets
+    hourly_counts_lifetime = [0] * 24
+    hourly_counts_year = [0] * 24
+
+    for item in hourly_data_lifetime:
         hour = int(item['local_hour'])
-        hourly_counts[hour] = item['count']
+        hourly_counts_lifetime[hour] = item['count']
+
+    for item in hourly_data_year:
+        hour = int(item['local_hour'])
+        hourly_counts_year[hour] = item['count']
 
     songs = [f"{i:02d}" for i in range(24)]
-    plays = hourly_counts
 
     log.debug(f"HourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
 
     return JsonResponse({
         "songs": songs,
-        "plays": plays
+        "playsLifetime": hourly_counts_lifetime,
+        "playsYear": hourly_counts_year
     })
+
 
 def songs(request: requests.request):
     """
@@ -551,7 +607,7 @@ def playlistSongs(request: requests.request):
     ).values_list('id', 'artists__name'):
         if artist_name:  # Skip null artists
             songArtistsDict[song_id].append(artist_name)
-    
+
     # Convert lists to comma-separated strings
     songArtistsDict = {k: ', '.join(v) for k, v in songArtistsDict.items()}
 
@@ -585,3 +641,174 @@ def playlistSongs(request: requests.request):
     log.debug(f"PlaylistSongs - Total time: {time.time() - start:.3f}s, Playlists: {len(playlistsData)}, Tracks: {total_tracks}, Queries: {len(connection.queries)}")
 
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")
+
+
+def globalDailyAggregation(request: requests.request):
+    """
+    Get daily listening aggregation for all users combined (cached for 1 hour)
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with daily song counts across all users
+    """
+    from django.db.models import Count
+    from django.core.cache import cache
+    from datetime import datetime
+    import time
+    from django.db import connection
+
+    # Check cache first
+    cache_key = 'global_daily_aggregation'
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        log.debug(f"GlobalDailyAgg - Served from cache")
+        return JsonResponse(cached_data)
+
+    start = time.time()
+
+    # Aggregate across all users with timezone conversion
+    daily_data = models.ListeningHistory.objects.extra(
+        select={
+            'local_date': 'DATE(("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'
+        }
+    ).values('local_date').annotate(
+        count=Count('id')
+    ).order_by('local_date')
+
+    # Convert to the format expected by frontend
+    songs = []
+    plays = []
+    for item in daily_data:
+        songs.append(str(item['local_date']))
+        plays.append(item['count'])
+
+    log.debug(f"GlobalDailyAgg - Total time: {time.time() - start:.3f}s, Days: {len(songs)}, Queries: {len(connection.queries)}")
+
+    response_data = {
+        "songs": songs,
+        "plays": plays,
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    # Cache for 1 hour (3600 seconds)
+    cache.set(cache_key, response_data, 3600)
+
+    return JsonResponse(response_data)
+
+
+def globalHourlyAggregation(request: requests.request):
+    """
+    Get hourly listening aggregation for all users combined (cached for 1 hour)
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with hourly song counts across all users
+    """
+    from django.db.models import Count
+    from django.core.cache import cache
+    from datetime import datetime
+    import time
+    from django.db import connection
+
+    # Check cache first
+    cache_key = 'global_hourly_aggregation'
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        log.debug(f"GlobalHourlyAgg - Served from cache")
+        return JsonResponse(cached_data)
+
+    start = time.time()
+
+# Get one year cutoff date
+    from datetime import timedelta
+    one_year_ago = datetime.now() - timedelta(days=365)
+
+    # Use database-level hour extraction with timezone conversion for all users (all time)
+    hourly_data_all = models.ListeningHistory.objects.extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Get last year's data
+    hourly_data_year = models.ListeningHistory.objects.filter(
+        timePlayed__gte=one_year_ago
+    ).extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Initialize all hours to 0 for both datasets
+    hourly_counts_all = [0] * 24
+    hourly_counts_year = [0] * 24
+
+    for item in hourly_data_all:
+        hour = int(item['local_hour'])
+        hourly_counts_all[hour] = item['count']
+
+    for item in hourly_data_year:
+        hour = int(item['local_hour'])
+        hourly_counts_year[hour] = item['count']
+
+    songs = [f"{i:02d}" for i in range(24)]
+
+    log.debug(f"GlobalHourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+    response_data = {
+        "songs": songs,
+        "playsAll": hourly_counts_all,
+        "playsYear": hourly_counts_year,
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    # Cache for 1 hour (3600 seconds)
+    cache.set(cache_key, response_data, 3600)
+
+    return JsonResponse(response_data)
+
+
+def globalStats(request: requests.request):
+    """Return global listening statistics for all users (cached)"""
+    from django.db.models import Sum, Count
+    from django.core.cache import cache
+    from datetime import datetime
+    import time
+    from django.db import connection
+
+    start = time.time()
+    cache_key = 'global_stats'
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        log.debug(f"GlobalStats - Returned from cache")
+        return JsonResponse(cached_data)
+
+    # Get listening statistics
+    listening_stats = models.ListeningHistory.objects.aggregate(
+        total_songs=Count('id'),
+        total_time=Sum('songID__trackLength')
+    )
+
+    # Get unique counts
+    unique_artists = models.Artists.objects.count()
+    unique_songs = models.Songs.objects.count()
+
+    log.debug(f"GlobalStats - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+    response_data = {
+        "songsListenedTo": listening_stats['total_songs'] or 0,
+        "hoursListened": round((listening_stats['total_time'] or 0) / 60000 / 60 * 10) / 10,
+        "uniqueArtists": unique_artists,
+        "uniqueSongs": unique_songs,
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    # Cache for 1 hour (3600 seconds)
+    cache.set(cache_key, response_data, 3600)
+
+    return JsonResponse(response_data)

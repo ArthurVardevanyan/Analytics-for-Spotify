@@ -34,6 +34,19 @@ spec:
       dnsPolicy: ClusterFirst
       schedulerName: default-scheduler
       enableServiceLinks: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: analytics-for-spotify
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: analytics-for-spotify
       initContainers:
         - name: setup
           image: registry.arthurvardevanyan.com/apps/analytics-for-spotify:<VERSION>

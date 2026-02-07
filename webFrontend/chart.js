@@ -300,7 +300,7 @@ function playlistSongs() {
                   {
                     data: weekPlays,
                     label: "Amount of Songs By The Week",
-                    backgroundColor: "#3e95cd",
+                    backgroundColor: "#1DB954",
                     fill: false,
                   },
                 ],
@@ -328,21 +328,31 @@ function playlistSongs() {
 function summaryLineChart(data) {
   const songs = data.songs;
   const plays = data.plays;
+
+  // Store original data globally for filtering
+  window.authDailyData = { songs: songs, plays: plays };
+
+  // Default to month view (last 30 days)
+  const processed = filterByDateRange(songs, plays, 30);
+
   const lineChart = new Chart(document.getElementById("line-chart"), {
     type: "line",
     data: {
-      labels: songs,
+      labels: processed.songs,
       datasets: [
         {
-          data: plays,
+          data: processed.plays,
           label: "Listen History",
-          borderColor: "#3e95cd",
-          fill: false,
+          borderColor: "#1DB954",
+          backgroundColor: "rgba(29, 185, 84, 0.1)",
+          fill: true,
           tension: 0.4,
         },
       ],
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       title: {
         display: true,
         text: "Listens Per Day",
@@ -354,104 +364,120 @@ function summaryLineChart(data) {
       },
     },
   });
-  $("#orders_1").click(() => {
-    const { data } = lineChart;
-    const yearSongs = [];
-    const yearPlays = [];
 
-    const days = 365; // Days you want to subtract
-    const date = new Date();
-    const last = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
-    const newDay = `${last.getFullYear()}-${`0${last.getMonth() + 1}`.slice(
-      -2,
-    )}-${`0${last.getDate()}`.slice(-2)}`;
+  // Store chart globally
+  window.authDailyChart = lineChart;
+}
 
-    for (let index = 0; index < songs.length; index++) {
-      if (newDay < songs[index]) {
-        yearSongs.push(songs[index]);
-        yearPlays.push(plays[index]);
-      }
-    }
-
-    const weekSongs = [];
-    const weekPlays = [];
-    let count = 0;
-    let temp = 0;
-    for (let index = 0; index < songs.length; index++) {
-      if (count === 7) {
-        weekSongs.push(songs[index - 7]);
-        weekPlays.push(temp);
-        temp = 0;
-        count = 0;
-      }
-      temp += plays[index];
-      count += 1;
-    }
-    if (count !== 0) {
-      weekSongs.push(songs[songs.length - count]);
+// Helper functions for aggregation
+function aggregateByWeek(songs, plays) {
+  const weekSongs = [];
+  const weekPlays = [];
+  let count = 0;
+  let temp = 0;
+  for (let index = 0; index < songs.length; index++) {
+    if (count === 7) {
+      weekSongs.push(songs[index - 7]);
       weekPlays.push(temp);
       temp = 0;
       count = 0;
     }
-    data.labels = weekSongs;
-    data.datasets[0].data = weekPlays;
+    temp += plays[index];
+    count += 1;
+  }
+  if (count !== 0) {
+    weekSongs.push(songs[songs.length - count]);
+    weekPlays.push(temp);
+  }
+  return { songs: weekSongs, plays: weekPlays };
+}
 
-    lineChart.update();
-  });
-  $("#orders_2").click(() => {
-    const { data } = lineChart;
-    const yearSongs = [];
-    const yearPlays = [];
-
-    const days = 30; // Days you want to subtract
-    const date = new Date();
-    const last = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
-    const newDay = `${last.getFullYear()}-${`0${last.getMonth() + 1}`.slice(
-      -2,
-    )}-${`0${last.getDate()}`.slice(-2)}`;
-
-    for (let index = 0; index < songs.length; index++) {
-      if (newDay < songs[index]) {
-        yearSongs.push(songs[index]);
-        yearPlays.push(plays[index]);
-      }
+function aggregateByMonth(songs, plays) {
+  const monthMap = {};
+  for (let i = 0; i < songs.length; i++) {
+    const monthKey = songs[i].substring(0, 7); // YYYY-MM
+    if (!monthMap[monthKey]) {
+      monthMap[monthKey] = 0;
     }
+    monthMap[monthKey] += plays[i];
+  }
+  const monthSongs = Object.keys(monthMap).sort();
+  const monthPlays = monthSongs.map((m) => monthMap[m]);
+  return { songs: monthSongs, plays: monthPlays };
+}
 
-    data.labels = yearSongs;
-    data.datasets[0].data = yearPlays;
+function filterByDateRange(songs, plays, days) {
+  const date = new Date();
+  const cutoff = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
 
-    lineChart.update();
-  });
-  $("#orders_3").click(() => {
-    const { data } = lineChart;
-    const yearSongs = [];
-    const yearPlays = [];
-
-    const days = 7; // Days you want to subtract
-    const date = new Date();
-    const last = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
-    const newDay = `${last.getFullYear()}-${`0${last.getMonth() + 1}`.slice(
-      -2,
-    )}-${`0${last.getDate()}`.slice(-2)}`;
-
-    for (let index = 0; index < songs.length; index++) {
-      if (newDay < songs[index]) {
-        yearSongs.push(songs[index]);
-        yearPlays.push(plays[index]);
-      }
+  const filtered = { songs: [], plays: [] };
+  for (let i = 0; i < songs.length; i++) {
+    if (songs[i] >= cutoffStr) {
+      filtered.songs.push(songs[i]);
+      filtered.plays.push(plays[i]);
     }
+  }
+  return filtered;
+}
 
-    data.labels = yearSongs;
-    data.datasets[0].data = yearPlays;
+function filterDailyAuth(period) {
+  // Update button states
+  document
+    .querySelectorAll("#lineChartDIV .filter-buttons button")
+    .forEach((btn) => {
+      btn.classList.remove("active");
+    });
 
-    lineChart.update();
-  });
-  document.getElementById("orders_2").click();
+  let buttonId =
+    period === "month"
+      ? "orders_3"
+      : period === "year"
+        ? "orders_2"
+        : "orders_1";
+  document.getElementById(buttonId).classList.add("active");
+
+  let processedData;
+  if (period === "month") {
+    // Month: show by day (last 30 days)
+    processedData = filterByDateRange(
+      window.authDailyData.songs,
+      window.authDailyData.plays,
+      30,
+    );
+  } else if (period === "year") {
+    // Year: show by week (last 365 days, aggregated weekly)
+    const filtered = filterByDateRange(
+      window.authDailyData.songs,
+      window.authDailyData.plays,
+      365,
+    );
+    processedData = aggregateByWeek(filtered.songs, filtered.plays);
+  } else {
+    // All: show by month
+    processedData = aggregateByMonth(
+      window.authDailyData.songs,
+      window.authDailyData.plays,
+    );
+  }
+
+  window.authDailyChart.data.labels = processedData.songs;
+  window.authDailyChart.data.datasets[0].data = processedData.plays;
+  window.authDailyChart.update();
 }
 
 function hourlyLineChart(data) {
   const songs = data.songs;
-  const plays = data.plays;
+  const playsLifetime = data.playsLifetime;
+  const playsYear = data.playsYear;
+
+  // Store original data globally for filtering
+  window.authHourlyData = {
+    songs: songs,
+    playsLifetime: playsLifetime,
+    playsYear: playsYear,
+  };
+
   const hourlyLineChart = new Chart(
     document.getElementById("hourlyLine-chart"),
     {
@@ -460,15 +486,18 @@ function hourlyLineChart(data) {
         labels: songs,
         datasets: [
           {
-            data: plays,
+            data: playsLifetime,
             label: "Average Hourly Listen History",
-            borderColor: "#3e95cd",
-            fill: false,
+            borderColor: "#1DB954",
+            backgroundColor: "rgba(29, 185, 84, 0.1)",
+            fill: true,
             tension: 0.4,
           },
         ],
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         title: {
           display: true,
           text: "Average Hourly Listens",
@@ -477,18 +506,40 @@ function hourlyLineChart(data) {
     },
   );
 
-  $("#orders_8").click(() => {
-    const chartData = hourlyLineChart.data;
-    chartData.labels = songs;
-    chartData.datasets[0].data = plays;
-    hourlyLineChart.update();
-  });
-  $("#orders_4").click(() => {
-    const chartData = hourlyLineChart.data;
+  // Store chart globally
+  window.authHourlyChart = hourlyLineChart;
+}
+
+function filterHourlyAuth(period) {
+  // Update button states
+  document
+    .querySelectorAll("#hourlyLineChartDIV .filter-buttons button")
+    .forEach((btn) => {
+      btn.classList.remove("active");
+    });
+
+  if (period === "lifetime") {
+    document.getElementById("orders_8").classList.add("active");
+    // Show lifetime data
+    window.authHourlyChart.data.labels = window.authHourlyData.songs;
+    window.authHourlyChart.data.datasets[0].data =
+      window.authHourlyData.playsLifetime;
+    window.authHourlyChart.update();
+  } else if (period === "year") {
+    document.getElementById("orders_9").classList.add("active");
+    // Show year data
+    window.authHourlyChart.data.labels = window.authHourlyData.songs;
+    window.authHourlyChart.data.datasets[0].data =
+      window.authHourlyData.playsYear;
+    window.authHourlyChart.update();
+  } else if (period === "day") {
+    document.getElementById("orders_4").classList.add("active");
     const selectedDate = document.getElementById("datePicker").value;
 
     if (!selectedDate) {
       alert("Please select a date first");
+      document.getElementById("orders_8").classList.add("active");
+      document.getElementById("orders_4").classList.remove("active");
       return;
     }
 
@@ -497,15 +548,17 @@ function hourlyLineChart(data) {
       url: `/analytics/hourlyAggregation/?date=${selectedDate}`,
       method: "GET",
       success(dateData) {
-        chartData.labels = dateData.songs;
-        chartData.datasets[0].data = dateData.plays;
-        hourlyLineChart.update();
+        window.authHourlyChart.data.labels = dateData.songs;
+        window.authHourlyChart.data.datasets[0].data = dateData.plays;
+        window.authHourlyChart.update();
       },
       error() {
         alert("Error loading date-specific data");
+        document.getElementById("orders_8").classList.add("active");
+        document.getElementById("orders_4").classList.remove("active");
       },
     });
-  });
+  }
 }
 function listeningHistory(loadAll = false) {
   const url = loadAll
@@ -561,8 +614,8 @@ function listeningHistory(loadAll = false) {
   });
 }
 function displayStats(data) {
-  const songsListenedTo = data.songsListenedTo;
-  const hoursListened = data.hoursListened;
+  const songsListenedTo = data.songsListenedTo.toLocaleString();
+  const hoursListened = data.hoursListened.toLocaleString();
   document.getElementById("statsDesktop").innerHTML =
     `Songs Listened To: ${songsListenedTo} & Hours Listened To: ${hoursListened}`;
   document.getElementById("statsMobile").innerHTML =

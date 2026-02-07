@@ -1,3 +1,7 @@
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
 ul.nav,
 ul.h_nav {
   list-style-type: none;
@@ -9,13 +13,18 @@ li.h_nav {
 }
 
 li.nav,
-li.h_nav,
-a {
+li.h_nav {
   font-family: Roboto;
   display: block;
   color: black;
   text-align: center;
   padding: 14px 16px;
+  text-decoration: none;
+}
+
+a {
+  font-family: Roboto;
+  color: black;
   text-decoration: none;
 }
 
@@ -195,6 +204,12 @@ h3 {
 
   #statsMobile {
 
+    display: block;
+  }
+
+  body > div[style*="float:right"] {
+    float: none;
+    text-align: center;
     display: block;
   }
 

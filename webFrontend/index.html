@@ -23,6 +23,115 @@
             -webkit-user-select: none;
             -ms-user-select: none;
         }
+
+        .chart-container {
+            margin: 20px auto;
+            max-width: 1400px;
+            padding: 20px;
+        }
+
+        .chart-container h2 {
+            text-align: center;
+        }
+
+        .chart-container canvas {
+            height: 400px !important;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container canvas {
+                height: 300px !important;
+            }
+        }
+
+        .filter-buttons {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .filter-buttons button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            border: 1px solid #1DB954;
+            background-color: white;
+            color: #1DB954;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .filter-buttons button.active {
+            background-color: #1DB954;
+            color: white;
+        }
+
+        .filter-buttons button:hover {
+            background-color: #1DB954;
+            color: white;
+        }
+
+        .global-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px auto;
+            max-width: 1200px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background-color: #f8f8f8;
+            border: 2px solid #1DB954;
+            border-radius: 8px;
+            padding: 20px 30px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1DB954;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mobile-note {
+            display: none;
+        }
+
+        .desktop-note {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-note {
+                display: none;
+            }
+
+            .mobile-note {
+                display: inline;
+            }
+
+            .global-stats {
+                gap: 15px;
+            }
+
+            .stat-box {
+                min-width: 150px;
+                padding: 15px 20px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 
@@ -31,7 +140,282 @@
     <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
     <div style="text-align: center;">
         <button onclick="window.location.href = '/analytics/login/';" class="btn btn-spotify">Log In</button>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+            <span class="desktop-note">Note: You must be whitelisted in the Spotify Developer App to use this
+                application. Want to self-host? Visit <a
+                    href="https://github.com/ArthurVardevanyan/Analytics-for-Spotify" target="_blank"
+                    style="color: #1DB954;">GitHub</a></span>
+            <span class="mobile-note">Note: You must be whitelisted in the Spotify Developer App to use this
+                application<br>Want to self-host? Visit <a
+                    href="https://github.com/ArthurVardevanyan/Analytics-for-Spotify" target="_blank"
+                    style="color: #1DB954;">GitHub</a></span>
+        </p>
     </div>
+
+    <div class="global-stats">
+        <div class="stat-box">
+            <div class="stat-label">Songs Listened</div>
+            <div class="stat-value" id="global-songs">-</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Hours Listened</div>
+            <div class="stat-value" id="global-hours">-</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Unique Artists</div>
+            <div class="stat-value" id="global-artists">-</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Unique Songs</div>
+            <div class="stat-value" id="global-unique-songs">-</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Global Listening History</h2>
+        <div class="filter-buttons">
+            <button id="daily-month" onclick="filterDaily('month')">Month (by day)</button>
+            <button id="daily-year" class="active" onclick="filterDaily('year')">Year (by week)</button>
+            <button id="daily-all" onclick="filterDaily('all')">All (by month)</button>
+        </div>
+        <canvas id="global-daily-chart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>Global Average Hourly Listens</h2>
+        <div class="filter-buttons">
+            <button id="hourly-year" class="active" onclick="filterHourly('year')">Year</button>
+            <button id="hourly-all" onclick="filterHourly('all')">All</button>
+        </div>
+        <canvas id="global-hourly-chart"></canvas>
+    </div>
+
+    <div style="text-align: center; margin: 20px; color: #888; font-size: 14px;">
+        <p id="last-updated">Loading statistics...</p>
+    </div>
+
+    <script>
+        let globalDailyChart = null;
+        let globalHourlyChart = null;
+        let dailyData = { songs: [], plays: [] };
+        let hourlyData = { songs: [], plays: [] };
+
+        function aggregateByWeek(songs, plays) {
+            const weekSongs = [];
+            const weekPlays = [];
+            let count = 0;
+            let temp = 0;
+            for (let index = 0; index < songs.length; index++) {
+                if (count === 7) {
+                    weekSongs.push(songs[index - 7]);
+                    weekPlays.push(temp);
+                    temp = 0;
+                    count = 0;
+                }
+                temp += plays[index];
+                count += 1;
+            }
+            if (count !== 0) {
+                weekSongs.push(songs[songs.length - count]);
+                weekPlays.push(temp);
+            }
+            return { songs: weekSongs, plays: weekPlays };
+        }
+
+        function aggregateByMonth(songs, plays) {
+            const monthMap = {};
+            for (let i = 0; i < songs.length; i++) {
+                const monthKey = songs[i].substring(0, 7); // YYYY-MM
+                if (!monthMap[monthKey]) {
+                    monthMap[monthKey] = 0;
+                }
+                monthMap[monthKey] += plays[i];
+            }
+            const monthSongs = Object.keys(monthMap).sort();
+            const monthPlays = monthSongs.map(m => monthMap[m]);
+            return { songs: monthSongs, plays: monthPlays };
+        }
+
+        function filterByDateRange(songs, plays, days) {
+            const date = new Date();
+            const cutoff = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
+            const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`;
+
+            const filtered = { songs: [], plays: [] };
+            for (let i = 0; i < songs.length; i++) {
+                if (songs[i] >= cutoffStr) {
+                    filtered.songs.push(songs[i]);
+                    filtered.plays.push(plays[i]);
+                }
+            }
+            return filtered;
+        }
+
+        function filterDaily(period) {
+            // Update button states
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                if (btn.id.startsWith('daily-')) btn.classList.remove('active');
+            });
+            document.getElementById('daily-' + period).classList.add('active');
+
+            let processedData;
+            if (period === 'month') {
+                // Month: show by day (last 30 days)
+                processedData = filterByDateRange(dailyData.songs, dailyData.plays, 30);
+            } else if (period === 'year') {
+                // Year: show by week (last 365 days, aggregated weekly)
+                const filtered = filterByDateRange(dailyData.songs, dailyData.plays, 365);
+                processedData = aggregateByWeek(filtered.songs, filtered.plays);
+            } else {
+                // All: show by month
+                processedData = aggregateByMonth(dailyData.songs, dailyData.plays);
+            }
+
+            globalDailyChart.data.labels = processedData.songs;
+            globalDailyChart.data.datasets[0].data = processedData.plays;
+            globalDailyChart.update();
+        }
+
+        function filterHourly(period) {
+            // Update button states
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                if (btn.id.startsWith('hourly-')) btn.classList.remove('active');
+            });
+            document.getElementById('hourly-' + period).classList.add('active');
+
+            let data;
+            if (period === 'year') {
+                data = hourlyData.playsYear;
+                globalHourlyChart.data.datasets[0].label = "Hourly Listens - Last Year (All Users)";
+            } else {
+                data = hourlyData.playsAll;
+                globalHourlyChart.data.datasets[0].label = "Hourly Listens - All Time (All Users)";
+            }
+
+            globalHourlyChart.data.datasets[0].data = data;
+            globalHourlyChart.update();
+        }
+
+        window.onload = function () {
+            let lastUpdatedTime = null;
+
+            // Load global stats
+            $.ajax({
+                url: "/analytics/globalStats/",
+                method: "GET",
+                success(data) {
+                    document.getElementById("global-songs").textContent = data.songsListenedTo.toLocaleString();
+                    document.getElementById("global-hours").textContent = data.hoursListened.toLocaleString();
+                    document.getElementById("global-artists").textContent = data.uniqueArtists.toLocaleString();
+                    document.getElementById("global-unique-songs").textContent = data.uniqueSongs.toLocaleString();
+
+                    if (data.lastUpdated && !lastUpdatedTime) {
+                        lastUpdatedTime = data.lastUpdated;
+                    }
+                }
+            });
+
+            // Load global daily aggregation
+            $.ajax({
+                url: "/analytics/globalDailyAggregation/",
+                method: "GET",
+                success(data) {
+                    if (data.lastUpdated && !lastUpdatedTime) {
+                        lastUpdatedTime = data.lastUpdated;
+                    }
+
+                    // Store full data
+                    dailyData = { songs: data.songs, plays: data.plays };
+
+                    // Default to year view (aggregated by week)
+                    const filtered = filterByDateRange(data.songs, data.plays, 365);
+                    const processed = aggregateByWeek(filtered.songs, filtered.plays);
+
+                    globalDailyChart = new Chart(document.getElementById("global-daily-chart"), {
+                        type: "line",
+                        data: {
+                            labels: processed.songs,
+                            datasets: [{
+                                data: processed.plays,
+                                label: "Daily Listens (All Users)",
+                                borderColor: "#1DB954",
+                                backgroundColor: "rgba(29, 185, 84, 0.1)",
+                                fill: true,
+                                tension: 0.4,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                }
+                            },
+                        },
+                    });
+                }
+            });
+
+            // Load global hourly aggregation
+            $.ajax({
+                url: "/analytics/globalHourlyAggregation/",
+                method: "GET",
+                success(data) {
+                    if (data.lastUpdated && !lastUpdatedTime) {
+                        lastUpdatedTime = data.lastUpdated;
+                    }
+
+                    // Store full data
+                    hourlyData = { songs: data.songs, playsAll: data.playsAll, playsYear: data.playsYear };
+
+                    // Default to year data
+                    globalHourlyChart = new Chart(document.getElementById("global-hourly-chart"), {
+                        type: "line",
+                        data: {
+                            labels: data.songs,
+                            datasets: [{
+                                data: data.playsYear,
+                                label: "Hourly Listens - Last Year (All Users)",
+                                borderColor: "#1DB954",
+                                backgroundColor: "rgba(29, 185, 84, 0.1)",
+                                fill: true,
+                                tension: 0.4,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                }
+                            },
+                        },
+                    });
+
+                    // Update last updated timestamp
+                    if (lastUpdatedTime) {
+                        const time = lastUpdatedTime.split(" ");
+                        const dt = new Date(time[0] + "T" + time[1]);
+                        const localDateTime = dt.toLocaleString();
+                        document.getElementById("last-updated").textContent =
+                            "Statistics last updated: " + localDateTime + " (refreshes hourly)";
+                    }
+                }
+            });
+        };
+    </script>
 
 </body>
 
