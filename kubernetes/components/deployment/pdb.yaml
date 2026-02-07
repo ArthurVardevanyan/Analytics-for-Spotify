@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-for-spotify
+  namespace: analytics-for-spotify
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: analytics-for-spotify
