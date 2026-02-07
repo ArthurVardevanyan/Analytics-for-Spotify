@@ -217,11 +217,20 @@ def listeningHistory(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    listeningHistory = models.ListeningHistory.objects.filter(
-        user=str(spotifyID)).select_related(
-        "songID").values(t=F("timePlayed"),n=F("songID__name")).order_by('t')
+    # Support optional limit parameter for lazy loading
+    limit = request.GET.get('limit', None)
 
-    return JsonResponse(list(listeningHistory), safe=False)
+    query = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).select_related(
+        "songID").values(t=F("timePlayed"),n=F("songID__name")).order_by('-t')
+
+    if limit:
+        try:
+            query = query[:int(limit)]
+        except ValueError:
+            pass  # Invalid limit, return all
+
+    return JsonResponse(list(query), safe=False)
 
 
 def stats(request: requests.request):
@@ -269,8 +278,8 @@ def dailyAggregation(request: requests.request):
     Returns:
         JsonResponse: JSON with daily song counts
     """
-    from django.db.models.functions import TruncDate
     from django.db.models import Count
+    from django.db.models.functions import Substr
     import time
     from django.db import connection
 
@@ -279,24 +288,28 @@ def dailyAggregation(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    # Use database-level date truncation and aggregation
-    # PostgreSQL will handle timezone conversion automatically based on settings.TIME_ZONE
+    # Extract date from timePlayed text field (format: "YYYY-MM-DD HH:MM:SS")
+    # For timezone conversion, we need to use raw SQL since timePlayed is text
+    from django.db.models import CharField
+    from django.db.models.functions import Cast
+    from datetime import datetime
+
+    # Use raw SQL for timezone conversion from UTC to local time
     daily_data = models.ListeningHistory.objects.filter(
         user=str(spotifyID)
-    ).annotate(
-        date=TruncDate('timestamp')  # Uses timestamp field which is BigInteger
-    ).values('date').annotate(
+    ).extra(
+        select={
+            'local_date': 'DATE(("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'
+        }
+    ).values('local_date').annotate(
         count=Count('id')
-    ).order_by('date')
+    ).order_by('local_date')
 
     # Convert to the format expected by frontend
     songs = []
     plays = []
     for item in daily_data:
-        # Convert timestamp back to date string
-        from datetime import datetime
-        dt = datetime.fromtimestamp(int(item['date']) / 1000000)  # Assuming timestamp is in microseconds
-        songs.append(dt.strftime('%Y-%m-%d'))
+        songs.append(str(item['local_date']))
         plays.append(item['count'])
 
     log.debug(f"DailyAgg - Total time: {time.time() - start:.3f}s, Days: {len(songs)}, Queries: {len(connection.queries)}")
@@ -315,9 +328,7 @@ def hourlyAggregation(request: requests.request):
     Returns:
         JsonResponse: JSON with hourly song counts
     """
-    from django.db.models.functions import ExtractHour
     from django.db.models import Count
-    from datetime import datetime
     import time
     from django.db import connection
 
@@ -327,11 +338,11 @@ def hourlyAggregation(request: requests.request):
         return HttpResponse(status=401)
 
     # Use database-level hour extraction with proper timezone conversion
-    # First, we need to convert timestamp to datetime in the database
+    # timePlayed is stored as text in format "YYYY-MM-DD HH:MM:SS" in UTC
     hourly_data = models.ListeningHistory.objects.filter(
         user=str(spotifyID)
     ).extra(
-        select={'local_hour': "EXTRACT(HOUR FROM (to_timestamp(timestamp/1000000.0) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Detroit'))"}
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
     ).values('local_hour').annotate(
         count=Count('id')
     ).order_by('local_hour')

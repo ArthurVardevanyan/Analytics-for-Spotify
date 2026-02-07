@@ -98,6 +98,8 @@ spec:
               source .venv/bin/activate
               python3 /home/www/analytics-for-spotify/setup.py
           env:
+            - name: LOG_LEVEL
+              value: "DEBUG"
             - name: MIGRATIONS
               value: "true"
             - name: CLIENT_ID

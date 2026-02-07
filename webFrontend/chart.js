@@ -167,7 +167,6 @@ window.onload = function () {
     },
   });
 
-  playlistSongs();
   listeningHistory();
 };
 function topSongs() {
@@ -486,64 +485,35 @@ function hourlyLineChart(data) {
   });
   $("#orders_4").click(() => {
     const chartData = hourlyLineChart.data;
-    const date = new Date(document.getElementById("datePicker").value);
-    const newDay = `${date.getFullYear()}-${`0${date.getMonth() + 1}`.slice(
-      -2,
-    )}-${`0${date.getDate()}`.slice(-2)}`;
+    const selectedDate = document.getElementById("datePicker").value;
 
-    const dailySongs = [
-      "00",
-      "01",
-      "02",
-      "03",
-      "04",
-      "05",
-      "06",
-      "07",
-      "08",
-      "09",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20",
-      "21",
-      "22",
-      "23",
-    ];
-    const dailyPlays = [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-
-    for (const i in data) {
-      localTime = new Date(`${data[i].t}`);
-      day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1}`.slice(
-        -2,
-      )}-${`0${localTime.getDate()}`.slice(-2)}`;
-      hour = `0${String(localTime.getHours())}`.slice(-2);
-
-      for (let j = 0; j < dailySongs.length; j++) {
-        if (day === newDay) {
-          if (hour === dailySongs[j]) {
-            dailyPlays[j] = dailyPlays[j] + 1;
-          }
-        }
-      }
+    if (!selectedDate) {
+      alert("Please select a date first");
+      return;
     }
-    chartData.labels = dailySongs;
-    chartData.datasets[0].data = dailyPlays;
-    hourlyLineChart.update();
+
+    // Fetch hourly data for specific date from backend
+    $.ajax({
+      url: `/analytics/hourlyAggregation/?date=${selectedDate}`,
+      method: "GET",
+      success(dateData) {
+        chartData.labels = dateData.songs;
+        chartData.datasets[0].data = dateData.plays;
+        hourlyLineChart.update();
+      },
+      error() {
+        alert("Error loading date-specific data");
+      },
+    });
   });
 }
-function listeningHistory() {
+function listeningHistory(loadAll = false) {
+  const url = loadAll
+    ? "/analytics/listeningHistory/"
+    : "/analytics/listeningHistory/?limit=100";
+
   $.ajax({
-    url: "/analytics/listeningHistory/",
+    url: url,
     method: "GET",
     success(data) {
       $(document).ready(() => {
@@ -578,6 +548,14 @@ function listeningHistory() {
             { data: "n", title: "Song Name" },
           ],
         });
+
+        // After initial load with 100 entries, load the rest in background along with playlists
+        if (!loadAll && data.length === 100) {
+          setTimeout(() => {
+            listeningHistory(true);
+            playlistSongs();
+          }, 1000);
+        }
       });
     },
   });
