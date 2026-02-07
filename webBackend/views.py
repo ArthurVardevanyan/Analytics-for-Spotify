@@ -233,6 +233,7 @@ def stats(request: requests.request):
     Returns:
         JsonResponse: JSON with songs count and hours listened
     """
+    from django.db.models import Sum, Count
     import time
     from django.db import connection
 
@@ -241,22 +242,18 @@ def stats(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    query_start = time.time()
-    listeningHistory = models.ListeningHistory.objects.filter(
-        user=str(spotifyID)).select_related(
-        "songID").values(l=F("songID__trackLength"))
+    # Use database aggregation instead of Python loop
+    result = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).aggregate(
+        total_songs=Count('id'),
+        total_time=Sum('songID__trackLength')
+    )
 
-    timeListened = 0
-    songsListenedTo = listeningHistory.count()
-    log.debug(f"Stats - Query time: {time.time() - query_start:.3f}s, Queries: {len(connection.queries)}")
+    songsListenedTo = result['total_songs'] or 0
+    timeListened = round((result['total_time'] or 0) / 60000 / 60 * 10) / 10
 
-    calc_start = time.time()
-    for item in listeningHistory:
-        timeListened += int(item['l'])
-
-    timeListened = round((timeListened / 60000 / 60) * 10) / 10
-    log.debug(f"Stats - Calc time: {time.time() - calc_start:.3f}s")
-    log.debug(f"Stats - Total time: {time.time() - start:.3f}s")
+    log.debug(f"Stats - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
 
     return JsonResponse({
         "songsListenedTo": songsListenedTo,
@@ -272,8 +269,8 @@ def dailyAggregation(request: requests.request):
     Returns:
         JsonResponse: JSON with daily song counts
     """
-    from datetime import datetime
-    from collections import defaultdict
+    from django.db.models.functions import TruncDate
+    from django.db.models import Count
     import time
     from django.db import connection
 
@@ -282,29 +279,27 @@ def dailyAggregation(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    query_start = time.time()
-    listeningHistory = models.ListeningHistory.objects.filter(
-        user=str(spotifyID)).values('timePlayed').order_by('timePlayed')
+    # Use database-level date truncation and aggregation
+    # PostgreSQL will handle timezone conversion automatically based on settings.TIME_ZONE
+    daily_data = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).annotate(
+        date=TruncDate('timestamp')  # Uses timestamp field which is BigInteger
+    ).values('date').annotate(
+        count=Count('id')
+    ).order_by('date')
 
-    # Force query execution
-    history_list = list(listeningHistory)
-    log.debug(f"DailyAgg - Query time: {time.time() - query_start:.3f}s, Rows: {len(history_list)}, Queries: {len(connection.queries)}")
+    # Convert to the format expected by frontend
+    songs = []
+    plays = []
+    for item in daily_data:
+        # Convert timestamp back to date string
+        from datetime import datetime
+        dt = datetime.fromtimestamp(int(item['date']) / 1000000)  # Assuming timestamp is in microseconds
+        songs.append(dt.strftime('%Y-%m-%d'))
+        plays.append(item['count'])
 
-    calc_start = time.time()
-    daily_counts = defaultdict(int)
-    for item in history_list:
-        time_str = item['timePlayed']
-        # Parse the UTC time and convert to local timezone
-        time_parts = time_str.split(' ')
-        dt = datetime.fromisoformat(time_parts[0] + 'T' + time_parts[1] + '+00:00')
-        local_dt = dt.astimezone()
-        date_str = local_dt.strftime('%Y-%m-%d')
-        daily_counts[date_str] += 1
-
-    songs = sorted(daily_counts.keys())
-    plays = [daily_counts[day] for day in songs]
-    log.debug(f"DailyAgg - Calc time: {time.time() - calc_start:.3f}s")
-    log.debug(f"DailyAgg - Total time: {time.time() - start:.3f}s")
+    log.debug(f"DailyAgg - Total time: {time.time() - start:.3f}s, Days: {len(songs)}, Queries: {len(connection.queries)}")
 
     return JsonResponse({
         "songs": songs,
@@ -320,6 +315,8 @@ def hourlyAggregation(request: requests.request):
     Returns:
         JsonResponse: JSON with hourly song counts
     """
+    from django.db.models.functions import ExtractHour
+    from django.db.models import Count
     from datetime import datetime
     import time
     from django.db import connection
@@ -329,29 +326,26 @@ def hourlyAggregation(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    query_start = time.time()
-    listeningHistory = models.ListeningHistory.objects.filter(
-        user=str(spotifyID)).values('timePlayed').order_by('timePlayed')
+    # Use database-level hour extraction with proper timezone conversion
+    # First, we need to convert timestamp to datetime in the database
+    hourly_data = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).extra(
+        select={'local_hour': "EXTRACT(HOUR FROM (to_timestamp(timestamp/1000000.0) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Detroit'))"}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
 
-    # Force query execution
-    history_list = list(listeningHistory)
-    log.debug(f"HourlyAgg - Query time: {time.time() - query_start:.3f}s, Rows: {len(history_list)}, Queries: {len(connection.queries)}")
-
-    calc_start = time.time()
+    # Initialize all hours to 0
     hourly_counts = [0] * 24
-    for item in history_list:
-        time_str = item['timePlayed']
-        # Parse the UTC time and convert to local timezone
-        time_parts = time_str.split(' ')
-        dt = datetime.fromisoformat(time_parts[0] + 'T' + time_parts[1] + '+00:00')
-        local_dt = dt.astimezone()
-        hour = local_dt.hour
-        hourly_counts[hour] += 1
+    for item in hourly_data:
+        hour = int(item['local_hour'])
+        hourly_counts[hour] = item['count']
 
     songs = [f"{i:02d}" for i in range(24)]
     plays = hourly_counts
-    log.debug(f"HourlyAgg - Calc time: {time.time() - calc_start:.3f}s")
-    log.debug(f"HourlyAgg - Total time: {time.time() - start:.3f}s")
+
+    log.debug(f"HourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
 
     return JsonResponse({
         "songs": songs,
