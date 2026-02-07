@@ -156,6 +156,8 @@ spec:
               cpu: 50m
               memory: 256Mi
           env:
+            - name: LOG_LEVEL
+              value: "INFO"
             - name: DATABASE
               valueFrom:
                 secretKeyRef:

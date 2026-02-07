@@ -71,7 +71,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': os.environ.get('LOG_LEVEL', 'INFO'),
     },
 }
 

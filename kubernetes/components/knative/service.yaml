@@ -24,6 +24,8 @@ spec:
       containerConcurrency: 0
       containers:
         - env:
+            - name: LOG_LEVEL
+              value: "DEBUG"
             - name: DATABASE
               valueFrom:
                 secretKeyRef:
