@@ -123,4 +123,6 @@ Recently Played Scanning is preferred due to the significantly lower volume of r
 
 ## Sample Images
 
-![Analytics For Spotify Sample](img/AnalyticsForSpotifySample.png?raw=true "Sample Output") ![Song Play Playlist Distribution](img/SongPlayPlaylistDistribution.png?raw=true "Sample Output")
+![Analytics For Spotify Home Page Sample](img/AnalyticsForSpotifyHomePageSample.png?raw=true "Sample Output")
+
+![Analytics For Spotify Log In Sample](img/AnalyticsForSpotifySample.png?raw=true "Sample Output") ![Song Play Playlist Distribution](img/SongPlayPlaylistDistribution.png?raw=true "Sample Output")
