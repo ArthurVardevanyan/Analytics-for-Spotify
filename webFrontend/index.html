@@ -30,6 +30,16 @@
             padding: 20px;
         }
 
+        .chart-container canvas {
+            height: 60px !important;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container canvas {
+                height: 250px !important;
+            }
+        }
+
         .filter-buttons {
             text-align: center;
             margin: 15px 0;
@@ -55,6 +65,53 @@
             background-color: #1DB954;
             color: white;
         }
+
+        .global-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px auto;
+            max-width: 1200px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background-color: #f8f8f8;
+            border: 2px solid #1DB954;
+            border-radius: 8px;
+            padding: 20px 30px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1DB954;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .global-stats {
+                gap: 15px;
+            }
+
+            .stat-box {
+                min-width: 150px;
+                padding: 15px 20px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 
@@ -65,22 +122,37 @@
         <button onclick="window.location.href = '/analytics/login/';" class="btn btn-spotify">Log In</button>
     </div>
 
+    <div class="global-stats">
+        <div class="stat-box">
+            <div class="stat-label">Songs Listened</div>
+            <div class="stat-value" id="global-songs">-</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Hours Listened</div>
+            <div class="stat-value" id="global-hours">-</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Unique Artists</div>
+            <div class="stat-value" id="global-artists">-</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Unique Songs</div>
+            <div class="stat-value" id="global-unique-songs">-</div>
+        </div>
+    </div>
+
     <div class="chart-container">
         <h2>Global Listening History</h2>
         <div class="filter-buttons">
-            <button id="daily-month" onclick="filterDaily('month')">Month</button>
-            <button id="daily-year" class="active" onclick="filterDaily('year')">Year</button>
-            <button id="daily-all" onclick="filterDaily('all')">All</button>
+            <button id="daily-month" onclick="filterDaily('month')">Month (by day)</button>
+            <button id="daily-year" class="active" onclick="filterDaily('year')">Year (by week)</button>
+            <button id="daily-all" onclick="filterDaily('all')">All (by month)</button>
         </div>
         <canvas id="global-daily-chart" height="60"></canvas>
     </div>
 
     <div class="chart-container">
         <h2>Global Average Hourly Listens</h2>
-        <div class="filter-buttons">
-            <button id="hourly-year" class="active" onclick="filterHourly('year')">Year</button>
-            <button id="hourly-all" onclick="filterHourly('all')">All</button>
-        </div>
         <canvas id="global-hourly-chart" height="60"></canvas>
     </div>
 
@@ -134,7 +206,7 @@
             const date = new Date();
             const cutoff = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
             const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`;
-            
+
             const filtered = { songs: [], plays: [] };
             for (let i = 0; i < songs.length; i++) {
                 if (songs[i] >= cutoffStr) {
@@ -170,22 +242,24 @@
             globalDailyChart.update();
         }
 
-        function filterHourly(period) {
-            // Update button states
-            document.querySelectorAll('.filter-buttons button').forEach(btn => {
-                if (btn.id.startsWith('hourly-')) btn.classList.remove('active');
-            });
-            document.getElementById('hourly-' + period).classList.add('active');
-
-            // Hourly data doesn't change with time period, just show all or year's worth
-            // For simplicity, we'll just keep it as-is since it's aggregated by hour of day
-            globalHourlyChart.data.labels = hourlyData.songs;
-            globalHourlyChart.data.datasets[0].data = hourlyData.plays;
-            globalHourlyChart.update();
-        }
-
         window.onload = function () {
             let lastUpdatedTime = null;
+
+            // Load global stats
+            $.ajax({
+                url: "/analytics/globalStats/",
+                method: "GET",
+                success(data) {
+                    document.getElementById("global-songs").textContent = data.songsListenedTo.toLocaleString();
+                    document.getElementById("global-hours").textContent = data.hoursListened.toLocaleString();
+                    document.getElementById("global-artists").textContent = data.uniqueArtists.toLocaleString();
+                    document.getElementById("global-unique-songs").textContent = data.uniqueSongs.toLocaleString();
+
+                    if (data.lastUpdated && !lastUpdatedTime) {
+                        lastUpdatedTime = data.lastUpdated;
+                    }
+                }
+            });
 
             // Load global daily aggregation
             $.ajax({
