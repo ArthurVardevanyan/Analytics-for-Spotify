@@ -36,6 +36,10 @@ CORS_ORIGIN_ALLOW_ALL = False  # True For Testing
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = [
+    'https://analytics-for-spotify.arthurvardevanyan.com',
+    'https://spotify.arthurvardevanyan.com',
+]
 
 ROOT_URLCONF = 'AnalyticsForSpotify.urls'
 
