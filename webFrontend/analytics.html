@@ -34,27 +34,19 @@
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            margin: 20px auto;
-            max-width: 1400px;
+            margin: 20px 0;
+            width: 100%;
         }
 
         .chart-wrapper .chart-container {
             flex: 1;
-            min-width: 600px;
+            min-width: 0;
         }
 
         #lineChartDIV,
         #hourlyLineChartDIV {
             width: auto;
             float: none;
-        }
-
-        #listeningHistoryDIV,
-        #playCountDIV {
-            width: 100%;
-            float: none;
-            text-align: center;
-            margin: 20px auto;
         }
 
         @media (max-width: 768px) {

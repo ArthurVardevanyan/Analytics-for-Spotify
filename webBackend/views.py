@@ -349,6 +349,42 @@ def hourlyAggregation(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
+    # Check if a specific date is requested
+    date_param = request.GET.get('date', None)
+
+    if date_param:
+        # Handle single day query
+        try:
+            # Parse the date (format: MM/DD/YYYY from datepicker)
+            selected_date = datetime.strptime(date_param, '%m/%d/%Y')
+            next_date = selected_date + timedelta(days=1)
+
+            hourly_data_day = models.ListeningHistory.objects.filter(
+                user=str(spotifyID),
+                timePlayed__gte=selected_date.strftime('%Y-%m-%d'),
+                timePlayed__lt=next_date.strftime('%Y-%m-%d')
+            ).extra(
+                select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+            ).values('local_hour').annotate(
+                count=Count('id')
+            ).order_by('local_hour')
+
+            hourly_counts_day = [0] * 24
+            for item in hourly_data_day:
+                hour = int(item['local_hour'])
+                hourly_counts_day[hour] = item['count']
+
+            songs = [f"{i:02d}" for i in range(24)]
+
+            log.debug(f"HourlyAgg (date={date_param}) - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+            return JsonResponse({
+                "songs": songs,
+                "plays": hourly_counts_day
+            })
+        except ValueError:
+            return HttpResponse(status=400)
+
     # Get one year cutoff date
     one_year_ago = datetime.now() - timedelta(days=365)
 
