@@ -551,7 +551,7 @@ def playlistSongs(request: requests.request):
     ).values_list('id', 'artists__name'):
         if artist_name:  # Skip null artists
             songArtistsDict[song_id].append(artist_name)
-    
+
     # Convert lists to comma-separated strings
     songArtistsDict = {k: ', '.join(v) for k, v in songArtistsDict.items()}
 
@@ -585,3 +585,113 @@ def playlistSongs(request: requests.request):
     log.debug(f"PlaylistSongs - Total time: {time.time() - start:.3f}s, Playlists: {len(playlistsData)}, Tracks: {total_tracks}, Queries: {len(connection.queries)}")
 
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")
+
+
+def globalDailyAggregation(request: requests.request):
+    """
+    Get daily listening aggregation for all users combined (cached for 1 hour)
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with daily song counts across all users
+    """
+    from django.db.models import Count
+    from django.core.cache import cache
+    from datetime import datetime
+    import time
+    from django.db import connection
+
+    # Check cache first
+    cache_key = 'global_daily_aggregation'
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        log.debug(f"GlobalDailyAgg - Served from cache")
+        return JsonResponse(cached_data)
+
+    start = time.time()
+
+    # Aggregate across all users with timezone conversion
+    daily_data = models.ListeningHistory.objects.extra(
+        select={
+            'local_date': 'DATE(("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'
+        }
+    ).values('local_date').annotate(
+        count=Count('id')
+    ).order_by('local_date')
+
+    # Convert to the format expected by frontend
+    songs = []
+    plays = []
+    for item in daily_data:
+        songs.append(str(item['local_date']))
+        plays.append(item['count'])
+
+    log.debug(f"GlobalDailyAgg - Total time: {time.time() - start:.3f}s, Days: {len(songs)}, Queries: {len(connection.queries)}")
+
+    response_data = {
+        "songs": songs,
+        "plays": plays,
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    # Cache for 1 hour (3600 seconds)
+    cache.set(cache_key, response_data, 3600)
+
+    return JsonResponse(response_data)
+
+
+def globalHourlyAggregation(request: requests.request):
+    """
+    Get hourly listening aggregation for all users combined (cached for 1 hour)
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with hourly song counts across all users
+    """
+    from django.db.models import Count
+    from django.core.cache import cache
+    from datetime import datetime
+    import time
+    from django.db import connection
+
+    # Check cache first
+    cache_key = 'global_hourly_aggregation'
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        log.debug(f"GlobalHourlyAgg - Served from cache")
+        return JsonResponse(cached_data)
+
+    start = time.time()
+
+    # Use database-level hour extraction with timezone conversion for all users
+    hourly_data = models.ListeningHistory.objects.extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Initialize all hours to 0
+    hourly_counts = [0] * 24
+    for item in hourly_data:
+        hour = int(item['local_hour'])
+        hourly_counts[hour] = item['count']
+
+    songs = [f"{i:02d}" for i in range(24)]
+    plays = hourly_counts
+
+    log.debug(f"GlobalHourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+    response_data = {
+        "songs": songs,
+        "plays": plays,
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    # Cache for 1 hour (3600 seconds)
+    cache.set(cache_key, response_data, 3600)
+
+    return JsonResponse(response_data)

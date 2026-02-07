@@ -23,4 +23,6 @@ urlpatterns = [
     path('playlistSubmission/', views.playlistSubmission),
     path('deletePlaylist/', views.deletePlaylist),
     path('playlistSongs/', views.playlistSongs, name='playlistSongs'),
+    path('globalDailyAggregation/', views.globalDailyAggregation, name='globalDailyAggregation'),
+    path('globalHourlyAggregation/', views.globalHourlyAggregation, name='globalHourlyAggregation'),
 ]
