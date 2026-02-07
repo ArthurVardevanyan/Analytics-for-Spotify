@@ -94,17 +94,17 @@
             <button id="orders_2" class="active" onclick="filterDailyAuth('year')">Year (by week)</button>
             <button id="orders_1" onclick="filterDailyAuth('all')">All (by month)</button>
         </div>
-        <canvas id="line-chart" height="60"></canvas>
+        <canvas id="line-chart"></canvas>
     </div>
     <div id="hourlyLineChartDIV" class="chart-container">
         <h2>Average Hourly Listens</h2>
         <div class="filter-buttons">
             <button id="orders_8" class="active" onclick="filterHourlyAuth('lifetime')">Lifetime</button>
             <button id="orders_4" onclick="filterHourlyAuth('day')">1 Day</button>
+            <input type="text" id="datePicker" placeholder="Pick a date for 1 Day view"
+                style="padding: 8px; margin: 0 5px; text-align: center; border: 1px solid #1DB954; border-radius: 4px;">
         </div>
-        <input type="text" id="datePicker" placeholder="Pick a date for 1 Day view"
-            style="display: block; margin: 10px auto; padding: 8px; text-align: center;">
-        <canvas id="hourlyLine-chart" height="60"></canvas>
+        <canvas id="hourlyLine-chart"></canvas>
     </div>
 
     <div id="listeningHistoryDIV">
