@@ -332,9 +332,8 @@ function summaryLineChart(data) {
   // Store original data globally for filtering
   window.authDailyData = { songs: songs, plays: plays };
 
-  // Default to year view (last 365 days, aggregated by week)
-  const filtered = filterByDateRange(songs, plays, 365);
-  const processed = aggregateByWeek(filtered.songs, filtered.plays);
+  // Default to month view (last 30 days)
+  const processed = filterByDateRange(songs, plays, 30);
 
   const lineChart = new Chart(document.getElementById("line-chart"), {
     type: "line",
@@ -514,7 +513,15 @@ function filterHourlyAuth(period) {
     document.getElementById("orders_8").classList.add("active");
     // Show lifetime data
     window.authHourlyChart.data.labels = window.authHourlyData.songs;
-    window.authHourlyChart.data.datasets[0].data = window.authHourlyData.plays;
+    window.authHourlyChart.data.datasets[0].data =
+      window.authHourlyData.playsLifetime;
+    window.authHourlyChart.update();
+  } else if (period === "year") {
+    document.getElementById("orders_9").classList.add("active");
+    // Show year data
+    window.authHourlyChart.data.labels = window.authHourlyData.songs;
+    window.authHourlyChart.data.datasets[0].data =
+      window.authHourlyData.playsYear;
     window.authHourlyChart.update();
   } else if (period === "day") {
     document.getElementById("orders_4").classList.add("active");
@@ -598,8 +605,8 @@ function listeningHistory(loadAll = false) {
   });
 }
 function displayStats(data) {
-  const songsListenedTo = data.songsListenedTo;
-  const hoursListened = data.hoursListened;
+  const songsListenedTo = data.songsListenedTo.toLocaleString();
+  const hoursListened = data.hoursListened.toLocaleString();
   document.getElementById("statsDesktop").innerHTML =
     `Songs Listened To: ${songsListenedTo} & Hours Listened To: ${hoursListened}`;
   document.getElementById("statsMobile").innerHTML =

@@ -340,6 +340,7 @@ def hourlyAggregation(request: requests.request):
         JsonResponse: JSON with hourly song counts
     """
     from django.db.models import Count
+    from datetime import datetime, timedelta
     import time
     from django.db import connection
 
@@ -348,9 +349,11 @@ def hourlyAggregation(request: requests.request):
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    # Use database-level hour extraction with proper timezone conversion
-    # timePlayed is stored as text in format "YYYY-MM-DD HH:MM:SS" in UTC
-    hourly_data = models.ListeningHistory.objects.filter(
+    # Get one year cutoff date
+    one_year_ago = datetime.now() - timedelta(days=365)
+
+    # Use database-level hour extraction with proper timezone conversion for lifetime
+    hourly_data_lifetime = models.ListeningHistory.objects.filter(
         user=str(spotifyID)
     ).extra(
         select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
@@ -358,21 +361,38 @@ def hourlyAggregation(request: requests.request):
         count=Count('id')
     ).order_by('local_hour')
 
-    # Initialize all hours to 0
-    hourly_counts = [0] * 24
-    for item in hourly_data:
+    # Get last year's data
+    hourly_data_year = models.ListeningHistory.objects.filter(
+        user=str(spotifyID),
+        timePlayed__gte=one_year_ago
+    ).extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Initialize all hours to 0 for both datasets
+    hourly_counts_lifetime = [0] * 24
+    hourly_counts_year = [0] * 24
+
+    for item in hourly_data_lifetime:
         hour = int(item['local_hour'])
-        hourly_counts[hour] = item['count']
+        hourly_counts_lifetime[hour] = item['count']
+
+    for item in hourly_data_year:
+        hour = int(item['local_hour'])
+        hourly_counts_year[hour] = item['count']
 
     songs = [f"{i:02d}" for i in range(24)]
-    plays = hourly_counts
 
     log.debug(f"HourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
 
     return JsonResponse({
         "songs": songs,
-        "plays": plays
+        "playsLifetime": hourly_counts_lifetime,
+        "playsYear": hourly_counts_year
     })
+
 
 def songs(request: requests.request):
     """

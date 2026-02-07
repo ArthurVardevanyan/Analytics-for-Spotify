@@ -106,6 +106,10 @@
             display: none;
         }
 
+        .desktop-note {
+            white-space: nowrap;
+        }
+
         @media (max-width: 768px) {
             .desktop-note {
                 display: none;
@@ -138,7 +142,7 @@
         <button onclick="window.location.href = '/analytics/login/';" class="btn btn-spotify">Log In</button>
         <p style="font-size: 12px; color: #666; margin-top: 10px;">
             <span class="desktop-note">Note: You must be whitelisted in the Spotify Developer App to use this
-                application | Want to self-host? Visit <a
+                application. Want to self-host? Visit <a
                     href="https://github.com/ArthurVardevanyan/Analytics-for-Spotify" target="_blank"
                     style="color: #1DB954;">GitHub</a></span>
             <span class="mobile-note">Note: You must be whitelisted in the Spotify Developer App to use this
@@ -179,6 +183,10 @@
 
     <div class="chart-container">
         <h2>Global Average Hourly Listens</h2>
+        <div class="filter-buttons">
+            <button id="hourly-year" class="active" onclick="filterHourly('year')">Year</button>
+            <button id="hourly-all" onclick="filterHourly('all')">All</button>
+        </div>
         <canvas id="global-hourly-chart"></canvas>
     </div>
 
@@ -268,6 +276,26 @@
             globalDailyChart.update();
         }
 
+        function filterHourly(period) {
+            // Update button states
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                if (btn.id.startsWith('hourly-')) btn.classList.remove('active');
+            });
+            document.getElementById('hourly-' + period).classList.add('active');
+
+            let data;
+            if (period === 'year') {
+                data = hourlyData.playsYear;
+                globalHourlyChart.data.datasets[0].label = "Hourly Listens - Last Year (All Users)";
+            } else {
+                data = hourlyData.playsAll;
+                globalHourlyChart.data.datasets[0].label = "Hourly Listens - All Time (All Users)";
+            }
+
+            globalHourlyChart.data.datasets[0].data = data;
+            globalHourlyChart.update();
+        }
+
         window.onload = function () {
             let lastUpdatedTime = null;
 
@@ -318,7 +346,7 @@
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 title: {
                                     display: false
@@ -362,7 +390,7 @@
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 title: {
                                     display: false
