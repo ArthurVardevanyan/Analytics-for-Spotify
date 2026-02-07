@@ -96,8 +96,12 @@ def loginResponse(request: requests.request):
     url = ""
     CODE = request.GET.get("code")
     if CODE:
-        credentials.setSession(request, CODE)
-        url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+        success = credentials.setSession(request, CODE)
+        if success:
+            url = '<meta http-equiv="Refresh" content="0; url=/spotify/analytics.html" />'
+        else:
+            log.warning("Authentication Failed - User may not be whitelisted in Spotify Developer App")
+            url = '<div style="font-family: Arial; padding: 20px;"><h2>Authentication Failed</h2><p>Your Spotify account is not authorized to use this application.</p><p>If this app is in Development Mode, please contact the administrator to add your account to the allowlist.</p><a href="/spotify/index.html">Return to Home</a></div>'
     else:
         log.warning("Login Code Failure: " + str(request.GET))
         url = '<meta http-equiv="Refresh" content="0; url=/spotify/index.html" />'
