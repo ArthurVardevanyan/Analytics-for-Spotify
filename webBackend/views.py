@@ -292,7 +292,12 @@ def dailyAggregation(request: requests.request):
 
     daily_counts = defaultdict(int)
     for item in listeningHistory:
-        date_str = item['timePlayed'].split(' ')[0]
+        time_str = item['timePlayed']
+        # Parse the UTC time and convert to local timezone
+        time_parts = time_str.split(' ')
+        dt = datetime.fromisoformat(time_parts[0] + 'T' + time_parts[1] + '+00:00')
+        local_dt = dt.astimezone()
+        date_str = local_dt.strftime('%Y-%m-%d')
         daily_counts[date_str] += 1
 
     songs = sorted(daily_counts.keys())
@@ -324,13 +329,12 @@ def hourlyAggregation(request: requests.request):
     hourly_counts = [0] * 24
     for item in listeningHistory:
         time_str = item['timePlayed']
-        try:
-            dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
-            hour = dt.hour
-            hourly_counts[hour] += 1
-        except:
-            hour_str = time_str.split(' ')[1].split(':')[0]
-            hourly_counts[int(hour_str)] += 1
+        # Parse the UTC time and convert to local timezone
+        time_parts = time_str.split(' ')
+        dt = datetime.fromisoformat(time_parts[0] + 'T' + time_parts[1] + '+00:00')
+        local_dt = dt.astimezone()
+        hour = local_dt.hour
+        hourly_counts[hour] += 1
 
     songs = [f"{i:02d}" for i in range(24)]
     plays = hourly_counts
