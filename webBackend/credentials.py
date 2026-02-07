@@ -23,14 +23,19 @@ def getUser(auth: dict):
     Parameters:
         auth    (dict): Spotify Auth Object
     Returns:
-        str: UserID
+        str: UserID or None if error
     """
     url = "https://api.spotify.com/v1/me"
     header = {"Accept": "application/json",
               "Content-Type": "application/json", "Authorization": "Bearer " + auth.get("access_token")}
-    result = requests.get(url,
-                          headers=header).json().get("id")
-    return result
+    response = requests.get(url, headers=header)
+    if response.status_code != 200:
+        return None
+    try:
+        result = response.json().get("id")
+        return result
+    except:
+        return None
 
 
 def getAPI():
@@ -81,7 +86,7 @@ def accessToken(CODE: str):
     Parameters:
         CODE:   (str): Authorization Code
     Returns:
-        dict: Spotify Auth Object
+        dict: Spotify Auth Object or None if error
     """
     header = {"Authorization": "Basic " + getAPI().get("B64CS")}
     data = {
@@ -90,7 +95,12 @@ def accessToken(CODE: str):
         "redirect_uri": getAPI().get("redirect_url")}
     response = requests.post(
         'https://accounts.spotify.com/api/token', headers=header, data=data)
-    return response.json()
+    if response.status_code != 200:
+        return None
+    try:
+        return response.json()
+    except:
+        return None
 
 
 def setSession(request: requests.request, CODE: str):
@@ -101,14 +111,20 @@ def setSession(request: requests.request, CODE: str):
         request:    (request)   : Request Object
         CODE:       (str)       : Authorization Code
     Returns:
-        bool: Unused Return
+        bool: True if successful, False if failed
     """
     auth = accessToken(CODE)
+    if auth is None:
+        return False
+
     currentTime = int(time.time())
     expire = auth.get("expires_in")
     auth["expires_at"] = currentTime + expire
     userID = ""
     userID = getUser(auth)
+    if userID is None:
+        return False
+
     request.session['spotify'] = userID  # SESSION
     try:
         models.Users.objects.get(user=str(userID))
