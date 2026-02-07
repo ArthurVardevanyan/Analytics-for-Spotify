@@ -242,6 +242,104 @@ def listeningHistoryStats(request: requests.request):
 
     return JsonResponse(list(listeningHistory), safe=False)
 
+def stats(request: requests.request):
+    """
+    Calculate listening stats
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with songs count and hours listened
+    """
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    listeningHistory = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).select_related(
+        "songID").values(l=F("songID__trackLength"))
+
+    timeListened = 0
+    songsListenedTo = listeningHistory.count()
+    for item in listeningHistory:
+        timeListened += int(item['l'])
+
+    timeListened = round((timeListened / 60000 / 60) * 10) / 10
+
+    return JsonResponse({
+        "songsListenedTo": songsListenedTo,
+        "hoursListened": timeListened
+    })
+
+def dailyAggregation(request: requests.request):
+    """
+    Get daily listening aggregation
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with daily song counts
+    """
+    from datetime import datetime
+    from collections import defaultdict
+
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    listeningHistory = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).values('timePlayed').order_by('timePlayed')
+
+    daily_counts = defaultdict(int)
+    for item in listeningHistory:
+        date_str = item['timePlayed'].split(' ')[0]
+        daily_counts[date_str] += 1
+
+    songs = sorted(daily_counts.keys())
+    plays = [daily_counts[day] for day in songs]
+
+    return JsonResponse({
+        "songs": songs,
+        "plays": plays
+    })
+
+def hourlyAggregation(request: requests.request):
+    """
+    Get hourly listening aggregation
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with hourly song counts
+    """
+    from datetime import datetime
+
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    listeningHistory = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)).values('timePlayed').order_by('timePlayed')
+
+    hourly_counts = [0] * 24
+    for item in listeningHistory:
+        time_str = item['timePlayed']
+        try:
+            dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+            hour = dt.hour
+            hourly_counts[hour] += 1
+        except:
+            hour_str = time_str.split(' ')[1].split(':')[0]
+            hourly_counts[int(hour_str)] += 1
+
+    songs = [f"{i:02d}" for i in range(24)]
+    plays = hourly_counts
+
+    return JsonResponse({
+        "songs": songs,
+        "plays": plays
+    })
+
 def songs(request: requests.request):
     """
 
