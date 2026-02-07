@@ -144,16 +144,30 @@ window.onload = function () {
   topSongs();
 
   $.ajax({
-    url: "/analytics/listeningHistoryStats/",
+    url: "/analytics/stats/",
     method: "GET",
     success(data) {
-      playlistSongs();
-      stats(data);
-      summaryLineChart(data);
-      hourlyLineChart(data);
-      listeningHistory(data);
+      displayStats(data);
     },
   });
+
+  $.ajax({
+    url: "/analytics/dailyAggregation/",
+    method: "GET",
+    success(data) {
+      summaryLineChart(data);
+    },
+  });
+
+  $.ajax({
+    url: "/analytics/hourlyAggregation/",
+    method: "GET",
+    success(data) {
+      hourlyLineChart(data);
+    },
+  });
+
+  listeningHistory();
 };
 function topSongs() {
   $.ajax({
@@ -194,17 +208,17 @@ function playlistSongs() {
           if (aDemoItems.length > 0) {
             var time = data[i].lastUpdated.split(" ");
             lt = new Date(time[0] + "T" + time[1] + "+00:00");
-            localDateTime = `${lt.getFullYear()}-${`0${lt.getMonth() + 1
-              }`.slice(-2)}-${`0${lt.getDate()}`.slice(
-                -2
-              )} ${`0${lt.getHours()}`.slice(-2)}:${`0${lt.getMinutes()}`.slice(
-                -2
-              )}:${`0${lt.getSeconds()}`.slice(-2)}`;
+            localDateTime = `${lt.getFullYear()}-${`0${
+              lt.getMonth() + 1
+            }`.slice(-2)}-${`0${lt.getDate()}`.slice(
+              -2,
+            )} ${`0${lt.getHours()}`.slice(-2)}:${`0${lt.getMinutes()}`.slice(
+              -2,
+            )}:${`0${lt.getSeconds()}`.slice(-2)}`;
 
             tableName = data[i].name.replace(/ /g, "_");
-            document.getElementById(
-              "playlists"
-            ).innerHTML += `<div class="playlistDIV"><br><h2>Playlist: ${data[i].name} </h2> <h3>Last Updated: ${localDateTime}</h3> <button onclick=deletePlaylist("${data[i].id}") style="color: black" class="btn">Delete</button><table id="playlist_${i}" class="display" width="100%"></table>
+            document.getElementById("playlists").innerHTML +=
+              `<div class="playlistDIV"><br><h2>Playlist: ${data[i].name} </h2> <h3>Last Updated: ${localDateTime}</h3> <button onclick=deletePlaylist("${data[i].id}") style="color: black" class="btn">Delete</button><table id="playlist_${i}" class="display" width="100%"></table>
               <div class="songSpread"><canvas id="songSpread_${data[i].id}" width="800" height="450"></canvas></div></div>`;
           }
         }
@@ -238,13 +252,14 @@ function playlistSongs() {
             for (const i in aDemoItems) {
               if (aDemoItems[i].t != null) {
                 localTime = new Date(
-                  aDemoItems[i].t + "T" + "00:00:00" + "+00:00"
+                  aDemoItems[i].t + "T" + "00:00:00" + "+00:00",
                 );
               } else {
                 localTime = new Date(aDemoItems[i].t);
               }
-              day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1
-                }`.slice(-2)}-${`0${localTime.getDate()}`.slice(-2)}`;
+              day = `${localTime.getFullYear()}-${`0${
+                localTime.getMonth() + 1
+              }`.slice(-2)}-${`0${localTime.getDate()}`.slice(-2)}`;
               if (songs.includes(day)) {
                 for (let j = 0; j < songs.length; j++) {
                   if (day === songs[j]) {
@@ -311,26 +326,8 @@ function playlistSongs() {
 }
 
 function summaryLineChart(data) {
-  const songs = [];
-  const plays = [];
-
-  for (const i in data) {
-    var time = data[i].t.split(" ");
-    localTime = new Date(time[0] + "T" + time[1] + "+00:00");
-    day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1}`.slice(
-      -2
-    )}-${`0${localTime.getDate()}`.slice(-2)}`;
-    if (songs.includes(day)) {
-      for (let j = 0; j < songs.length; j++) {
-        if (day === songs[j]) {
-          plays[j] = plays[j] + 1;
-        }
-      }
-    } else {
-      songs.push(day);
-      plays.push(1);
-    }
-  }
+  const songs = data.songs;
+  const plays = data.plays;
   const lineChart = new Chart(document.getElementById("line-chart"), {
     type: "line",
     data: {
@@ -341,7 +338,7 @@ function summaryLineChart(data) {
           label: "Listen History",
           borderColor: "#3e95cd",
           fill: false,
-          tension: 0.4
+          tension: 0.4,
         },
       ],
     },
@@ -352,9 +349,9 @@ function summaryLineChart(data) {
       },
       scales: {
         y: {
-          beginAtZero: true
-        }
-      }
+          beginAtZero: true,
+        },
+      },
     },
   });
   $("#orders_1").click(() => {
@@ -366,7 +363,7 @@ function summaryLineChart(data) {
     const date = new Date();
     const last = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
     const newDay = `${last.getFullYear()}-${`0${last.getMonth() + 1}`.slice(
-      -2
+      -2,
     )}-${`0${last.getDate()}`.slice(-2)}`;
 
     for (let index = 0; index < songs.length; index++) {
@@ -410,7 +407,7 @@ function summaryLineChart(data) {
     const date = new Date();
     const last = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
     const newDay = `${last.getFullYear()}-${`0${last.getMonth() + 1}`.slice(
-      -2
+      -2,
     )}-${`0${last.getDate()}`.slice(-2)}`;
 
     for (let index = 0; index < songs.length; index++) {
@@ -434,7 +431,7 @@ function summaryLineChart(data) {
     const date = new Date();
     const last = new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
     const newDay = `${last.getFullYear()}-${`0${last.getMonth() + 1}`.slice(
-      -2
+      -2,
     )}-${`0${last.getDate()}`.slice(-2)}`;
 
     for (let index = 0; index < songs.length; index++) {
@@ -453,46 +450,8 @@ function summaryLineChart(data) {
 }
 
 function hourlyLineChart(data) {
-  const songs = [
-    "00",
-    "01",
-    "02",
-    "03",
-    "04",
-    "05",
-    "06",
-    "07",
-    "08",
-    "09",
-    "10",
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "16",
-    "17",
-    "18",
-    "19",
-    "20",
-    "21",
-    "22",
-    "23",
-  ];
-  const plays = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  ];
-  for (const i in data) {
-    var time = data[i].t.split(" ");
-    localTime = new Date(time[0] + "T" + time[1] + "+00:00");
-    hour = `0${String(localTime.getHours())}`.slice(-2);
-    // hour = data[i].t.slice(11, 13);
-    for (let j = 0; j < songs.length; j++) {
-      if (hour === songs[j]) {
-        plays[j] = plays[j] + 1;
-      }
-    }
-  }
+  const songs = data.songs;
+  const plays = data.plays;
   const hourlyLineChart = new Chart(
     document.getElementById("hourlyLine-chart"),
     {
@@ -505,7 +464,7 @@ function hourlyLineChart(data) {
             label: "Average Hourly Listen History",
             borderColor: "#3e95cd",
             fill: false,
-            tension: 0.4
+            tension: 0.4,
           },
         ],
       },
@@ -515,7 +474,7 @@ function hourlyLineChart(data) {
           text: "Average Hourly Listens",
         },
       },
-    }
+    },
   );
 
   $("#orders_8").click(() => {
@@ -526,64 +485,35 @@ function hourlyLineChart(data) {
   });
   $("#orders_4").click(() => {
     const chartData = hourlyLineChart.data;
-    const date = new Date(document.getElementById("datePicker").value);
-    const newDay = `${date.getFullYear()}-${`0${date.getMonth() + 1}`.slice(
-      -2
-    )}-${`0${date.getDate()}`.slice(-2)}`;
+    const selectedDate = document.getElementById("datePicker").value;
 
-    const dailySongs = [
-      "00",
-      "01",
-      "02",
-      "03",
-      "04",
-      "05",
-      "06",
-      "07",
-      "08",
-      "09",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20",
-      "21",
-      "22",
-      "23",
-    ];
-    const dailyPlays = [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-
-    for (const i in data) {
-      localTime = new Date(`${data[i].t}`);
-      day = `${localTime.getFullYear()}-${`0${localTime.getMonth() + 1}`.slice(
-        -2
-      )}-${`0${localTime.getDate()}`.slice(-2)}`;
-      hour = `0${String(localTime.getHours())}`.slice(-2);
-
-      for (let j = 0; j < dailySongs.length; j++) {
-        if (day === newDay) {
-          if (hour === dailySongs[j]) {
-            dailyPlays[j] = dailyPlays[j] + 1;
-          }
-        }
-      }
+    if (!selectedDate) {
+      alert("Please select a date first");
+      return;
     }
-    chartData.labels = dailySongs;
-    chartData.datasets[0].data = dailyPlays;
-    hourlyLineChart.update();
+
+    // Fetch hourly data for specific date from backend
+    $.ajax({
+      url: `/analytics/hourlyAggregation/?date=${selectedDate}`,
+      method: "GET",
+      success(dateData) {
+        chartData.labels = dateData.songs;
+        chartData.datasets[0].data = dateData.plays;
+        hourlyLineChart.update();
+      },
+      error() {
+        alert("Error loading date-specific data");
+      },
+    });
   });
 }
-function listeningHistory() {
+function listeningHistory(loadAll = false) {
+  const url = loadAll
+    ? "/analytics/listeningHistory/"
+    : "/analytics/listeningHistory/?limit=100";
+
   $.ajax({
-    url: "/analytics/listeningHistory/",
+    url: url,
     method: "GET",
     success(data) {
       $(document).ready(() => {
@@ -593,11 +523,11 @@ function listeningHistory() {
           var time = data[i].t.split(" ");
           lt = new Date(time[0] + "T" + time[1] + "+00:00");
           localDateTime = `${lt.getFullYear()}-${`0${lt.getMonth() + 1}`.slice(
-            -2
+            -2,
           )}-${`0${lt.getDate()}`.slice(-2)} ${`0${lt.getHours()}`.slice(
-            -2
+            -2,
           )}:${`0${lt.getMinutes()}`.slice(-2)}:${`0${lt.getSeconds()}`.slice(
-            -2
+            -2,
           )}`;
           data[i].t = localDateTime;
         }
@@ -618,21 +548,23 @@ function listeningHistory() {
             { data: "n", title: "Song Name" },
           ],
         });
+
+        // After initial load with 100 entries, load the rest in background along with playlists
+        if (!loadAll && data.length === 100) {
+          setTimeout(() => {
+            listeningHistory(true);
+            playlistSongs();
+          }, 1000);
+        }
       });
     },
   });
 }
-function stats(data) {
-  timeListened = 0;
-  SongsListenedTo = data.length;
-  for (const i in data) {
-    timeListened = timeListened += parseInt(data[i].l);
-  }
-  timeListened = Math.round((timeListened / 60000 / 60) * 10) / 10;
-  document.getElementById(
-    "statsDesktop"
-  ).innerHTML = `Songs Listened To: ${SongsListenedTo} & Hours Listened To: ${timeListened}`;
-  document.getElementById(
-    "statsMobile"
-  ).innerHTML = `Songs Listened To: ${SongsListenedTo}<br>Hours Listened To: ${timeListened}`;
+function displayStats(data) {
+  const songsListenedTo = data.songsListenedTo;
+  const hoursListened = data.hoursListened;
+  document.getElementById("statsDesktop").innerHTML =
+    `Songs Listened To: ${songsListenedTo} & Hours Listened To: ${hoursListened}`;
+  document.getElementById("statsMobile").innerHTML =
+    `Songs Listened To: ${songsListenedTo}<br>Hours Listened To: ${hoursListened}`;
 }

@@ -64,6 +64,8 @@ spec:
               drop:
                 - all
           env:
+            - name: LOG_LEVEL
+              value: "INFO"
             - name: MIGRATIONS
               value: "true"
             - name: CLIENT_ID
@@ -156,6 +158,8 @@ spec:
               cpu: 50m
               memory: 256Mi
           env:
+            - name: LOG_LEVEL
+              value: "INFO"
             - name: DATABASE
               valueFrom:
                 secretKeyRef:

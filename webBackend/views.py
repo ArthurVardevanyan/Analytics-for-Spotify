@@ -213,34 +213,166 @@ def listeningHistory(request: requests.request):
     Returns:
         HttpResponse: HTTP response
     """
+    import time
+    from django.db import connection
+
+    start = time.time()
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    listeningHistory = models.ListeningHistory.objects.filter(
-        user=str(spotifyID)).select_related(
-        "songID").values(t=F("timePlayed"),n=F("songID__name")).order_by('t')
+    # Support optional limit parameter for lazy loading
+    limit = request.GET.get('limit', None)
 
-    return JsonResponse(list(listeningHistory), safe=False)
+    # Use values() with direct field access - avoids JOIN overhead
+    query = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).values(
+        t=F("timePlayed"),
+        n=F("songID__name")
+    ).order_by('-timePlayed')
+
+    if limit:
+        try:
+            query = query[:int(limit)]
+        except ValueError:
+            pass  # Invalid limit, return all
+
+    result = list(query)
+    log.debug(f"ListeningHistory - Total time: {time.time() - start:.3f}s, Rows: {len(result)}, Limit: {limit or 'None'}, Queries: {len(connection.queries)}")
+
+    return JsonResponse(result, safe=False)
 
 
-def listeningHistoryStats(request: requests.request):
+def stats(request: requests.request):
     """
+    Calculate listening stats
 
     Parameters:
         request:    (request): Request Object
     Returns:
-        HttpResponse: HTTP response
+        JsonResponse: JSON with songs count and hours listened
     """
+    from django.db.models import Sum, Count
+    import time
+    from django.db import connection
+
+    start = time.time()
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
 
-    listeningHistory = models.ListeningHistory.objects.filter(
-        user=str(spotifyID)).select_related(
-        "songID").values(t=F("timePlayed"),l=F("songID__trackLength")).order_by('t')
+    # Use database aggregation instead of Python loop
+    result = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).aggregate(
+        total_songs=Count('id'),
+        total_time=Sum('songID__trackLength')
+    )
 
-    return JsonResponse(list(listeningHistory), safe=False)
+    songsListenedTo = result['total_songs'] or 0
+    timeListened = round((result['total_time'] or 0) / 60000 / 60 * 10) / 10
+
+    log.debug(f"Stats - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+    return JsonResponse({
+        "songsListenedTo": songsListenedTo,
+        "hoursListened": timeListened
+    })
+
+def dailyAggregation(request: requests.request):
+    """
+    Get daily listening aggregation
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with daily song counts
+    """
+    from django.db.models import Count
+    from django.db.models.functions import Substr
+    import time
+    from django.db import connection
+
+    start = time.time()
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    # Extract date from timePlayed text field (format: "YYYY-MM-DD HH:MM:SS")
+    # For timezone conversion, we need to use raw SQL since timePlayed is text
+    from django.db.models import CharField
+    from django.db.models.functions import Cast
+    from datetime import datetime
+
+    # Use raw SQL for timezone conversion from UTC to local time
+    daily_data = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).extra(
+        select={
+            'local_date': 'DATE(("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'
+        }
+    ).values('local_date').annotate(
+        count=Count('id')
+    ).order_by('local_date')
+
+    # Convert to the format expected by frontend
+    songs = []
+    plays = []
+    for item in daily_data:
+        songs.append(str(item['local_date']))
+        plays.append(item['count'])
+
+    log.debug(f"DailyAgg - Total time: {time.time() - start:.3f}s, Days: {len(songs)}, Queries: {len(connection.queries)}")
+
+    return JsonResponse({
+        "songs": songs,
+        "plays": plays
+    })
+
+def hourlyAggregation(request: requests.request):
+    """
+    Get hourly listening aggregation
+
+    Parameters:
+        request:    (request): Request Object
+    Returns:
+        JsonResponse: JSON with hourly song counts
+    """
+    from django.db.models import Count
+    import time
+    from django.db import connection
+
+    start = time.time()
+    spotifyID = request.session.get('spotify', False)
+    if(spotifyID == False):
+        return HttpResponse(status=401)
+
+    # Use database-level hour extraction with proper timezone conversion
+    # timePlayed is stored as text in format "YYYY-MM-DD HH:MM:SS" in UTC
+    hourly_data = models.ListeningHistory.objects.filter(
+        user=str(spotifyID)
+    ).extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Initialize all hours to 0
+    hourly_counts = [0] * 24
+    for item in hourly_data:
+        hour = int(item['local_hour'])
+        hourly_counts[hour] = item['count']
+
+    songs = [f"{i:02d}" for i in range(24)]
+    plays = hourly_counts
+
+    log.debug(f"HourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
+
+    return JsonResponse({
+        "songs": songs,
+        "plays": plays
+    })
 
 def songs(request: requests.request):
     """
@@ -250,6 +382,10 @@ def songs(request: requests.request):
     Returns:
         HttpResponse: HTTP response
     """
+    import time
+    from django.db import connection
+
+    start = time.time()
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -286,6 +422,8 @@ def songs(request: requests.request):
                 "a": playCountArtistDict.get(song["songID"], "")
             }
         )
+
+    log.debug(f"Songs - Total time: {time.time() - start:.3f}s, Songs: {len(playCountGroupConcat)}, Queries: {len(connection.queries)}")
 
     return JsonResponse(playCountGroupConcat, safe=False)
 
@@ -367,6 +505,10 @@ def playlistSongs(request: requests.request):
     Returns:
         HttpResponse: HTTP response
     """
+    import time
+    from django.db import connection
+
+    start = time.time()
     spotifyID = request.session.get('spotify', False)
     if(spotifyID == False):
         return HttpResponse(status=401)
@@ -379,30 +521,39 @@ def playlistSongs(request: requests.request):
     userObject = models.Users.objects.get(
         user=str(spotifyID))
 
-    # Get Play Count History for User
-    playCount = list(models.PlayCount.objects.filter(user=userObject).select_related().values(
-        'songID', 'playCount'))
-    playCountDict = {}
-    for pc in playCount:
-        playCountDict[pc['songID']] = pc.get('playCount', 0)
+    # Get Play Count History for User - as dict for O(1) lookup
+    playCountDict = dict(
+        models.PlayCount.objects.filter(user=userObject).values_list('songID', 'playCount')
+    )
 
-    # Get Listening History for User, and Store only Last Played
-    listeningHistory = list(models.ListeningHistory.objects.filter(
-        user=userObject).select_related().values(
-            'songID', 'timePlayed').order_by('timePlayed'))
-    listeningHistoryLatest = {}
-    for lh in listeningHistory:
-        listeningHistoryLatest[lh['songID']] = lh['timePlayed']
+    # Get Latest Listening History for User using database-level aggregation
+    from django.db.models import Max
+    listeningHistoryLatest = dict(
+        models.ListeningHistory.objects.filter(user=userObject)
+        .values('songID')
+        .annotate(latest=Max('timePlayed'))
+        .values_list('songID', 'latest')
+    )
 
-    # Get List of all Song <--> Artist Relationships
-    songArtists = list(models.Songs.objects.select_related(
-    ).all().values('id', 'artists__name'))
+    # Get only song IDs that are actually in playlists for this user
+    from django.db.models import Q
+    playlist_song_ids = set(
+        models.PlaylistSongs.objects.filter(
+            playlistID__playlistsusers__user=userObject
+        ).values_list('songID', flat=True).distinct()
+    )
 
-    # MYSQL GROUP_CONCAT Logic in Python
-    songArtistsDict = {}
-    for artist in songArtists:
-        songArtistsDict[
-            artist['id']] = str(artist["artists__name"]) + ", " + str(songArtistsDict.get(artist['id'], " "))
+    # Get Song <--> Artist Relationships only for songs in playlists
+    from collections import defaultdict
+    songArtistsDict = defaultdict(list)
+    for song_id, artist_name in models.Songs.objects.filter(
+        id__in=playlist_song_ids
+    ).values_list('id', 'artists__name'):
+        if artist_name:  # Skip null artists
+            songArtistsDict[song_id].append(artist_name)
+    
+    # Convert lists to comma-separated strings
+    songArtistsDict = {k: ', '.join(v) for k, v in songArtistsDict.items()}
 
     # For Each Playlist, build data for Table
     for playlist in playlists:
@@ -420,7 +571,7 @@ def playlistSongs(request: requests.request):
                 "n": ps['songID__name'],
                 "pc": playCountDict.get(ps['songID'], 0),
                 "t": listeningHistoryLatest.get(ps['songID'], "1970-01-01").split(" ")[0],
-                "a": str(songArtistsDict.get(ps['songID'], "")).rstrip(', ')
+                "a": songArtistsDict.get(ps['songID'], "")
             })
 
         playlistDict["id"] = playlist[0]
@@ -429,4 +580,8 @@ def playlistSongs(request: requests.request):
         playlistDict["tracks"] = sorted(
             playlistData, key=lambda x: x['t'])
         playlistsData.append(playlistDict)
+
+    total_tracks = sum(len(p['tracks']) for p in playlistsData)
+    log.debug(f"PlaylistSongs - Total time: {time.time() - start:.3f}s, Playlists: {len(playlistsData)}, Tracks: {total_tracks}, Queries: {len(connection.queries)}")
+
     return HttpResponse(json.dumps(playlistsData), content_type="application/json")
