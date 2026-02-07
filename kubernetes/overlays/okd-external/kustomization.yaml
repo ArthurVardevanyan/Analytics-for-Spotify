@@ -1,0 +1,119 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: analytics-for-spotify-ext
+resources:
+  - ../../base
+  - ./route.yaml
+  - ./network-policy.yaml
+components:
+  - ../../components/deployment
+patches:
+  - target:
+      kind: ExternalSecret
+      name: analytics-for-spotify
+    patch: |-
+      - op: replace
+        path: /spec/data/0/remoteRef/key
+        value: spotify/spotify_external
+      - op: replace
+        path: /spec/data/1/remoteRef/key
+        value: spotify/spotify_external
+      - op: replace
+        path: /spec/data/2/remoteRef/key
+        value: spotify/database_external
+      - op: replace
+        path: /spec/data/3/remoteRef/key
+        value: spotify/database_external
+      - op: replace
+        path: /spec/data/4/remoteRef/key
+        value: spotify/database_external
+      - op: replace
+        path: /spec/data/5/remoteRef/key
+        value: spotify/database_external
+      - op: replace
+        path: /spec/data/6/remoteRef/key
+        value: spotify/spotify_external
+  - target:
+      kind: Application
+      name: analytics-for-spotify
+    patch: |-
+      - op: replace
+        path: /spec/destination/namespace
+        value: analytics-for-spotify-ext
+      - op: replace
+        path: /spec/source/path
+        value: kubernetes/overlays/okd-external
+      - op: replace
+        path: /spec/ignoreDifferences/0/group
+        value: apps
+      - op: replace
+        path: /spec/ignoreDifferences/0/kind
+        value: Deployment
+  - target:
+      kind: PostgresCluster
+      name: spotify
+    patch: |-
+      - op: replace
+        path: /spec/backups/pgbackrest/global/repo2-path
+        value: /spotify-ext
+  - target:
+      kind: NetworkPolicy
+      name: analytics-for-spotify-app
+    patch: |-
+      - op: replace
+        path: /spec/ingress/0/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: analytics-for-spotify-ext
+      - op: remove
+        path: /spec/ingress/0/from/0/podSelector/matchLabels/serving.knative.dev~1service
+      - op: add
+        path: /spec/ingress/0/from/0/podSelector/matchLabels/app
+        value: analytics-for-spotify
+  - target:
+      kind: NetworkPolicy
+      name: analytics-for-spotify-postgres
+    patch: |-
+      - op: replace
+        path: /spec/ingress/0/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: analytics-for-spotify-ext
+      - op: replace
+        path: /spec/egress/0/to/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: analytics-for-spotify-ext
+  - target:
+      kind: NetworkPolicy
+      name: allow-postgres
+    patch: |-
+      - op: remove
+        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
+      - op: add
+        path: /spec/podSelector/matchLabels/app
+        value: analytics-for-spotify
+      - op: replace
+        path: /spec/egress/0/to/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: analytics-for-spotify-ext
+  - target:
+      kind: NetworkPolicy
+      name: knative-ingress
+    patch: |-
+      - op: remove
+        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
+      - op: add
+        path: /spec/podSelector/matchLabels/app
+        value: analytics-for-spotify
+  - target:
+      kind: NetworkPolicy
+      name: spotify-egress
+    patch: |-
+      - op: remove
+        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
+      - op: add
+        path: /spec/podSelector/matchLabels/app
+        value: analytics-for-spotify
+  - target:
+      kind: NetworkPolicy
+      name: allow-internet-egress
+    patch: |-
+      - op: remove
+        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
+      - op: add
+        path: /spec/podSelector/matchLabels/app
+        value: analytics-for-spotify

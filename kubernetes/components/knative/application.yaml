@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: knative-serving
+  namespace: analytics-for-spotify
+  labels:
+    test: test
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    notifications.argoproj.io/subscribe.on-sync-succeeded.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-sync-status-unknown.gh-tenant: ""
+    notifications.argoproj.io/subscribe.on-health-degraded.gh-tenant: ""
+spec:
+  destination:
+    namespace: knative-serving
+    server: https://kubernetes.default.svc
+  project: analytics-for-spotify
+  source:
+    path: kubernetes/overlays/okd-knative
+    repoURL: https://git.arthurvardevanyan.com/ArthurVardevanyan/Analytics-for-Spotify
+    targetRevision: HEAD
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true

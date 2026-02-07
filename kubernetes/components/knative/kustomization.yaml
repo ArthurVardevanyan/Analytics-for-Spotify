@@ -4,3 +4,5 @@ resources:
   - service.yaml
   - domain-mapping.yaml
   - certificate.yaml
+  - application.yaml
+  - network-policy.yaml

@@ -1,10 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: analytics-for-spotify
   name: analytics-for-spotify
-  labels:
-    app.kubernetes.io/instance: analytics-for-spotify_analytics-for-spotify
+  namespace: analytics-for-spotify-ext
 spec:
   ports:
     - protocol: TCP

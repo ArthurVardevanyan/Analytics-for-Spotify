@@ -247,24 +247,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: knative-ingress
-  namespace: analytics-for-spotify
-spec:
-  podSelector:
-    matchLabels:
-      serving.knative.dev/service: analytics-for-spotify
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: knative-serving
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
   name: spotify-egress
   namespace: analytics-for-spotify
 spec:
