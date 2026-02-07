@@ -667,27 +667,46 @@ def globalHourlyAggregation(request: requests.request):
 
     start = time.time()
 
-    # Use database-level hour extraction with timezone conversion for all users
-    hourly_data = models.ListeningHistory.objects.extra(
+# Get one year cutoff date
+    from datetime import timedelta
+    one_year_ago = datetime.now() - timedelta(days=365)
+
+    # Use database-level hour extraction with timezone conversion for all users (all time)
+    hourly_data_all = models.ListeningHistory.objects.extra(
         select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
     ).values('local_hour').annotate(
         count=Count('id')
     ).order_by('local_hour')
 
-    # Initialize all hours to 0
-    hourly_counts = [0] * 24
-    for item in hourly_data:
+    # Get last year's data
+    hourly_data_year = models.ListeningHistory.objects.filter(
+        timePlayed__gte=one_year_ago
+    ).extra(
+        select={'local_hour': 'EXTRACT(HOUR FROM ("timePlayed" || \'+00\')::timestamptz AT TIME ZONE \'America/Detroit\')'}
+    ).values('local_hour').annotate(
+        count=Count('id')
+    ).order_by('local_hour')
+
+    # Initialize all hours to 0 for both datasets
+    hourly_counts_all = [0] * 24
+    hourly_counts_year = [0] * 24
+
+    for item in hourly_data_all:
         hour = int(item['local_hour'])
-        hourly_counts[hour] = item['count']
+        hourly_counts_all[hour] = item['count']
+
+    for item in hourly_data_year:
+        hour = int(item['local_hour'])
+        hourly_counts_year[hour] = item['count']
 
     songs = [f"{i:02d}" for i in range(24)]
-    plays = hourly_counts
 
     log.debug(f"GlobalHourlyAgg - Total time: {time.time() - start:.3f}s, Queries: {len(connection.queries)}")
 
     response_data = {
         "songs": songs,
-        "plays": plays,
+        "playsAll": hourly_counts_all,
+        "playsYear": hourly_counts_year,
         "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 

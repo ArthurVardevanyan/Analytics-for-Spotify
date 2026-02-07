@@ -300,7 +300,7 @@ function playlistSongs() {
                   {
                     data: weekPlays,
                     label: "Amount of Songs By The Week",
-                    backgroundColor: "#3e95cd",
+                    backgroundColor: "#1DB954",
                     fill: false,
                   },
                 ],
@@ -344,8 +344,8 @@ function summaryLineChart(data) {
         {
           data: processed.plays,
           label: "Listen History",
-          borderColor: "#3e95cd",
-          backgroundColor: "rgba(62, 149, 205, 0.1)",
+          borderColor: "#1DB954",
+          backgroundColor: "rgba(29, 185, 84, 0.1)",
           fill: true,
           tension: 0.4,
         },
@@ -482,8 +482,8 @@ function hourlyLineChart(data) {
           {
             data: plays,
             label: "Average Hourly Listen History",
-            borderColor: "#3e95cd",
-            backgroundColor: "rgba(62, 149, 205, 0.1)",
+            borderColor: "#1DB954",
+            backgroundColor: "rgba(29, 185, 84, 0.1)",
             fill: true,
             tension: 0.4,
           },

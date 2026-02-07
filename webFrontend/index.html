@@ -323,15 +323,16 @@
                     }
 
                     // Store full data
-                    hourlyData = { songs: data.songs, plays: data.plays };
+                    hourlyData = { songs: data.songs, playsAll: data.playsAll, playsYear: data.playsYear };
 
+                    // Default to year data
                     globalHourlyChart = new Chart(document.getElementById("global-hourly-chart"), {
                         type: "line",
                         data: {
                             labels: data.songs,
                             datasets: [{
-                                data: data.plays,
-                                label: "Hourly Listens (All Users)",
+                                data: data.playsYear,
+                                label: "Hourly Listens - Last Year (All Users)",
                                 borderColor: "#1DB954",
                                 backgroundColor: "rgba(29, 185, 84, 0.1)",
                                 fill: true,
