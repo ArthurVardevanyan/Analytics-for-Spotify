@@ -8,9 +8,7 @@ spec:
     - name: data
 
   sidecars:
-    # - image: mariadb:10.11.7
-    #   name: mariadb
-    - image: docker.io/library/postgres:17.4@sha256:7f29c02ba9eeff4de9a9f414d803faa0e6fe5e8d15ebe217e3e418c82e652b35
+    - image: docker.io/library/postgres:18.1@sha256:e9d55eb89617d76161da674975912372a787d16e1945f750fb451d5b8c61242c
       name: postgres
       securityContext:
         runAsNonRoot: true
@@ -34,10 +32,6 @@ spec:
       ports:
         - containerPort: 3306
       env:
-        # - name: MARIADB_ROOT_PASSWORD
-        #   value: spotify
-        # - name: MARIADB_DATABASE
-        #   value: spotify
         - name: POSTGRES_USER
           value: spotify
         - name: POSTGRES_PASSWORD
@@ -49,17 +43,13 @@ spec:
       volumeMounts:
         - name: psql
           mountPath: /var/lib/postgresql/data
-        # - name: mysql
-        #   mountPath: /var/lib/mysql/
         - name: tmp
           mountPath: /tmp
-        # - name: run-mysqld
-        #   mountPath: /run/mysqld
         - name: run-psql
           mountPath: "/var/run/postgresql"
   steps:
     - name: unit-test
-      image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base"
+      image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base-builder"
       resources:
         requests:
           memory: 192Mi
@@ -109,7 +99,7 @@ spec:
         retry() {
           local MAX_TRIES
           local DELAY=0
-          local ADD_DELAY=60
+          local ADD_DELAY=30
           MAX_TRIES="${1}"
 
           shift 1
@@ -130,33 +120,35 @@ spec:
 
 
         echo "Waiting for Database to Start"
-        #sleep 15
         cd $(workspaces.data.path)
 
         python3 -m pip install -r requirements.txt --break-system-packages
+        # Install coverage only for CI
+        python3 -m pip install coverage --break-system-packages
 
-        python3 -m venv .venv && \
-        source .venv/bin/activate && \
-        python3 -m pip install -r requirements.txt
+        # Wait for PostgreSQL to be ready
+        echo "Checking database connection..."
+        for i in {1..30}; do
+          if python3 -c "import psycopg; psycopg.connect('host=127.0.0.1 dbname=spotify user=spotify password=spotify')" 2>/dev/null; then
+            echo "Database is ready!"
+            break
+          fi
+          echo "Attempt $i: Database not ready yet, waiting..."
+          sleep 2
+        done
 
         test() {
-          coverage run --source='./monitoringBackend,./webBackend'  manage.py test
-          coverage report -m
+          python3 -m coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+          python3 -m coverage report -m
         }
         retry 5 test
   volumes:
     - name: psql
       emptyDir:
         sizeLimit: 200Mi
-    # - name: mysql
-    #   emptyDir:
-    #     sizeLimit: 200Mi
     - name: tmp
       emptyDir:
         sizeLimit: 1Mi
-    # - name: run-mysqld
-    #   emptyDir:
-    #     sizeLimit: 1Mi
     - name: run-psql
       emptyDir:
         sizeLimit: 1Mi

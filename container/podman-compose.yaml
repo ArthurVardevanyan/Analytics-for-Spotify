@@ -8,19 +8,9 @@
 #.env
 # DB_HOST=127.0.0.1
 # DATABASE=spotify
-# DB_USER=root
+# DB_USER=spotify
 # DB_PASSWORD=spotify
 # DEBUG=True
-
-# podman run -d \
-#   --name mariadb \
-#   --hostname mariadb \
-#   --network host \
-#   -p 3306:3306 \
-#   -e MYSQL_ROOT_PASSWORD="spotify" \
-#   -e MARIADB_DATABASE="spotify" \
-#   -v /mnt/mariadb:/var/lib/mysql \
-#   docker.io/mariadb:10.10
 
 version: "3.4.4"
 
