@@ -812,3 +812,100 @@ def globalStats(request: requests.request):
     cache.set(cache_key, response_data, 3600)
 
     return JsonResponse(response_data)
+
+
+def analyzeHistoricalImport(request: requests.request):
+    """
+    Analyze uploaded historical Spotify data ZIP file
+
+    Parameters:
+        request: Request object with uploaded ZIP file
+    Returns:
+        JsonResponse: Statistics about what will be imported
+    """
+    from webBackend.import_historical import analyze_historical_data
+
+    spotifyID = request.session.get('spotify', False)
+    if spotifyID == False:
+        return HttpResponse(status=401)
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    if 'zipfile' not in request.FILES:
+        return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+    zip_file = request.FILES['zipfile']
+
+    try:
+        stats = analyze_historical_data(zip_file, spotifyID)
+
+        # Store songs_data in session for later import
+        request.session['import_data'] = stats['songs_data']
+
+        # Return statistics without songs_data (too large for response)
+        return JsonResponse({
+            'total': stats['total'],
+            'to_add': stats['to_add'],
+            'skipped_duration': stats['skipped_duration'],
+            'skipped_flag': stats['skipped_flag'],
+            'skipped_incognito': stats['skipped_incognito'],
+            'already_exists': stats['already_exists']
+        })
+    except Exception as e:
+        log.exception("Error analyzing historical import")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def executeHistoricalImport(request: requests.request):
+    """
+    Execute the historical import after user confirmation
+
+    Parameters:
+        request: Request object
+    Returns:
+        JsonResponse: Import results
+    """
+    from webBackend.import_historical import import_historical_data
+
+    spotifyID = request.session.get('spotify', False)
+    if spotifyID == False:
+        return HttpResponse(status=401)
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    # Get stored songs_data from session
+    songs_data = request.session.get('import_data', [])
+
+    if not songs_data:
+        return JsonResponse({'error': 'No import data found. Please analyze first.'}, status=400)
+
+    try:
+        # Get user's access token
+        user = database.user_status(spotifyID, detailed=1)
+        if not user:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+        access_token = credentials.refresh_token(user.refreshToken)
+
+        # Perform the import
+        result = import_historical_data(songs_data, spotifyID, access_token)
+
+        # Clear session data after import
+        if 'import_data' in request.session:
+            del request.session['import_data']
+
+        if result['success']:
+            return JsonResponse({
+                'success': True,
+                'artists_created': result['artists_created'],
+                'songs_created': result['songs_created'],
+                'history_entries': result['history_entries']
+            })
+        else:
+            return JsonResponse({'error': result.get('error', 'Unknown error')}, status=500)
+
+    except Exception as e:
+        log.exception("Error executing historical import")
+        return JsonResponse({'error': str(e)}, status=500)

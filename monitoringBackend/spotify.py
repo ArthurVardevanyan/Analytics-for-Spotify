@@ -586,5 +586,34 @@ def main():
     return 0
 
 
+def get_track_info(access_token: str, track_id: str):
+    """
+    Get track information from Spotify API
+
+    Parameters:
+        access_token (str): Spotify API access token
+        track_id (str): Spotify track ID
+
+    Returns:
+        dict: Track information or None if failed
+    """
+    url = f'https://api.spotify.com/v1/tracks/{track_id}'
+    header = {'Authorization': f'Bearer {access_token}'}
+
+    try:
+        response = requests.get(url, headers=header, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 401:
+            log.error(f"Unauthorized access for track {track_id}")
+            return None
+        else:
+            log.error(f"Failed to get track info for {track_id}: {response.status_code}")
+            return None
+    except Exception as e:
+        log.error(f"Exception getting track info for {track_id}: {e}")
+        return None
+
+
 if __name__ == "__main__":
     main()

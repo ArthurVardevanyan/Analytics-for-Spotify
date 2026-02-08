@@ -26,4 +26,6 @@ urlpatterns = [
     path('globalDailyAggregation/', views.globalDailyAggregation, name='globalDailyAggregation'),
     path('globalHourlyAggregation/', views.globalHourlyAggregation, name='globalHourlyAggregation'),
     path('globalStats/', views.globalStats, name='globalStats'),
+    path('analyzeHistoricalImport/', views.analyzeHistoricalImport, name='analyzeHistoricalImport'),
+    path('executeHistoricalImport/', views.executeHistoricalImport, name='executeHistoricalImport'),
 ]

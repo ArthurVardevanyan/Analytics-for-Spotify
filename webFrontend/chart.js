@@ -108,6 +108,100 @@ function deletePlaylist(id) {
   });
 }
 
+function analyzeImport() {
+  const fileInput = document.getElementById("historicalDataFile");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select a ZIP file to import.");
+    return;
+  }
+
+  if (!file.name.endsWith(".zip")) {
+    alert("Please select a valid ZIP file.");
+    return;
+  }
+
+  // Show progress indicator
+  document.getElementById("importProgress").style.display = "block";
+
+  const formData = new FormData();
+  formData.append("zipfile", file);
+
+  $.ajax({
+    url: "/analytics/analyzeHistoricalImport/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    data: formData,
+    processData: false,
+    contentType: false,
+    success(data) {
+      // Hide progress indicator
+      document.getElementById("importProgress").style.display = "none";
+
+      // Show confirmation dialog with statistics
+      const message =
+        `Import Analysis Complete!\n\n` +
+        `Total songs in file: ${data.total.toLocaleString()}\n\n` +
+        `Songs to be added: ${data.to_add.toLocaleString()}\n` +
+        `Skipped (already in database): ${data.already_exists.toLocaleString()}\n` +
+        `Skipped (less than 30 seconds): ${data.skipped_duration.toLocaleString()}\n` +
+        `Skipped (marked as skipped): ${data.skipped_flag.toLocaleString()}\n` +
+        `Skipped (incognito mode): ${data.skipped_incognito.toLocaleString()}\n\n` +
+        `Do you want to proceed with importing ${data.to_add.toLocaleString()} songs?\n` +
+        `This may take several minutes.`;
+
+      if (confirm(message)) {
+        executeImport();
+      }
+    },
+    error(xhr) {
+      document.getElementById("importProgress").style.display = "none";
+      const errorMsg = xhr.responseJSON?.error || "Unknown error occurred";
+      alert(`Error analyzing import: ${errorMsg}`);
+    },
+  });
+}
+
+function executeImport() {
+  // Show progress indicator
+  document.getElementById("importProgress").innerHTML =
+    "<p>Importing data... This may take several minutes. Please do not close this page.</p>";
+  document.getElementById("importProgress").style.display = "block";
+
+  $.ajax({
+    url: "/analytics/executeHistoricalImport/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    timeout: 600000, // 10 minute timeout for large imports
+    success(data) {
+      document.getElementById("importProgress").style.display = "none";
+
+      if (data.success) {
+        alert(
+          `Import completed successfully!\n\n` +
+            `Artists created: ${data.artists_created.toLocaleString()}\n` +
+            `Songs created: ${data.songs_created.toLocaleString()}\n` +
+            `Listening history entries added: ${data.history_entries.toLocaleString()}\n\n` +
+            `The page will now reload to show your updated statistics.`,
+        );
+        window.location.reload();
+      } else {
+        alert(`Import failed: ${data.error}`);
+      }
+    },
+    error(xhr) {
+      document.getElementById("importProgress").style.display = "none";
+      const errorMsg = xhr.responseJSON?.error || "Unknown error occurred";
+      alert(`Error during import: ${errorMsg}`);
+    },
+  });
+}
+
 window.onload = function () {
   $.ajax({
     url: "/analytics/authenticated/",

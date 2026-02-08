@@ -145,6 +145,17 @@
 
     <div style="clear:both; text-align:center; margin: auto;  width: 100%; display: block;">
         <br>
+        <h3>Import Historical Spotify Data:</h3>
+        <p style="color: #666; font-size: 14px;">Upload your Spotify data export ZIP file (my_spotify_data.zip)</p>
+        <p style="color: #666; font-size: 14px;">Get your data from <a
+                href="https://www.spotify.com/us/account/privacy/" target="_blank"
+                style="color: #1DB954;">spotify.com/account/privacy</a> under "Extended streaming history"</p>
+        <input type="file" id="historicalDataFile" accept=".zip" style="margin: 10px;">
+        <button onclick="analyzeImport()" style="color: black" class="btn">Analyze Import</button>
+        <div id="importProgress" style="margin-top: 10px; display: none;">
+            <p>Processing... This may take a few minutes.</p>
+        </div>
+        <br><br>
         <h3>Input Playlist URL to Track:</h3>
         <input type="text" id="playlist" value=""> <button onclick=playlist() style="color: black" class="btn">Submit
             Playlist</button>
