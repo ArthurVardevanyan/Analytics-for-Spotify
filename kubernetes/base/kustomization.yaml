@@ -8,3 +8,4 @@ resources:
   - application.yaml
   - postgres.yaml
   - network-policy.yaml
+  - cronjob.yaml

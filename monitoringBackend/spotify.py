@@ -7,7 +7,7 @@ from webBackend.credentials import refresh_token as authorize
 import requests
 import time
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import math
 import sys
 sys.path.append("..")
@@ -581,9 +581,47 @@ def main():
     Returns:
         int: unused return
     """
+    print("Booting Spotify Monitoring Backend...")
     boot()
     keepAliveThread()
     return 0
+
+
+def get_track_info(access_token: str, track_id: str, max_retries: int = 3):
+    """
+    Get track information from Spotify API with retry logic for rate limits
+
+    Parameters:
+        access_token (str): Spotify API access token
+        track_id (str): Spotify track ID
+        max_retries (int): Maximum number of retries for 429 errors
+
+    Returns:
+        dict: Track information or None if failed
+    """
+    url = f'https://api.spotify.com/v1/tracks/{track_id}'
+    header = {'Authorization': f'Bearer {access_token}'}
+
+    try:
+        response = requests.get(url, headers=header, timeout=10)
+
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 401:
+            log.error(f"Unauthorized access for track {track_id}")
+            return None
+        elif response.status_code == 429:
+            # Rate limited - skip this track instead of retrying
+            log.warning(f"Rate limited for track {track_id}. Skipping.")
+            return None
+        else:
+            log.error(f"Failed to get track info for {track_id}: {response.status_code}")
+            return None
+    except Exception as e:
+        log.error(f"Exception getting track info for {track_id}: {e}")
+        return None
+
+    return None
 
 
 if __name__ == "__main__":

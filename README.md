@@ -14,6 +14,7 @@ Current Features:
 - Keeps Track of How Many Times a Song is Played
 - Ability to View Unplayable Songs in a Spotify Playlist
 - Includes Local Files (Hybrid & Realtime Scanning)
+- Upload Historical Songs From [Spotify Dump](https://www.spotify.com/us/account/privacy/)
 
 Notes:
 
@@ -122,6 +123,8 @@ Recently Played Scanning is preferred due to the significantly lower volume of r
 \*Hybrid: 5-15 seconds when local song is playing. 60 seconds when non local song is playing.
 
 ## Sample Images
+
+![Analytics For Spotify Historical Import](img/AnalyticsForSpotifyHistorical.png?raw=true "Sample Output")
 
 ![Analytics For Spotify Home Page Sample](img/AnalyticsForSpotifyHomePageSample.png?raw=true "Sample Output")
 

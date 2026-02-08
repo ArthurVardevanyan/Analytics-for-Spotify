@@ -75,10 +75,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 256Mi
+              memory: 1Gi
             requests:
-              cpu: 10m
-              memory: 128Mi
+              cpu: 50m
+              memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -88,6 +88,9 @@ spec:
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: "/tmp"
       enableServiceLinks: false
       initContainers:
         - command:
@@ -142,10 +145,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 384Mi
+              memory: 1Gi
             requests:
-              cpu: 10m
-              memory: 192Mi
+              cpu: 50m
+              memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -156,3 +159,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
       timeoutSeconds: 30
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi

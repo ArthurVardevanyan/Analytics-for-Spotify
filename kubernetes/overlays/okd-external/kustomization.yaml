@@ -68,6 +68,9 @@ patches:
       - op: add
         path: /spec/ingress/0/from/0/podSelector/matchLabels/app
         value: analytics-for-spotify
+      - op: replace
+        path: /spec/ingress/1/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: analytics-for-spotify-ext
   - target:
       kind: NetworkPolicy
       name: analytics-for-spotify-postgres
@@ -117,3 +120,17 @@ patches:
       - op: add
         path: /spec/podSelector/matchLabels/app
         value: analytics-for-spotify
+  - target:
+      kind: NetworkPolicy
+      name: allow-postgres-cronjob
+    patch: |-
+      - op: replace
+        path: /spec/egress/0/to/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: analytics-for-spotify-ext
+  - target:
+      kind: CronJob
+      name: link-missing-artists
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: analytics-for-spotify-ext

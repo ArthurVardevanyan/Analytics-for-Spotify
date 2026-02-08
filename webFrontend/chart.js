@@ -108,6 +108,116 @@ function deletePlaylist(id) {
   });
 }
 
+function analyzeImport() {
+  const fileInput = document.getElementById("historicalDataFile");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select a ZIP file to import.");
+    return;
+  }
+
+  if (!file.name.endsWith(".zip")) {
+    alert("Please select a valid ZIP file.");
+    return;
+  }
+
+  // Show progress indicator
+  document.getElementById("importProgress").style.display = "block";
+
+  const formData = new FormData();
+  formData.append("zipfile", file);
+
+  $.ajax({
+    url: "/analytics/analyzeHistoricalImport/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    data: formData,
+    processData: false,
+    contentType: false,
+    success(data) {
+      // Hide progress indicator
+      document.getElementById("importProgress").style.display = "none";
+
+      // Build year breakdown string
+      let yearBreakdown = "";
+      if (
+        data.years_breakdown &&
+        Object.keys(data.years_breakdown).length > 0
+      ) {
+        yearBreakdown = "\n\nBreakdown by year:\n";
+        for (const [year, count] of Object.entries(data.years_breakdown)) {
+          yearBreakdown += `  ${year}: ${count.toLocaleString()} songs\n`;
+        }
+      }
+
+      // Show confirmation dialog with statistics
+      const message =
+        `Import Analysis Complete!\n\n` +
+        `Total songs in file: ${data.total.toLocaleString()}\n\n` +
+        `Songs to be added: ${data.to_add.toLocaleString()}\n` +
+        `Skipped (already in database): ${data.already_exists.toLocaleString()}\n` +
+        `Skipped (less than 30 seconds): ${data.skipped_duration.toLocaleString()}\n` +
+        `Skipped (marked as skipped): ${data.skipped_flag.toLocaleString()}\n` +
+        `Skipped (incognito mode): ${data.skipped_incognito.toLocaleString()}` +
+        yearBreakdown +
+        `\n\nDo you want to proceed with importing ${data.to_add.toLocaleString()} songs?\n` +
+        `This may take several minutes.`;
+
+      if (confirm(message)) {
+        executeImport();
+      }
+    },
+    error(xhr) {
+      document.getElementById("importProgress").style.display = "none";
+      const errorMsg = xhr.responseJSON?.error || "Unknown error occurred";
+      alert(`Error analyzing import: ${errorMsg}`);
+    },
+  });
+}
+
+function executeImport() {
+  // Show progress indicator
+  document.getElementById("importProgress").innerHTML =
+    "<p>Importing data... This will take a very long time.</p>" +
+    "<p><strong>You can safely close this page.</strong> The import will continue processing in the background, " +
+    "and progress is saved every 1,000 songs. Your data will be available when the import completes.</p>" +
+    "<p><em>Note: Artist data will be populated automatically during nightly background scanning or the next time each song is played.</em></p>";
+  document.getElementById("importProgress").style.display = "block";
+
+  $.ajax({
+    url: "/analytics/executeHistoricalImport/",
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+    timeout: 600000, // 10 minute timeout for large imports
+    success(data) {
+      document.getElementById("importProgress").style.display = "none";
+
+      if (data.success) {
+        alert(
+          `Import completed successfully!\n\n` +
+            `Artists created: ${data.artists_created.toLocaleString()}\n` +
+            `Songs created: ${data.songs_created.toLocaleString()}\n` +
+            `Listening history entries added: ${data.history_entries.toLocaleString()}\n\n` +
+            `The page will now reload to show your updated statistics.`,
+        );
+        window.location.reload();
+      } else {
+        alert(`Import failed: ${data.error}`);
+      }
+    },
+    error(xhr) {
+      document.getElementById("importProgress").style.display = "none";
+      const errorMsg = xhr.responseJSON?.error || "Unknown error occurred";
+      alert(`Error during import: ${errorMsg}`);
+    },
+  });
+}
+
 window.onload = function () {
   $.ajax({
     url: "/analytics/authenticated/",

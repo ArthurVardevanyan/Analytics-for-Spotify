@@ -53,10 +53,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 256Mi
+              memory: 1Gi
             requests:
-              cpu: 10m
-              memory: 128Mi
+              cpu: 50m
+              memory: 512Mi
           command:
             - /bin/bash
             - "-c"
@@ -166,10 +166,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 512Mi
+              memory: 1Gi
             requests:
               cpu: 50m
-              memory: 256Mi
+              memory: 512Mi
           env:
             - name: LOG_LEVEL
               value: "INFO"
@@ -193,11 +193,16 @@ spec:
                 secretKeyRef:
                   key: DB_USER
                   name: env
-      #     volumeMounts:
+          volumeMounts:
+            - name: tmp
+              mountPath: "/tmp"
       #       - name: certs
       #         mountPath: "/home/root/cert"
       #         readOnly: true
-      # volumes:
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
       #   - name: certs
       #     secret:
       #       secretName: analytics-for-spotify-cert
