@@ -26,7 +26,6 @@
 - <https://stackoverflow.com/questions/6791911/execute-code-when-django-starts-once-only>
 - <https://stackoverflow.com/questions/2444879/use-the-django-orm-in-a-standalone-script-again>
 - <https://serverfault.com/questions/844761/wsgi-truncated-or-oversized-response-headers-received-from-daemon-process>
-- <https://stackoverflow.com/questions/40916735/cant-install-libmysqlclient-dev-package-when-building-dockerfile-with-ubuntu>
 - <https://datatables.net/>
 - <https://datatables.net/forums/discussion/32107/how-to-load-an-array-of-json-objects-to-datatables>
 - <https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track?market=ES>

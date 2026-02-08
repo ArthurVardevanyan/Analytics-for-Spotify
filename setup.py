@@ -60,8 +60,8 @@ def setup(API: dict):
     If existing Instance, updates the API Config.
 
     Parameters:
-        db   (MySQLdb): Database Connection Object
-        API  (dict)   : Spotify API Configuration
+        db   (Django ORM): Database Connection Object
+        API  (dict)      : Spotify API Configuration
 
     Returns:
         int: unused return

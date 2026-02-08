@@ -44,7 +44,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 ROOT_URLCONF = 'AnalyticsForSpotify.urls'
 
- # django.db.backends.mysql
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

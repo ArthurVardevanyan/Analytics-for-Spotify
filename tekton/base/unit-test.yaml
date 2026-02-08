@@ -8,9 +8,7 @@ spec:
     - name: data
 
   sidecars:
-    # - image: mariadb:10.11.7
-    #   name: mariadb
-    - image: docker.io/library/postgres:17.4@sha256:7f29c02ba9eeff4de9a9f414d803faa0e6fe5e8d15ebe217e3e418c82e652b35
+    - image: docker.io/library/postgres:18.1@sha256:e9d55eb89617d76161da674975912372a787d16e1945f750fb451d5b8c61242c
       name: postgres
       securityContext:
         runAsNonRoot: true
@@ -34,10 +32,6 @@ spec:
       ports:
         - containerPort: 3306
       env:
-        # - name: MARIADB_ROOT_PASSWORD
-        #   value: spotify
-        # - name: MARIADB_DATABASE
-        #   value: spotify
         - name: POSTGRES_USER
           value: spotify
         - name: POSTGRES_PASSWORD
@@ -49,12 +43,8 @@ spec:
       volumeMounts:
         - name: psql
           mountPath: /var/lib/postgresql/data
-        # - name: mysql
-        #   mountPath: /var/lib/mysql/
         - name: tmp
           mountPath: /tmp
-        # - name: run-mysqld
-        #   mountPath: /run/mysqld
         - name: run-psql
           mountPath: "/var/run/postgresql"
   steps:
@@ -148,15 +138,9 @@ spec:
     - name: psql
       emptyDir:
         sizeLimit: 200Mi
-    # - name: mysql
-    #   emptyDir:
-    #     sizeLimit: 200Mi
     - name: tmp
       emptyDir:
         sizeLimit: 1Mi
-    # - name: run-mysqld
-    #   emptyDir:
-    #     sizeLimit: 1Mi
     - name: run-psql
       emptyDir:
         sizeLimit: 1Mi
