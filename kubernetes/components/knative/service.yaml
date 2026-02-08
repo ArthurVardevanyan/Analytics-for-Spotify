@@ -98,7 +98,6 @@ spec:
             - -c
             - |
               cd /home/www/analytics-for-spotify/
-              source .venv/bin/activate
               python3 /home/www/analytics-for-spotify/setup.py
           env:
             - name: LOG_LEVEL

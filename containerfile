@@ -11,9 +11,7 @@ COPY . /home/www/analytics-for-spotify/
 RUN chown -R 65534:65534 /home/www/analytics-for-spotify/
 
 RUN cd /home/www/analytics-for-spotify/ && \
-	python3 -m venv .venv && \
-	. .venv/bin/activate && \
-	python3 -m pip install -r requirements.txt
+	python3 -m pip install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Entry Point
 USER 65534
