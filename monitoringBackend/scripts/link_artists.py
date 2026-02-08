@@ -91,10 +91,11 @@ def link_missing_artists():
             FROM songs s
             LEFT JOIN songs_artists sa ON s.id = sa.songs_id
             WHERE sa.songs_id IS NULL
+            AND s.id NOT LIKE ':%'
         """)
         songs_without_artists = [row[0] for row in cursor.fetchall()]
 
-    log.info(f"Found {len(songs_without_artists)} songs missing artist data")
+    log.info(f"Found {len(songs_without_artists)} songs missing artist data (excluding local files)")
 
     # Get a valid access token from any enabled user
     enabled_users = models.Users.objects.filter(enabled=True)
