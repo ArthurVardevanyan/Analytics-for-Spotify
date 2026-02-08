@@ -1,0 +1,97 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: link-missing-artists
+  namespace: analytics-for-spotify
+  labels:
+    app: link-missing-artists
+spec:
+  schedule: "0 3 * * *" # Run daily at 3 AM
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: link-missing-artists
+          annotations:
+            seccomp.security.alpha.kubernetes.io/defaultProfileName: "runtime/default"
+        spec:
+          automountServiceAccountToken: false
+          dnsPolicy: ClusterFirst
+          enableServiceLinks: false
+          restartPolicy: Never
+          containers:
+            - name: link-artists
+              image: registry.arthurvardevanyan.com/apps/analytics-for-spotify:<VERSION>
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/bash
+                - "-c"
+                - |
+                  cd /home/www/analytics-for-spotify/
+                  source .venv/bin/activate
+                  python3 /home/www/analytics-for-spotify/monitoringBackend/scripts/link_artists.py
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                privileged: false
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+                capabilities:
+                  drop:
+                    - All
+              resources:
+                limits:
+                  cpu: 75m
+                  memory: 256Mi
+                requests:
+                  cpu: 25m
+                  memory: 128Mi
+              env:
+                - name: MIGRATIONS
+                  value: "true"
+                - name: LOG_LEVEL
+                  value: "DEBUG"
+                - name: CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      key: CLIENT_ID
+                      name: env
+                - name: CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      key: CLIENT_SECRET
+                      name: env
+                - name: DATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      key: DATABASE
+                      name: env
+                - name: DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: DB_HOST
+                      name: env
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: DB_PASSWORD
+                      name: env
+                - name: REDIRECT_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: REDIRECT_URL
+                      name: env
+                - name: DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: DB_USER
+                      name: env
+              volumeMounts:
+                - name: tmp
+                  mountPath: "/tmp"
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 1Gi

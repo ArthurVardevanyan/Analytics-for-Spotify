@@ -77,7 +77,7 @@ spec:
               cpu: 350m
               memory: 1Gi
             requests:
-              cpu: 35m
+              cpu: 50m
               memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
@@ -147,7 +147,7 @@ spec:
               cpu: 350m
               memory: 1Gi
             requests:
-              cpu: 10m
+              cpu: 50m
               memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
