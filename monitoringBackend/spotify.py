@@ -581,8 +581,8 @@ def main():
     Returns:
         int: unused return
     """
+    print("Booting Spotify Monitoring Backend...")
     boot()
-    linkMissingArtistsThread()
     keepAliveThread()
     return 0
 
@@ -622,139 +622,6 @@ def get_track_info(access_token: str, track_id: str, max_retries: int = 3):
         return None
 
     return None
-
-
-def linkMissingArtistsThread(once: int = 0):
-    """
-    Incepts Thread for Linking Missing Artists to Songs
-
-    Parameters:
-        once    (int): Optional Flag to Run Once and Exit
-    Returns:
-        int: unused return
-    """
-    try:
-        log.info("linkMissingArtistsThread: Starting")
-        LAT = threading.Thread(
-            target=linkMissingArtistsChecker, args=(once,))
-        LAT.start()
-        thread = ["link_missing_artists"]
-        thread.append(LAT)
-        global THREADS
-        THREADS.append(thread)
-    except:
-        log.exception("linkMissingArtistsThread Thread Failure")
-
-
-def linkMissingArtistsChecker(once: int = 0):
-    """
-    Thread for Nightly Scan of Songs Missing Artist Relationships
-    Fetches artist data from Spotify API and links to songs
-
-    Parameters:
-        once    (int): Optional Flag to Run Once and Exit
-    Returns:
-        int: unused return
-    """
-    from datetime import datetime, time as dt_time
-
-    while True:
-        try:
-            # Run once per day at 3 AM
-            current_time = datetime.now()
-            target_time = current_time.replace(hour=3, minute=0, second=0, microsecond=0)
-
-            # If it's past 3 AM today, schedule for tomorrow
-            if current_time > target_time:
-                target_time = target_time + timedelta(days=1)
-
-            # Calculate sleep time
-            sleep_seconds = (target_time - current_time).total_seconds()
-
-            if once == 0:
-                log.info(f"linkMissingArtists: Sleeping until {target_time.strftime('%Y-%m-%d %H:%M:%S')}")
-                time.sleep(sleep_seconds)
-
-            log.info("linkMissingArtists: Starting scan for songs missing artists")
-
-            # Find songs without any artist relationships
-            # Use raw SQL to find songs not in the many-to-many table
-            from django.db import connection
-
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT s.id
-                    FROM songs s
-                    LEFT JOIN songs_artists sa ON s.id = sa.songs_id
-                    WHERE sa.songs_id IS NULL
-                """)
-                songs_without_artists = [row[0] for row in cursor.fetchall()]
-
-            log.info(f"linkMissingArtists: Found {len(songs_without_artists)} songs missing artist data")
-
-            # Get a valid access token from any enabled user
-            enabled_users = models.Users.objects.filter(enabled=True)
-            if not enabled_users.exists():
-                log.warning("linkMissingArtists: No enabled users found, skipping")
-                if once == 1:
-                    break
-                continue
-
-            # Use first enabled user's token
-            user = enabled_users.first()
-            access_token = authorize(user.user)
-
-            # Process each song
-            successful_links = 0
-            failed_links = 0
-
-            for song_id in songs_without_artists:
-                try:
-                    # Fetch track info from Spotify API
-                    track_info = get_track_info(access_token, song_id)
-
-                    if track_info and 'artists' in track_info:
-                        song_obj = models.Songs.objects.get(id=song_id)
-
-                        # Process each artist
-                        for artist in track_info['artists']:
-                            artist_id = artist.get('id')
-                            artist_name = artist.get('name')
-
-                            if artist_id:
-                                # Create artist if doesn't exist
-                                artist_obj, created = models.Artists.objects.get_or_create(
-                                    id=artist_id,
-                                    defaults={'name': artist_name}
-                                )
-
-                                # Link artist to song
-                                song_obj.artists.add(artist_obj)
-
-                        successful_links += 1
-                        log.debug(f"linkMissingArtists: Linked artists for song {song_id}")
-                    else:
-                        failed_links += 1
-                        log.warning(f"linkMissingArtists: Failed to get track info for {song_id}")
-
-                    # Sleep briefly to avoid rate limiting (10 requests per second max)
-                    time.sleep(0.1)
-
-                except Exception as e:
-                    failed_links += 1
-                    log.error(f"linkMissingArtists: Error processing song {song_id}: {e}")
-
-            log.info(f"linkMissingArtists: Completed. Successfully linked: {successful_links}, Failed: {failed_links}")
-
-            if once == 1:
-                break
-
-        except Exception as e:
-            log.exception(f"linkMissingArtists: Error in main loop: {e}")
-            if once == 1:
-                break
-            # Sleep 1 hour before retrying on error
-            time.sleep(3600)
 
 
 if __name__ == "__main__":

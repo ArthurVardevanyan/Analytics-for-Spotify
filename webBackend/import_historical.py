@@ -47,15 +47,27 @@ def analyze_historical_data(zip_file, user_id):
 
     # Create a dict mapping song_id -> list of epoch timestamps for faster lookup
     existing_songs_timestamps = defaultdict(list)
+    # Also track ALL exact timestamps (DB has unique constraint on timestamp+user, not timestamp+user+song)
+    existing_exact_timestamps = set()
     for song_id, timestamp_str in existing_history:
         # Convert timestamp string (20260207020317) to epoch
+        # IMPORTANT: Timestamps are stored as UTC, must specify timezone
         try:
             dt = datetime.strptime(str(timestamp_str), '%Y%m%d%H%M%S')
+            # Replace with UTC timezone to match import data
+            from datetime import timezone
+            dt = dt.replace(tzinfo=timezone.utc)
             epoch = int(dt.timestamp())
             existing_songs_timestamps[song_id].append(epoch)
+            # Track exact timestamp to avoid unique constraint violations
+            existing_exact_timestamps.add(int(timestamp_str))
         except (ValueError, AttributeError):
             # Skip invalid timestamps
             continue
+
+    # Debug: Log how many existing entries we loaded
+    total_existing = sum(len(timestamps) for timestamps in existing_songs_timestamps.values())
+    print(f"DEBUG: Loaded {total_existing} existing listening history entries for {len(existing_songs_timestamps)} unique songs")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Extract zip file
@@ -96,7 +108,10 @@ def analyze_historical_data(zip_file, user_id):
                                 if not ts:
                                     continue
 
+                                # Parse as UTC (the 'Z' suffix means UTC)
+                                from datetime import timezone
                                 dt = datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
+                                dt = dt.replace(tzinfo=timezone.utc)
                                 epoch_timestamp = int(dt.timestamp())
                                 # Format for database: timestamp as YYYYMMDDHHmmss, timePlayed as YYYY-MM-DD HH:MM:SS
                                 timestamp_db = int(dt.strftime('%Y%m%d%H%M%S'))
@@ -109,15 +124,21 @@ def analyze_historical_data(zip_file, user_id):
                                 if not track_id:
                                     continue
 
-                                # Check if already exists in database using sliding window
-                                # Use the song's duration as the window (convert ms to seconds)
-                                song_duration_seconds = ms_played / 1000
+                                # Check for duplicates
+                                # First check: exact timestamp duplicate (DB unique constraint on timestamp+user)
+                                if timestamp_db in existing_exact_timestamps:
+                                    stats['already_exists'] += 1
+                                    continue
+
+                                # Second check: 60-second sliding window for same song
+                                # Use a fixed 60-second window to detect duplicate entries
+                                # This accounts for minor timestamp variations while avoiding false positives
                                 is_duplicate = False
                                 if track_id in existing_songs_timestamps:
                                     for existing_timestamp in existing_songs_timestamps[track_id]:
                                         time_diff = abs(epoch_timestamp - existing_timestamp)
-                                        # Allow for the full song length plus a small buffer (30 seconds)
-                                        if time_diff <= (song_duration_seconds + 30):
+                                        # 60-second window catches duplicates from same play event
+                                        if time_diff <= 60:
                                             is_duplicate = True
                                             break
 
@@ -143,6 +164,9 @@ def analyze_historical_data(zip_file, user_id):
                                         'time_played': timeplayed_db,
                                         'ms_played': ms_played
                                     })
+                                    # Track this timestamp so we don't count duplicates within the same import
+                                    existing_songs_timestamps[track_id].append(epoch_timestamp)
+                                    existing_exact_timestamps.add(timestamp_db)
 
                         except json.JSONDecodeError:
                             log.error(f"[{user_id}] Failed to parse JSON file: {filename}")
@@ -175,10 +199,39 @@ def import_historical_data(songs_data, user_id, access_token):
     total_artists_created = 0
     total_songs_created = 0
     total_history_entries = 0
+    total_duplicates_skipped = 0
 
     # Get existing songs and artists from DB (will refresh after each batch)
     existing_song_ids = set(models.Songs.objects.values_list('id', flat=True))
     existing_artist_ids = set(models.Artists.objects.values_list('id', flat=True))
+
+    # Load ALL existing listening history into memory for duplicate detection
+    # Store as dict[song_id] -> list[epoch_timestamps]
+    existing_songs_timestamps = defaultdict(list)
+    # Also track ALL exact timestamps (DB has unique constraint on timestamp+user, not timestamp+user+song)
+    existing_exact_timestamps = set()
+    existing_history = models.ListeningHistory.objects.filter(
+        user=user_obj
+    ).values('songID_id', 'timestamp')
+
+    for entry in existing_history:
+        song_id = entry['songID_id']
+        timestamp_str = entry['timestamp']
+
+        try:
+            # Convert YYYYMMDDHHmmss to epoch for comparison
+            dt = datetime.strptime(str(timestamp_str), '%Y%m%d%H%M%S')
+            from datetime import timezone
+            dt = dt.replace(tzinfo=timezone.utc)
+            epoch = int(dt.timestamp())
+            existing_songs_timestamps[song_id].append(epoch)
+            # Track exact timestamp (in original format) to avoid unique constraint violations
+            existing_exact_timestamps.add(int(timestamp_str))
+        except (ValueError, AttributeError):
+            # Skip invalid timestamps
+            continue
+
+    log.info(f"[{user_id}] Loaded {len(existing_songs_timestamps)} songs with existing listening history for duplicate detection")
 
     # Cache track info to avoid duplicate API calls
     track_info_cache = {}
@@ -214,6 +267,32 @@ def import_historical_data(songs_data, user_id, access_token):
 
             # Only add listening history if song exists or was just created
             if track_id in existing_song_ids or track_id in processed_songs:
+                # First check: exact timestamp duplicate (DB unique constraint on timestamp+user)
+                timestamp_int = int(song_data['timestamp'])
+                if timestamp_int in existing_exact_timestamps:
+                    total_duplicates_skipped += 1
+                    continue  # Skip exact timestamp duplicate
+
+                # Second check: 60-second sliding window for same song
+                # Convert timestamp to epoch for comparison
+                dt = datetime.strptime(str(song_data['timestamp']), '%Y%m%d%H%M%S')
+                dt = dt.replace(tzinfo=timezone.utc)
+                epoch_timestamp = int(dt.timestamp())
+
+                is_duplicate = False
+                if track_id in existing_songs_timestamps:
+                    for existing_timestamp in existing_songs_timestamps[track_id]:
+                        time_diff = abs(epoch_timestamp - existing_timestamp)
+                        # 60-second window catches duplicates from same play event
+                        if time_diff <= 60:
+                            is_duplicate = True
+                            total_duplicates_skipped += 1
+                            break
+
+                if is_duplicate:
+                    continue  # Skip this duplicate
+
+                # Not a duplicate - add to listening history
                 # Count plays for this song
                 play_counts[track_id] += 1
 
@@ -224,6 +303,10 @@ def import_historical_data(songs_data, user_id, access_token):
                     timestamp=song_data['timestamp'],
                     timePlayed=song_data['time_played']
                 ))
+
+                # Add this timestamp to our tracking so we don't import duplicates within the same batch
+                existing_songs_timestamps[track_id].append(epoch_timestamp)
+                existing_exact_timestamps.add(timestamp_int)
             else:
                 log.warning(f"[{user_id}] Skipping listening history for non-existent song {track_id}")
 
@@ -269,7 +352,8 @@ def import_historical_data(songs_data, user_id, access_token):
                 if skipped_count > 0:
                     log.warning(f"[{user_id}] Skipped {skipped_count} listening history entries for non-existent songs")
 
-                models.ListeningHistory.objects.bulk_create(valid_history, ignore_conflicts=True)
+                # Don't use ignore_conflicts - we already checked for duplicates
+                models.ListeningHistory.objects.bulk_create(valid_history, ignore_conflicts=False)
                 total_history_entries += len(valid_history)
                 log.info(f"[{user_id}] Batch: Created {len(valid_history)} listening history entries")
 
@@ -308,10 +392,11 @@ def import_historical_data(songs_data, user_id, access_token):
                 'processed_songs': batch_start
             }
 
-    log.info(f"[{user_id}] Historical import completed successfully - Total: {total_artists_created} artists, {total_songs_created} songs, {total_history_entries} history entries")
+    log.info(f"[{user_id}] Historical import completed successfully - Total: {total_artists_created} artists, {total_songs_created} songs, {total_history_entries} history entries, {total_duplicates_skipped} duplicates skipped")
     return {
         'success': True,
         'artists_created': total_artists_created,
         'songs_created': total_songs_created,
-        'history_entries': total_history_entries
+        'history_entries': total_history_entries,
+        'duplicates_skipped': total_duplicates_skipped
     }
