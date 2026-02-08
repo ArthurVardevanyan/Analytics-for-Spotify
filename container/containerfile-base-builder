@@ -1,0 +1,9 @@
+# Base Builder Image - For compiling Python packages
+# renovate: datasource=docker depName=debian
+FROM debian:sid-20260202-slim@sha256:a4ae8eb0a58728b7e2800e645fadd46e81377ffc1e04f3c13d61b38385c8ac39
+
+# Install build dependencies
+RUN apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y && \
+	apt-get install -y python3 python3-pip gcc pkg-config --no-install-recommends --allow-downgrades && \
+	apt-get autoremove -y && apt-get clean && \
+	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

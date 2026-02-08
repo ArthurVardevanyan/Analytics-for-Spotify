@@ -1,24 +1,29 @@
 # WIP, TESTING ONLY, DO NOT DEPLOY
 
-# Base OS & Dependencies
-FROM registry.arthurvardevanyan.com/apps/analytics-for-spotify:base
+# ============================================
+# Stage 1: Builder - Install Python packages
+# ============================================
+FROM registry.arthurvardevanyan.com/apps/analytics-for-spotify:base-builder AS builder
+
+COPY requirements.txt /tmp/requirements.txt
+RUN python3 -m pip install --no-cache-dir --break-system-packages \
+	--prefix=/opt/python-packages \
+	-r /tmp/requirements.txt
+
+# ============================================
+# Stage 2: Runtime - Minimal final image
+# ============================================
+FROM registry.arthurvardevanyan.com/apps/analytics-for-spotify:base-runtime
 
 ARG quay_expiration=90d
 LABEL quay.expires-after=${quay_expiration}
 
+# Copy Python packages from builder (copies lib/ which contains pythonX.X/site-packages)
+COPY --from=builder /opt/python-packages/local/lib /usr/local/lib
+
 # Setup Analytics For Spotify
 COPY . /home/www/analytics-for-spotify/
 RUN chown -R 65534:65534 /home/www/analytics-for-spotify/
-
-RUN cd /home/www/analytics-for-spotify/ && \
-	python3 -m pip install --no-cache-dir --break-system-packages -r requirements.txt && \
-	python3 -m pip uninstall --break-system-packages -y pip setuptools wheel
-
-# Remove build dependencies not needed at runtime
-RUN apt-get purge -y gcc pkg-config && \
-	apt-get autoremove -y && \
-	apt-get clean && \
-	rm -rf /var/lib/apt/lists/* /root/.cache
 
 # Entry Point
 USER 65534

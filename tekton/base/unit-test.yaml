@@ -49,7 +49,7 @@ spec:
           mountPath: "/var/run/postgresql"
   steps:
     - name: unit-test
-      image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base"
+      image: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base-builder"
       resources:
         requests:
           memory: 192Mi
@@ -99,7 +99,7 @@ spec:
         retry() {
           local MAX_TRIES
           local DELAY=0
-          local ADD_DELAY=60
+          local ADD_DELAY=30
           MAX_TRIES="${1}"
 
           shift 1
@@ -125,13 +125,10 @@ spec:
 
         python3 -m pip install -r requirements.txt --break-system-packages
 
-        python3 -m venv .venv && \
-        source .venv/bin/activate && \
-        python3 -m pip install -r requirements.txt
-
         test() {
-          coverage run --source='./monitoringBackend,./webBackend'  manage.py test
-          coverage report -m
+          python3 manage.py test
+          # coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+          # coverage report -m
         }
         retry 5 test
   volumes:

@@ -2,11 +2,11 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  name: base-image
+  name: base-image-builder
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "1"
     pipelinesascode.tekton.dev/on-cel-expression: |
-      (target_branch == "main") && "container/***".pathChanged()
+      (target_branch == "main") && "container/containerfile-base-builder".pathChanged()
     # event == "pull_request" &&
     pipelinesascode.tekton.dev/target-namespace: "analytics-for-spotify-ci"
     pipelinesascode.tekton.dev/task-1: "https://raw.githubusercontent.com/ArthurVardevanyan/HomeLab/main/tekton/tasks/git-clone/0.9.1/git-clone.yaml"
@@ -19,9 +19,9 @@ spec:
     - name: git-commit
       value: "{{ revision }}"
     - name: DOCKERFILE
-      value: "./container/containerfile"
+      value: "./container/containerfile-base-builder"
     - name: IMAGE
-      value: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base"
+      value: "registry.arthurvardevanyan.com/apps/analytics-for-spotify:base-builder"
   pipelineSpec:
     params:
       - name: git-url
