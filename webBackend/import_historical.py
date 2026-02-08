@@ -35,16 +35,24 @@ def analyze_historical_data(zip_file, user_id):
     # Get user's existing listening history (song + timestamp) to avoid duplicates
     # We'll check for duplicates using a sliding window approach
     user_obj = models.Users.objects.get(user=str(user_id))
+
+    # Fetch existing history and convert timestamps to epoch for comparison
     existing_history = list(
         models.ListeningHistory.objects.filter(user=user_obj)
         .values_list('songID_id', 'timestamp')
     )
 
-    # Create a dict mapping song_id -> list of timestamps for faster lookup
-    from collections import defaultdict
+    # Create a dict mapping song_id -> list of epoch timestamps for faster lookup
     existing_songs_timestamps = defaultdict(list)
-    for song_id, timestamp in existing_history:
-        existing_songs_timestamps[song_id].append(timestamp)
+    for song_id, timestamp_str in existing_history:
+        # Convert timestamp string (20260207020317) to epoch
+        try:
+            dt = datetime.strptime(str(timestamp_str), '%Y%m%d%H%M%S')
+            epoch = int(dt.timestamp())
+            existing_songs_timestamps[song_id].append(epoch)
+        except (ValueError, AttributeError):
+            # Skip invalid timestamps
+            continue
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Extract zip file
