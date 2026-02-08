@@ -48,6 +48,8 @@ def analyze_historical_data(zip_file, user_id):
 
     # Create a dict mapping song_id -> list of epoch timestamps for faster lookup
     existing_songs_timestamps = defaultdict(list)
+    # Create a dict mapping epoch timestamp -> track_id for sequential context checking
+    db_timestamp_to_track = {}
     # Also track ALL exact timestamps (DB has unique constraint on timestamp+user, not timestamp+user+song)
     existing_exact_timestamps = set()
     for song_id, timestamp_str in existing_history:
@@ -60,12 +62,12 @@ def analyze_historical_data(zip_file, user_id):
             dt = dt.replace(tzinfo=timezone.utc)
             epoch = int(dt.timestamp())
             existing_songs_timestamps[song_id].append(epoch)
+            db_timestamp_to_track[epoch] = song_id
             # Track exact timestamp to avoid unique constraint violations
             existing_exact_timestamps.add(int(timestamp_str))
         except (ValueError, AttributeError):
             # Skip invalid timestamps
             continue
-
     # Debug: Log how many existing entries we loaded
     total_existing = sum(len(timestamps) for timestamps in existing_songs_timestamps.values())
     print(f"DEBUG: Loaded {total_existing} existing listening history entries for {len(existing_songs_timestamps)} unique songs")
@@ -148,45 +150,36 @@ def analyze_historical_data(zip_file, user_id):
                                     continue
 
                                 # Third check: sequential context (prev/next song in listening session)
-                                # If the song before or after this entry exists in DB around the same time,
-                                # it suggests the session was captured by runtime monitoring
+                                # Check if songs adjacent in the import data match songs in the DB around this timestamp
+                                # This catches sessions already captured by runtime monitoring
                                 is_sequential_duplicate = False
 
-                                # Check previous song in dump
+                                # Get prev/next track IDs from import data
+                                prev_import_track_id = None
+                                next_import_track_id = None
+
                                 if entry_idx > 0:
                                     prev_entry = data[entry_idx - 1]
                                     prev_track_uri = prev_entry.get('spotify_track_uri', '')
                                     if prev_track_uri and prev_track_uri.startswith('spotify:track:'):
-                                        prev_track_id = prev_track_uri.replace('spotify:track:', '')
-                                        prev_ts = prev_entry.get('ts', '')
-                                        if prev_ts:
-                                            prev_dt = datetime.strptime(prev_ts, '%Y-%m-%dT%H:%M:%SZ')
-                                            prev_dt = prev_dt.replace(tzinfo=timezone.utc)
-                                            prev_epoch = int(prev_dt.timestamp())
-                                            # Check if prev song exists in DB within 15 minutes of current entry
-                                            if prev_track_id in existing_songs_timestamps:
-                                                for db_epoch in existing_songs_timestamps[prev_track_id]:
-                                                    if abs(epoch_timestamp - db_epoch) <= 900:  # 15 minutes
-                                                        is_sequential_duplicate = True
-                                                        break
+                                        prev_import_track_id = prev_track_uri.replace('spotify:track:', '')
 
-                                # Check next song in dump
-                                if not is_sequential_duplicate and entry_idx < len(data) - 1:
+                                if entry_idx < len(data) - 1:
                                     next_entry = data[entry_idx + 1]
                                     next_track_uri = next_entry.get('spotify_track_uri', '')
                                     if next_track_uri and next_track_uri.startswith('spotify:track:'):
-                                        next_track_id = next_track_uri.replace('spotify:track:', '')
-                                        next_ts = next_entry.get('ts', '')
-                                        if next_ts:
-                                            next_dt = datetime.strptime(next_ts, '%Y-%m-%dT%H:%M:%SZ')
-                                            next_dt = next_dt.replace(tzinfo=timezone.utc)
-                                            next_epoch = int(next_dt.timestamp())
-                                            # Check if next song exists in DB within 15 minutes of current entry
-                                            if next_track_id in existing_songs_timestamps:
-                                                for db_epoch in existing_songs_timestamps[next_track_id]:
-                                                    if abs(epoch_timestamp - db_epoch) <= 900:  # 15 minutes
-                                                        is_sequential_duplicate = True
-                                                        break
+                                        next_import_track_id = next_track_uri.replace('spotify:track:', '')
+
+                                # Now check if any songs in the DB within 15 minutes match these
+                                if prev_import_track_id or next_import_track_id:
+                                    # Look through all DB entries to find songs near this timestamp
+                                    for db_epoch, db_track_id in db_timestamp_to_track.items():
+                                        time_diff = abs(epoch_timestamp - db_epoch)
+                                        if time_diff <= 900:  # Within 15 minutes
+                                            # Check if this DB entry matches prev or next from import
+                                            if db_track_id == prev_import_track_id or db_track_id == next_import_track_id:
+                                                is_sequential_duplicate = True
+                                                break
 
                                 if is_sequential_duplicate:
                                     stats['sequential_duplicates'] += 1
