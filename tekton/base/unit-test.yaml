@@ -123,6 +123,8 @@ spec:
         cd $(workspaces.data.path)
 
         python3 -m pip install -r requirements.txt --break-system-packages
+        # Install coverage only for CI
+        python3 -m pip install coverage --break-system-packages
 
         # Wait for PostgreSQL to be ready
         echo "Checking database connection..."
@@ -136,9 +138,8 @@ spec:
         done
 
         test() {
-          python3 manage.py test
-          # coverage run --source='./monitoringBackend,./webBackend'  manage.py test
-          # coverage report -m
+          python3 -m coverage run --source='./monitoringBackend,./webBackend'  manage.py test
+          python3 -m coverage report -m
         }
         retry 5 test
   volumes:
