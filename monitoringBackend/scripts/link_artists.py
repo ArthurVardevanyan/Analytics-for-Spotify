@@ -57,7 +57,7 @@ def get_track_info(access_token: str, track_id: str):
                 log.error(f"Retry after: {retry_seconds} seconds ({retry_hours:.2f} hours)")
             else:
                 log.error(f"Rate limited (429) for track {track_id}. Retry after: {retry_after}")
-            
+
             log.error(f"Response headers: {dict(response.headers)}")
             try:
                 log.error(f"Response body: {response.json()}")

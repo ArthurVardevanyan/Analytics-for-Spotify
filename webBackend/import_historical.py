@@ -130,15 +130,15 @@ def analyze_historical_data(zip_file, user_id):
                                     stats['already_exists'] += 1
                                     continue
 
-                                # Second check: 60-second sliding window for same song
-                                # Use a fixed 60-second window to detect duplicate entries
-                                # This accounts for minor timestamp variations while avoiding false positives
+                                # Second check: 5-minute sliding window for same song
+                                # Use a fixed 5-minute (300 second) window to detect duplicate entries
+                                # This accounts for timestamp variations between runtime and historical data
                                 is_duplicate = False
                                 if track_id in existing_songs_timestamps:
                                     for existing_timestamp in existing_songs_timestamps[track_id]:
                                         time_diff = abs(epoch_timestamp - existing_timestamp)
-                                        # 60-second window catches duplicates from same play event
-                                        if time_diff <= 60:
+                                        # 5-minute window catches duplicates from same play event
+                                        if time_diff <= 300:
                                             is_duplicate = True
                                             break
 
@@ -283,8 +283,8 @@ def import_historical_data(songs_data, user_id, access_token):
                 if track_id in existing_songs_timestamps:
                     for existing_timestamp in existing_songs_timestamps[track_id]:
                         time_diff = abs(epoch_timestamp - existing_timestamp)
-                        # 60-second window catches duplicates from same play event
-                        if time_diff <= 60:
+                        # 5-minute window catches duplicates from same play event
+                        if time_diff <= 300:
                             is_duplicate = True
                             total_duplicates_skipped += 1
                             break
