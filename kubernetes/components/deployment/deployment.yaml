@@ -195,11 +195,16 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: "/tmp"
+            - name: run
+              mountPath: "/run"
       #       - name: certs
       #         mountPath: "/home/root/cert"
       #         readOnly: true
       volumes:
         - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: run
           emptyDir:
             sizeLimit: 1Gi
       #   - name: certs
