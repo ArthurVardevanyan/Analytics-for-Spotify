@@ -39,6 +39,7 @@ SESSION_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'https://analytics-for-spotify.arthurvardevanyan.com',
     'https://spotify.arthurvardevanyan.com',
+    'http://127.0.0.1:8080',
 ]
 
 ROOT_URLCONF = 'AnalyticsForSpotify.urls'

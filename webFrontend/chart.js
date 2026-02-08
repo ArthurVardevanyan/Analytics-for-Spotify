@@ -143,7 +143,10 @@ function analyzeImport() {
 
       // Build year breakdown string
       let yearBreakdown = "";
-      if (data.years_breakdown && Object.keys(data.years_breakdown).length > 0) {
+      if (
+        data.years_breakdown &&
+        Object.keys(data.years_breakdown).length > 0
+      ) {
         yearBreakdown = "\n\nBreakdown by year:\n";
         for (const [year, count] of Object.entries(data.years_breakdown)) {
           yearBreakdown += `  ${year}: ${count.toLocaleString()} songs\n`;
@@ -178,7 +181,10 @@ function analyzeImport() {
 function executeImport() {
   // Show progress indicator
   document.getElementById("importProgress").innerHTML =
-    "<p>Importing data... This may take several minutes. Please do not close this page.</p>";
+    "<p>Importing data... This will take a very long time.</p>" +
+    "<p><strong>You can safely close this page.</strong> The import will continue processing in the background, " +
+    "and progress is saved every 1,000 songs. Your data will be available when the import completes.</p>" +
+    "<p><em>Note: Artist data will be populated automatically during nightly background scanning or the next time each song is played.</em></p>";
   document.getElementById("importProgress").style.display = "block";
 
   $.ajax({

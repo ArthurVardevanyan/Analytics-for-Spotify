@@ -888,7 +888,7 @@ def executeHistoricalImport(request: requests.request):
         if not user:
             return JsonResponse({'error': 'User not found'}, status=404)
 
-        access_token = credentials.refresh_token(user.refreshToken)
+        access_token = credentials.refresh_token(spotifyID)
 
         # Perform the import
         result = import_historical_data(songs_data, spotifyID, access_token)

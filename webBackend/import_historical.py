@@ -22,6 +22,8 @@ def analyze_historical_data(zip_file, user_id):
     Returns:
         dict: Statistics about what will be imported
     """
+    log.info(f"Starting historical data analysis for user {user_id}")
+
     stats = {
         'total': 0,
         'to_add': 0,
@@ -89,13 +91,16 @@ def analyze_historical_data(zip_file, user_id):
                                     stats['skipped_duration'] += 1
                                     continue
 
-                                # Convert timestamp to epoch
+                                # Convert timestamp to both formats
                                 ts = entry.get('ts')
                                 if not ts:
                                     continue
 
                                 dt = datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
                                 epoch_timestamp = int(dt.timestamp())
+                                # Format for database: timestamp as YYYYMMDDHHmmss, timePlayed as YYYY-MM-DD HH:MM:SS
+                                timestamp_db = int(dt.strftime('%Y%m%d%H%M%S'))
+                                timeplayed_db = dt.strftime('%Y-%m-%d %H:%M:%S')
 
                                 # Get track ID
                                 track_uri = entry.get('spotify_track_uri', '')
@@ -122,7 +127,7 @@ def analyze_historical_data(zip_file, user_id):
 
                                 # Valid song to import
                                 stats['to_add'] += 1
-                                
+
                                 # Track year breakdown
                                 year = dt.year
                                 stats['years_breakdown'][year] += 1
@@ -134,21 +139,23 @@ def analyze_historical_data(zip_file, user_id):
                                         'track_name': entry.get('master_metadata_track_name', ''),
                                         'artist_name': entry.get('master_metadata_album_artist_name', ''),
                                         'album_name': entry.get('master_metadata_album_album_name', ''),
-                                        'timestamp': epoch_timestamp,
-                                        'time_played': ts,
+                                        'timestamp': timestamp_db,
+                                        'time_played': timeplayed_db,
                                         'ms_played': ms_played
                                     })
 
                         except json.JSONDecodeError:
-                            log.error(f"Failed to parse JSON file: {filename}")
+                            log.error(f"[{user_id}] Failed to parse JSON file: {filename}")
                             continue
 
+    log.info(f"Analysis complete for user {user_id}: {stats['to_add']} songs to import, {stats['already_exists']} duplicates skipped")
     return stats
 
 
 def import_historical_data(songs_data, user_id, access_token):
     """
     Actually import the historical data into the database.
+    Commits to DB every 1000 songs for resumability.
 
     Parameters:
         songs_data (list): List of song data dictionaries
@@ -158,127 +165,153 @@ def import_historical_data(songs_data, user_id, access_token):
     Returns:
         dict: Import results
     """
+    log.info(f"Starting historical data import for user {user_id} - {len(songs_data)} songs to process")
+
     user_obj = models.Users.objects.get(user=str(user_id))
 
-    # Batch process for efficiency
-    songs_to_create = []
-    artists_to_create = []
-    listening_history_to_create = []
-    play_counts = defaultdict(int)
+    BATCH_SIZE = 1000
 
-    # Track unique artists and songs
-    processed_songs = set()
-    processed_artists = set()
+    # Track totals across all batches
+    total_artists_created = 0
+    total_songs_created = 0
+    total_history_entries = 0
 
-    # Get existing songs and artists from DB
+    # Get existing songs and artists from DB (will refresh after each batch)
     existing_song_ids = set(models.Songs.objects.values_list('id', flat=True))
     existing_artist_ids = set(models.Artists.objects.values_list('id', flat=True))
 
-    for i, song_data in enumerate(songs_data):
-        track_id = song_data['track_id']
+    # Cache track info to avoid duplicate API calls
+    track_info_cache = {}
 
-        # Fetch full track info from Spotify API if not in DB
-        if track_id not in existing_song_ids and track_id not in processed_songs:
-            try:
-                track_info = spotify_api.get_track_info(access_token, track_id)
+    for batch_start in range(0, len(songs_data), BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, len(songs_data))
+        batch = songs_data[batch_start:batch_end]
 
-                if track_info:
-                    # Create song object
-                    songs_to_create.append(models.Songs(
-                        id=track_id,
-                        name=track_info.get('name', song_data['track_name']),
-                        trackLength=track_info.get('duration_ms', song_data['ms_played'])
-                    ))
-                    processed_songs.add(track_id)
+        log.info(f"[{user_id}] Processing batch {batch_start//BATCH_SIZE + 1} (songs {batch_start + 1}-{batch_end} of {len(songs_data)})")
 
-                    # Process artists
-                    for artist in track_info.get('artists', []):
-                        artist_id = artist.get('id')
-                        artist_name = artist.get('name')
+        # Batch-specific collections
+        songs_to_create = []
+        artists_to_create = []
+        listening_history_to_create = []
+        play_counts = defaultdict(int)
 
-                        if artist_id and artist_id not in existing_artist_ids and artist_id not in processed_artists:
-                            artists_to_create.append(models.Artists(
-                                id=artist_id,
-                                name=artist_name
-                            ))
-                            processed_artists.add(artist_id)
-                            existing_artist_ids.add(artist_id)
+        # Track what we've processed in this batch
+        processed_songs = set()
+        processed_artists = set()
 
-            except Exception as e:
-                log.error(f"Failed to fetch track info for {track_id}: {e}")
-                continue
+        for i, song_data in enumerate(batch):
+            track_id = song_data['track_id']
 
-        # Count plays for this song
-        play_counts[track_id] += 1
+            # Create new songs using data from import file (no API call needed)
+            if track_id not in existing_song_ids and track_id not in processed_songs:
+                # Create song object using import data
+                songs_to_create.append(models.Songs(
+                    id=track_id,
+                    name=song_data['track_name'],
+                    trackLength=song_data['ms_played']
+                ))
+                processed_songs.add(track_id)
 
-        # Add to listening history
-        listening_history_to_create.append(models.ListeningHistory(
-            user=user_obj,
-            songID_id=track_id,
-            timestamp=song_data['timestamp'],
-            timePlayed=song_data['time_played']
-        ))
+            # Only add listening history if song exists or was just created
+            if track_id in existing_song_ids or track_id in processed_songs:
+                # Count plays for this song
+                play_counts[track_id] += 1
 
-        # Log progress every 100 songs
-        if (i + 1) % 100 == 0:
-            log.info(f"Processed {i + 1}/{len(songs_data)} songs")
-
-    # Bulk create in database
-    try:
-        if artists_to_create:
-            models.Artists.objects.bulk_create(artists_to_create, ignore_conflicts=True)
-            log.info(f"Created {len(artists_to_create)} artists")
-
-        if songs_to_create:
-            models.Songs.objects.bulk_create(songs_to_create, ignore_conflicts=True)
-            log.info(f"Created {len(songs_to_create)} songs")
-
-            # Link artists to songs
-            for song in songs_to_create:
-                try:
-                    track_info = spotify_api.get_track_info(access_token, song.id)
-                    if track_info:
-                        song_obj = models.Songs.objects.get(id=song.id)
-                        for artist in track_info.get('artists', []):
-                            artist_obj = models.Artists.objects.get(id=artist['id'])
-                            song_obj.artists.add(artist_obj)
-                except Exception as e:
-                    log.error(f"Failed to link artists for song {song.id}: {e}")
-
-        if listening_history_to_create:
-            models.ListeningHistory.objects.bulk_create(listening_history_to_create, ignore_conflicts=True)
-            log.info(f"Created {len(listening_history_to_create)} listening history entries")
-
-        # Update play counts
-        play_count_objects = []
-        for song_id, count in play_counts.items():
-            try:
-                song_obj = models.Songs.objects.get(id=song_id)
-                play_count, created = models.PlayCount.objects.get_or_create(
+                # Add to listening history
+                listening_history_to_create.append(models.ListeningHistory(
                     user=user_obj,
-                    songID=song_obj,
-                    defaults={'playCount': 0}
-                )
-                play_count.playCount = str(int(play_count.playCount) + count)
-                play_count_objects.append(play_count)
-            except models.Songs.DoesNotExist:
-                log.error(f"Song {song_id} not found in database")
-                continue
+                    songID_id=track_id,
+                    timestamp=song_data['timestamp'],
+                    timePlayed=song_data['time_played']
+                ))
+            else:
+                log.warning(f"[{user_id}] Skipping listening history for non-existent song {track_id}")
 
-        if play_count_objects:
-            models.PlayCount.objects.bulk_update(play_count_objects, ['playCount'])
-            log.info(f"Updated {len(play_count_objects)} play counts")
+        # Commit this batch to database
+        try:
+            if artists_to_create:
+                models.Artists.objects.bulk_create(artists_to_create, ignore_conflicts=True)
+                total_artists_created += len(artists_to_create)
+                log.info(f"[{user_id}] Batch: Created {len(artists_to_create)} new artists")
 
-        return {
-            'success': True,
-            'artists_created': len(artists_to_create),
-            'songs_created': len(songs_to_create),
-            'history_entries': len(listening_history_to_create)
-        }
+            if songs_to_create:
+                models.Songs.objects.bulk_create(songs_to_create, ignore_conflicts=True)
+                total_songs_created += len(songs_to_create)
+                log.info(f"[{user_id}] Batch: Created {len(songs_to_create)} new songs")
 
-    except Exception as e:
-        log.exception("Error during bulk import")
-        return {
-            'success': False,
-            'error': 'An internal error occurred during historical import. Please try again later.'
-        }
+                # Refresh existing_song_ids to include songs we just created
+                # (in case ignore_conflicts skipped some, we need to know which songs actually exist)
+                existing_song_ids = set(models.Songs.objects.values_list('id', flat=True))
+
+                # Link artists to songs using cached track info
+                for song in songs_to_create:
+                    try:
+                        track_info = track_info_cache.get(song.id)
+                        if track_info:
+                            song_obj = models.Songs.objects.get(id=song.id)
+                            for artist in track_info.get('artists', []):
+                                try:
+                                    artist_obj = models.Artists.objects.get(id=artist['id'])
+                                    song_obj.artists.add(artist_obj)
+                                except models.Artists.DoesNotExist:
+                                    log.error(f"[{user_id}] Artist {artist['id']} not found for song {song.id}")
+                    except Exception as e:
+                        log.error(f"[{user_id}] Failed to link artists for song {song.id}: {e}")
+
+            if listening_history_to_create:
+                # Filter to only include listening history for songs that actually exist
+                # (in case some songs failed to create due to conflicts or other issues)
+                valid_history = [
+                    lh for lh in listening_history_to_create
+                    if lh.songID_id in existing_song_ids
+                ]
+                skipped_count = len(listening_history_to_create) - len(valid_history)
+                if skipped_count > 0:
+                    log.warning(f"[{user_id}] Skipped {skipped_count} listening history entries for non-existent songs")
+
+                models.ListeningHistory.objects.bulk_create(valid_history, ignore_conflicts=True)
+                total_history_entries += len(valid_history)
+                log.info(f"[{user_id}] Batch: Created {len(valid_history)} listening history entries")
+
+            # Update play counts for this batch
+            play_count_objects = []
+            for song_id, count in play_counts.items():
+                try:
+                    song_obj = models.Songs.objects.get(id=song_id)
+                    play_count, created = models.PlayCount.objects.get_or_create(
+                        user=user_obj,
+                        songID=song_obj,
+                        defaults={'playCount': '0'}
+                    )
+                    play_count.playCount = str(int(play_count.playCount) + count)
+                    play_count_objects.append(play_count)
+                except models.Songs.DoesNotExist:
+                    log.error(f"[{user_id}] Song {song_id} not found in database")
+                    continue
+
+            if play_count_objects:
+                models.PlayCount.objects.bulk_update(play_count_objects, ['playCount'])
+                log.info(f"[{user_id}] Batch: Updated {len(play_count_objects)} play counts")
+
+            # Refresh existing IDs for next batch
+            existing_song_ids.update(processed_songs)
+            existing_artist_ids.update(processed_artists)
+
+            log.info(f"[{user_id}] Batch {batch_start//BATCH_SIZE + 1} committed successfully")
+
+        except Exception as e:
+            log.exception(f"[{user_id}] Error during batch {batch_start//BATCH_SIZE + 1} import")
+            return {
+                'success': False,
+                'error': 'An internal error occurred during historical import. Please try again later.',
+                'partial_import': True,
+                'processed_songs': batch_start
+            }
+
+    log.info(f"[{user_id}] Historical import completed successfully - Total: {total_artists_created} artists, {total_songs_created} songs, {total_history_entries} history entries")
+    return {
+        'success': True,
+        'artists_created': total_artists_created,
+        'songs_created': total_songs_created,
+        'history_entries': total_history_entries
+    }
