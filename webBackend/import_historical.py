@@ -31,6 +31,7 @@ def analyze_historical_data(zip_file, user_id):
         'skipped_flag': 0,
         'skipped_incognito': 0,
         'already_exists': 0,
+        'sequential_duplicates': 0,
         'years_breakdown': defaultdict(int),
         'songs_data': []  # Store for later import
     }
@@ -84,7 +85,7 @@ def analyze_historical_data(zip_file, user_id):
                         try:
                             data = json.load(f)
 
-                            for entry in data:
+                            for entry_idx, entry in enumerate(data):
                                 stats['total'] += 1
 
                                 # Skip if skipped flag is true
@@ -144,6 +145,51 @@ def analyze_historical_data(zip_file, user_id):
 
                                 if is_duplicate:
                                     stats['already_exists'] += 1
+                                    continue
+
+                                # Third check: sequential context (prev/next song in listening session)
+                                # If the song before or after this entry exists in DB around the same time,
+                                # it suggests the session was captured by runtime monitoring
+                                is_sequential_duplicate = False
+
+                                # Check previous song in dump
+                                if entry_idx > 0:
+                                    prev_entry = data[entry_idx - 1]
+                                    prev_track_uri = prev_entry.get('spotify_track_uri', '')
+                                    if prev_track_uri and prev_track_uri.startswith('spotify:track:'):
+                                        prev_track_id = prev_track_uri.replace('spotify:track:', '')
+                                        prev_ts = prev_entry.get('ts', '')
+                                        if prev_ts:
+                                            prev_dt = datetime.strptime(prev_ts, '%Y-%m-%dT%H:%M:%SZ')
+                                            prev_dt = prev_dt.replace(tzinfo=timezone.utc)
+                                            prev_epoch = int(prev_dt.timestamp())
+                                            # Check if prev song exists in DB within 15 minutes of current entry
+                                            if prev_track_id in existing_songs_timestamps:
+                                                for db_epoch in existing_songs_timestamps[prev_track_id]:
+                                                    if abs(epoch_timestamp - db_epoch) <= 900:  # 15 minutes
+                                                        is_sequential_duplicate = True
+                                                        break
+
+                                # Check next song in dump
+                                if not is_sequential_duplicate and entry_idx < len(data) - 1:
+                                    next_entry = data[entry_idx + 1]
+                                    next_track_uri = next_entry.get('spotify_track_uri', '')
+                                    if next_track_uri and next_track_uri.startswith('spotify:track:'):
+                                        next_track_id = next_track_uri.replace('spotify:track:', '')
+                                        next_ts = next_entry.get('ts', '')
+                                        if next_ts:
+                                            next_dt = datetime.strptime(next_ts, '%Y-%m-%dT%H:%M:%SZ')
+                                            next_dt = next_dt.replace(tzinfo=timezone.utc)
+                                            next_epoch = int(next_dt.timestamp())
+                                            # Check if next song exists in DB within 15 minutes of current entry
+                                            if next_track_id in existing_songs_timestamps:
+                                                for db_epoch in existing_songs_timestamps[next_track_id]:
+                                                    if abs(epoch_timestamp - db_epoch) <= 900:  # 15 minutes
+                                                        is_sequential_duplicate = True
+                                                        break
+
+                                if is_sequential_duplicate:
+                                    stats['sequential_duplicates'] += 1
                                     continue
 
                                 # Valid song to import
