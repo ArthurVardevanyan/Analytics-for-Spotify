@@ -120,10 +120,20 @@ spec:
 
 
         echo "Waiting for Database to Start"
-        #sleep 15
         cd $(workspaces.data.path)
 
         python3 -m pip install -r requirements.txt --break-system-packages
+
+        # Wait for PostgreSQL to be ready
+        echo "Checking database connection..."
+        for i in {1..30}; do
+          if python3 -c "import psycopg; psycopg.connect('host=127.0.0.1 dbname=spotify user=spotify password=spotify')" 2>/dev/null; then
+            echo "Database is ready!"
+            break
+          fi
+          echo "Attempt $i: Database not ready yet, waiting..."
+          sleep 2
+        done
 
         test() {
           python3 manage.py test
