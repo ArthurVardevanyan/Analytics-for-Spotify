@@ -29,6 +29,7 @@ def analyze_historical_data(zip_file, user_id):
         'skipped_flag': 0,
         'skipped_incognito': 0,
         'already_exists': 0,
+        'years_breakdown': defaultdict(int),
         'songs_data': []  # Store for later import
     }
 
@@ -121,6 +122,10 @@ def analyze_historical_data(zip_file, user_id):
 
                                 # Valid song to import
                                 stats['to_add'] += 1
+                                
+                                # Track year breakdown
+                                year = dt.year
+                                stats['years_breakdown'][year] += 1
 
                                 # Store data for later import
                                 if track_id:
@@ -275,5 +280,5 @@ def import_historical_data(songs_data, user_id, access_token):
         log.exception("Error during bulk import")
         return {
             'success': False,
-            'error': str(e)
+            'error': 'An internal error occurred during historical import. Please try again later.'
         }

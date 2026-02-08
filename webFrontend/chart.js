@@ -141,6 +141,15 @@ function analyzeImport() {
       // Hide progress indicator
       document.getElementById("importProgress").style.display = "none";
 
+      // Build year breakdown string
+      let yearBreakdown = "";
+      if (data.years_breakdown && Object.keys(data.years_breakdown).length > 0) {
+        yearBreakdown = "\n\nBreakdown by year:\n";
+        for (const [year, count] of Object.entries(data.years_breakdown)) {
+          yearBreakdown += `  ${year}: ${count.toLocaleString()} songs\n`;
+        }
+      }
+
       // Show confirmation dialog with statistics
       const message =
         `Import Analysis Complete!\n\n` +
@@ -149,8 +158,9 @@ function analyzeImport() {
         `Skipped (already in database): ${data.already_exists.toLocaleString()}\n` +
         `Skipped (less than 30 seconds): ${data.skipped_duration.toLocaleString()}\n` +
         `Skipped (marked as skipped): ${data.skipped_flag.toLocaleString()}\n` +
-        `Skipped (incognito mode): ${data.skipped_incognito.toLocaleString()}\n\n` +
-        `Do you want to proceed with importing ${data.to_add.toLocaleString()} songs?\n` +
+        `Skipped (incognito mode): ${data.skipped_incognito.toLocaleString()}` +
+        yearBreakdown +
+        `\n\nDo you want to proceed with importing ${data.to_add.toLocaleString()} songs?\n` +
         `This may take several minutes.`;
 
       if (confirm(message)) {

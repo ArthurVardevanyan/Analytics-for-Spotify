@@ -850,11 +850,12 @@ def analyzeHistoricalImport(request: requests.request):
             'skipped_duration': stats['skipped_duration'],
             'skipped_flag': stats['skipped_flag'],
             'skipped_incognito': stats['skipped_incognito'],
-            'already_exists': stats['already_exists']
+            'already_exists': stats['already_exists'],
+            'years_breakdown': dict(sorted(stats['years_breakdown'].items()))
         })
     except Exception as e:
         log.exception("Error analyzing historical import")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'An internal error occurred while analyzing the file. Please try again later.'}, status=500)
 
 
 def executeHistoricalImport(request: requests.request):
@@ -904,8 +905,8 @@ def executeHistoricalImport(request: requests.request):
                 'history_entries': result['history_entries']
             })
         else:
-            return JsonResponse({'error': result.get('error', 'Unknown error')}, status=500)
+            return JsonResponse({'error': 'Failed to import historical data. Please try again later.'}, status=500)
 
     except Exception as e:
         log.exception("Error executing historical import")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'An internal error occurred while importing your data. Please try again later.'}, status=500)
