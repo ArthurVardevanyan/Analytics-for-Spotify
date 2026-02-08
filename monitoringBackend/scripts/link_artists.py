@@ -111,6 +111,7 @@ def link_missing_artists():
     # Use first enabled user's token
     user = enabled_users.first()
     access_token = authorize(user.user)
+    last_token_refresh = time.time()
 
     # Process each song
     successful_links = 0
@@ -118,6 +119,12 @@ def link_missing_artists():
 
     for song_id in songs_without_artists:
         try:
+            # Refresh token every 45 minutes (3600s token lifetime - 15min buffer)
+            if time.time() - last_token_refresh > 2700:
+                log.info("Refreshing access token")
+                access_token = authorize(user.user)
+                last_token_refresh = time.time()
+
             # Fetch track info from Spotify API
             track_info = get_track_info(access_token, song_id)
 
