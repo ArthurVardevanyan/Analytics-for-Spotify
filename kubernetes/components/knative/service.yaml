@@ -75,10 +75,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 768Mi
+              memory: 1Gi
             requests:
               cpu: 35m
-              memory: 384Mi
+              memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -145,10 +145,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 768Mi
+              memory: 1Gi
             requests:
               cpu: 10m
-              memory: 384Mi
+              memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

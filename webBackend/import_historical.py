@@ -48,8 +48,9 @@ def analyze_historical_data(zip_file, user_id):
 
     # Create a dict mapping song_id -> list of epoch timestamps for faster lookup
     existing_songs_timestamps = defaultdict(list)
-    # Create a dict mapping epoch timestamp -> track_id for sequential context checking
-    db_timestamp_to_track = {}
+    # Create a time-bucketed dict for efficient sequential context checking
+    # Bucket by 15-minute intervals (900 seconds)
+    db_by_timebucket = defaultdict(list)  # bucket_id -> [(epoch, track_id)]
     # Also track ALL exact timestamps (DB has unique constraint on timestamp+user, not timestamp+user+song)
     existing_exact_timestamps = set()
     for song_id, timestamp_str in existing_history:
@@ -62,7 +63,9 @@ def analyze_historical_data(zip_file, user_id):
             dt = dt.replace(tzinfo=timezone.utc)
             epoch = int(dt.timestamp())
             existing_songs_timestamps[song_id].append(epoch)
-            db_timestamp_to_track[epoch] = song_id
+            # Add to time-bucketed structure for fast sequential lookups
+            bucket = epoch // 900  # 15-minute buckets
+            db_by_timebucket[bucket].append((epoch, song_id))
             # Track exact timestamp to avoid unique constraint violations
             existing_exact_timestamps.add(int(timestamp_str))
         except (ValueError, AttributeError):
@@ -150,8 +153,10 @@ def analyze_historical_data(zip_file, user_id):
                                     continue
 
                                 # Third check: sequential context (prev/next song in listening session)
+                                # ONLY runs on entries that passed exact timestamp and 7.5min window checks
                                 # Check if songs adjacent in the import data match songs in the DB around this timestamp
                                 # This catches sessions already captured by runtime monitoring
+                                # Uses time-bucketing for O(n) performance instead of O(n²)
                                 is_sequential_duplicate = False
 
                                 # Get prev/next track IDs from import data
@@ -170,16 +175,26 @@ def analyze_historical_data(zip_file, user_id):
                                     if next_track_uri and next_track_uri.startswith('spotify:track:'):
                                         next_import_track_id = next_track_uri.replace('spotify:track:', '')
 
-                                # Now check if any songs in the DB within 15 minutes match these
+                                # Use time-bucketed lookup for efficient sequential check
                                 if prev_import_track_id or next_import_track_id:
-                                    # Look through all DB entries to find songs near this timestamp
-                                    for db_epoch, db_track_id in db_timestamp_to_track.items():
-                                        time_diff = abs(epoch_timestamp - db_epoch)
-                                        if time_diff <= 900:  # Within 15 minutes
-                                            # Check if this DB entry matches prev or next from import
-                                            if db_track_id == prev_import_track_id or db_track_id == next_import_track_id:
-                                                is_sequential_duplicate = True
-                                                break
+                                    # Calculate which time buckets to check (current ±1 for 15-minute window)
+                                    current_bucket = epoch_timestamp // 900  # 900 seconds = 15 minutes
+                                    buckets_to_check = [current_bucket - 1, current_bucket, current_bucket + 1]
+
+                                    for bucket in buckets_to_check:
+                                        if bucket not in db_by_timebucket:
+                                            continue
+
+                                        for db_epoch, db_track_id in db_by_timebucket[bucket]:
+                                            time_diff = abs(epoch_timestamp - db_epoch)
+                                            if time_diff <= 900:  # Within 15 minutes
+                                                # Check if this DB entry matches prev or next from import
+                                                if db_track_id == prev_import_track_id or db_track_id == next_import_track_id:
+                                                    is_sequential_duplicate = True
+                                                    break
+
+                                        if is_sequential_duplicate:
+                                            break
 
                                 if is_sequential_duplicate:
                                     stats['sequential_duplicates'] += 1
@@ -362,23 +377,8 @@ def import_historical_data(songs_data, user_id, access_token):
                 log.info(f"[{user_id}] Batch: Created {len(songs_to_create)} new songs")
 
                 # Refresh existing_song_ids to include songs we just created
-                # (in case ignore_conflicts skipped some, we need to know which songs actually exist)
+                # This ensures we know which songs actually exist before creating listening history
                 existing_song_ids = set(models.Songs.objects.values_list('id', flat=True))
-
-                # Link artists to songs using cached track info
-                for song in songs_to_create:
-                    try:
-                        track_info = track_info_cache.get(song.id)
-                        if track_info:
-                            song_obj = models.Songs.objects.get(id=song.id)
-                            for artist in track_info.get('artists', []):
-                                try:
-                                    artist_obj = models.Artists.objects.get(id=artist['id'])
-                                    song_obj.artists.add(artist_obj)
-                                except models.Artists.DoesNotExist:
-                                    log.error(f"[{user_id}] Artist {artist['id']} not found for song {song.id}")
-                    except Exception as e:
-                        log.error(f"[{user_id}] Failed to link artists for song {song.id}: {e}")
 
             if listening_history_to_create:
                 # Filter to only include listening history for songs that actually exist
@@ -395,6 +395,22 @@ def import_historical_data(songs_data, user_id, access_token):
                 models.ListeningHistory.objects.bulk_create(valid_history, ignore_conflicts=False)
                 total_history_entries += len(valid_history)
                 log.info(f"[{user_id}] Batch: Created {len(valid_history)} listening history entries")
+
+            # Link artists to songs after listening history is created
+            if songs_to_create:
+                for song in songs_to_create:
+                    try:
+                        track_info = track_info_cache.get(song.id)
+                        if track_info:
+                            song_obj = models.Songs.objects.get(id=song.id)
+                            for artist in track_info.get('artists', []):
+                                try:
+                                    artist_obj = models.Artists.objects.get(id=artist['id'])
+                                    song_obj.artists.add(artist_obj)
+                                except models.Artists.DoesNotExist:
+                                    log.error(f"[{user_id}] Artist {artist['id']} not found for song {song.id}")
+                    except Exception as e:
+                        log.error(f"[{user_id}] Failed to link artists for song {song.id}: {e}")
 
             # Update play counts for this batch
             play_count_objects = []

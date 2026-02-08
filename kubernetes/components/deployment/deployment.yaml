@@ -53,10 +53,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 768Mi
+              memory: 1Gi
             requests:
               cpu: 10m
-              memory: 384Mi
+              memory: 512Mi
           command:
             - /bin/bash
             - "-c"
@@ -166,10 +166,10 @@ spec:
           resources:
             limits:
               cpu: 350m
-              memory: 768Mi
+              memory: 1Gi
             requests:
               cpu: 50m
-              memory: 384Mi
+              memory: 512Mi
           env:
             - name: LOG_LEVEL
               value: "INFO"
