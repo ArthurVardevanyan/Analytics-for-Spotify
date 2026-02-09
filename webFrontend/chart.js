@@ -49,16 +49,22 @@ function start() {
 }
 
 function stop() {
-  $.ajax({
-    url: "/analytics/stop/",
-    method: "POST",
-    headers: {
-      "X-CSRFToken": CSRF_TOKEN,
-    },
-    success() {
-      window.location.href = "/spotify/analytics.html";
-    },
-  });
+  if (
+    confirm(
+      "Are you sure you want to stop the service? This will pause tracking your listening history.",
+    )
+  ) {
+    $.ajax({
+      url: "/analytics/stop/",
+      method: "POST",
+      headers: {
+        "X-CSRFToken": CSRF_TOKEN,
+      },
+      success() {
+        window.location.href = "/spotify/analytics.html";
+      },
+    });
+  }
 }
 
 function deleteUser() {
@@ -241,18 +247,18 @@ window.onload = function () {
       data = data.split(":");
       if (data[0] === "1") {
         document.getElementById("status").innerHTML =
-          "<h3 style='margin: 0px; color:green'>Service is Running</h3>";
+          "<h3 style='margin: 0px; color:#1DB954'>Service is Running</h3>";
       } else if (data[1] === "1") {
         document.getElementById("status").innerHTML =
-          "<h3 style='margin: 0px; color:yellow'>Service is being Stopped</h3>";
+          "<h3 style='margin: 0px; color:#FFD700'>Service is being Stopped</h3>";
       } else if (data[1] === "0") {
         document.getElementById("status").innerHTML =
-          "<h3 style='margin: 0px; color:red'>Service is not Running</h3>";
+          "<h3 style='margin: 0px; color:#FF4444'>Service is not Running</h3>";
       }
       if (data[2] === "0" || data[2] === "2") {
         document.getElementById("realTime").style.display = "";
         document.getElementById("realTime").innerHTML =
-          "<h3 style='margin: 0px; color:black'>Their may be up to a 20 minute delay in song history.</h3>";
+          "<h3 style='margin: 0px;'>20 Minute Song Polling</h3>";
       }
     },
   });
@@ -729,6 +735,32 @@ function listeningHistory(loadAll = false) {
     },
   });
 }
+
+function toggleOptions() {
+  const menu = document.getElementById("options-menu");
+  if (menu.style.display === "none" || menu.style.display === "") {
+    menu.style.display = "block";
+  } else {
+    menu.style.display = "none";
+  }
+}
+
+// Close options menu when clicking outside
+document.addEventListener("click", function (event) {
+  const menu = document.getElementById("options-menu");
+  const optionsBtn = event.target.closest("button");
+
+  if (menu && menu.style.display === "block") {
+    if (
+      !optionsBtn ||
+      (optionsBtn.textContent.trim().toUpperCase() !== "SETTINGS" &&
+        !menu.contains(event.target))
+    ) {
+      menu.style.display = "none";
+    }
+  }
+});
+
 function displayStats(data) {
   const songsListenedTo = data.songsListenedTo.toLocaleString();
   const hoursListened = data.hoursListened.toLocaleString();

@@ -1,5 +1,55 @@
+/* ===== Theme Variables ===== */
+:root {
+  /* Light theme (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f8f8;
+  --bg-tertiary: #ececec;
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --text-tertiary: #454545;
+  --border-color: #000000;
+  --link-color: #6b6b6b;
+  --link-hover: #adadad;
+  --table-odd: #ececec;
+  --table-even: #ffffff;
+  --nav-active: #878787;
+  --stat-box-bg: #f8f8f8;
+  --stat-box-border: #1DB954;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --btn-bg: #f0f0f0;
+  --btn-bg-hover: #e0e0e0;
+  --btn-border: transparent;
+  --btn-text: #000000;
+}
+
+[data-theme="dark"] {
+  /* Dark theme */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #242424;
+  --bg-tertiary: #2e2e2e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #9a9a9a;
+  --border-color: #444444;
+  --link-color: #a0a0a0;
+  --link-hover: #d0d0d0;
+  --table-odd: #242424;
+  --table-even: #1a1a1a;
+  --nav-active: #3a3a3a;
+  --stat-box-bg: #242424;
+  --stat-box-border: #1DB954;
+  --shadow-color: rgba(255, 255, 255, 0.1);
+  --btn-bg: #555;
+  --btn-bg-hover: #666;
+  --btn-border: transparent;
+  --btn-text: #ffffff;
+}
+
 body {
   font-family: 'Roboto', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 ul.nav,
@@ -16,7 +66,7 @@ li.nav,
 li.h_nav {
   font-family: Roboto;
   display: block;
-  color: black;
+  color: var(--text-primary);
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
@@ -24,36 +74,37 @@ li.h_nav {
 
 a {
   font-family: Roboto;
-  color: black;
+  color: var(--text-primary);
   text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .active {
-  background-color: #878787;
+  background-color: var(--nav-active);
 }
 
 /* unvisited link */
 
 a:link {
-  color: #6b6b6b;
+  color: var(--link-color);
 }
 
 /* visited link */
 
 a:visited {
-  color: #454545;
+  color: var(--text-tertiary);
 }
 
 /* mouse over link */
 
 a:hover {
-  color: #adadad;
+  color: var(--link-hover);
 }
 
 /* selected link */
 
 a:active {
-  color: black;
+  color: var(--text-primary);
 }
 
 .dataTables_wrapper {
@@ -67,12 +118,13 @@ div.dt-layout-row{
 table {
   width: 100%;
   font-family: Roboto;
+  background-color: var(--bg-primary);
 }
 
 table,
 th,
 td {
-  border: 1.5px solid black;
+  border: 1.5px solid var(--border-color);
   border-collapse: collapse;
 }
 
@@ -80,14 +132,24 @@ th,
 td {
   padding: 10px;
   text-align: left;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 table#t01 tr:nth-child(even) {
-  background-color: white;
+  background-color: var(--table-even);
 }
 
 table#t01 tr:nth-child(odd) {
-  background-color: #ececec;
+  background-color: var(--table-odd);
+}
+
+table#t01 tr:nth-child(even) td {
+  background-color: var(--table-even);
+}
+
+table#t01 tr:nth-child(odd) td {
+  background-color: var(--table-odd);
 }
 
 h1,
@@ -144,35 +206,8 @@ h3 {
   display: none;
 }
 
-.btn-spotify:hover {
-  background-color: #1ed760;
-}
-
-.btn-spotify {
-  background-color: #1db954;
-  border-color: #1aa34a;
-}
-
-.btn-green:hover {
-  background-color: #1BC156;
-}
-
-.btn-green {
-  background-color: #328F32;
-}
-
-
-.btn-red:hover {
-  background-color: red;
-}
-
-.btn-red {
-  background-color: #E10000;
-}
-
 .btn {
-  color: #fff;
-
+  color: var(--btn-text);
   font-size: 12px;
   line-height: 1;
   border-radius: 500px;
@@ -191,9 +226,51 @@ h3 {
   vertical-align: middle;
   touch-action: manipulation;
   cursor: pointer;
+  background-color: var(--btn-bg);
   background-image: none;
-  border: 1px solid transparent;
+  border: none;
   user-select: none;
+}
+
+.btn:hover {
+  background-color: var(--btn-bg-hover);
+  color: #1db954;
+}
+
+.btn-spotify {
+  color: #1db954 !important;
+  background-color: var(--btn-bg);
+}
+
+.btn-spotify:hover {
+  color: #1ed760 !important;
+}
+
+.btn-green {
+  color: #1db954 !important;
+  background-color: var(--btn-bg);
+}
+
+.btn-green:hover {
+  color: #1ed760 !important;
+}
+
+.btn-red {
+  color: #E10000 !important;
+  background-color: var(--btn-bg);
+}
+
+.btn-red:hover {
+  color: #ff4444 !important;
+}
+
+.btn-delete {
+  color: #E10000 !important;
+  background-color: var(--btn-bg);
+}
+
+.btn-delete:hover {
+  color: #ff4444 !important;
 }
 
 @media only screen and (max-width: 768px) {
@@ -249,4 +326,161 @@ h3 {
     padding: 10px;
     position: relative;
   }
+}
+/* ===== Theme Toggle Button ===== */
+#theme-toggle {
+  color: var(--btn-text);
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 500px;
+  padding: 11px 24px 9px;
+  margin: 4px;
+  transition-property: background-color, border-color, color, box-shadow, filter;
+  transition-duration: .3s;
+  border-width: 0;
+  letter-spacing: 2px;
+  min-width: 120px;
+  text-transform: uppercase;
+  white-space: normal;
+  font-family: Roboto;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  touch-action: manipulation;
+  cursor: pointer;
+  background-color: var(--btn-bg);
+  border: none;
+  user-select: none;
+}
+
+#theme-toggle:hover {
+  background-color: var(--btn-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+#theme-toggle:active {
+  transform: translateY(0);
+}
+
+/* ===== Dark Theme Adjustments ===== */
+[data-theme="dark"] h1 {
+  color: #1db954;
+}
+
+[data-theme="dark"] .stat-box {
+  background-color: var(--stat-box-bg);
+  border-color: var(--stat-box-border);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+[data-theme="dark"] h1 {
+  color: #1db954;
+}
+
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] p {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .stat-label {
+  color: var(--text-secondary);
+}
+
+/* Options dropdown menu */
+#options-menu {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+#options-menu button {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+}
+
+[data-theme="dark"] .filter-buttons button {
+  background-color: var(--bg-secondary);
+  color: #1DB954;
+  border-color: #1DB954;
+}
+
+[data-theme="dark"] .filter-buttons button.active,
+[data-theme="dark"] .filter-buttons button:hover {
+  background-color: #1DB954;
+  color: var(--text-primary);
+}
+
+/* DataTables dark theme */
+[data-theme="dark"] .dataTables_wrapper {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_length,
+[data-theme="dark"] .dataTables_wrapper .dataTables_filter,
+[data-theme="dark"] .dataTables_wrapper .dataTables_info,
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  color: var(--text-primary) !important;
+  background-color: #1DB954;
+  border-color: #1DB954;
+}
+
+[data-theme="dark"] input[type="search"],
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="file"],
+[data-theme="dark"] select {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] input[type="file"]::file-selector-button {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+[data-theme="dark"] input[type="file"]::file-selector-button:hover {
+  background-color: #555;
+}
+
+/* Chart containers */
+[data-theme="dark"] .chart-container {
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Spotify button adjustments for dark theme */
+[data-theme="dark"] .btn-spotify {
+  box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
+}
+
+[data-theme="dark"] .btn-spotify:hover {
+  box-shadow: 0 4px 12px rgba(30, 215, 96, 0.4);
 }

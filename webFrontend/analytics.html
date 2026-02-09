@@ -17,6 +17,7 @@
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+    <script type="text/javascript" src="theme.js"></script>
 
     <style>
         canvas {
@@ -97,12 +98,21 @@
 
 <body>
     <div style="float:right; display:block;">
+        <button id="theme-toggle" onclick="ThemeManager.toggleTheme()" aria-label="Toggle theme">
+            ◐ Auto
+        </button>
         <button id="realTime" class="btn " style="text-transform: none; display:none;"></button>
         <button id="status" class="btn "></button>
-        <button onclick="deleteUser();" style="color: black" class="btn">Delete User</button>
-        <button onclick="start();" class="btn btn-green">Start Service</button>
-        <button onclick="stop();" class="btn btn-red">Stop Service</button>
-        <button onclick='deleteCookies();' class="btn btn-spotify">Log Out</button>
+        <button onclick="toggleOptions()" class="btn">Settings</button>
+        <div id="options-menu"
+            style="display: none; position: absolute; right: 10px; margin-top: 5px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px var(--shadow-color); z-index: 100;">
+            <button onclick="deleteUser();" class="btn btn-delete" style="width: 100%; margin: 2px 0;">Delete
+                User</button>
+            <button onclick="stop();" class="btn btn-red" style="width: 100%; margin: 2px 0;">Stop Service</button>
+            <button onclick="start();" class="btn btn-green" style="width: 100%; margin: 2px 0;">Start Service</button>
+            <button onclick='deleteCookies();' class="btn btn-spotify" style="width: 100%; margin: 2px 0;">Log
+                Out</button>
+        </div>
     </div>
     <div style="clear: right; float:center; display:block;">
         <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
@@ -145,18 +155,19 @@
     <div style="clear:both; text-align:center; margin: auto;  width: 100%; display: block;">
         <br>
         <h3>Import Historical Spotify Data:</h3>
-        <p style="color: #666; font-size: 14px;">Upload your Spotify data export ZIP file (my_spotify_data.zip)</p>
-        <p style="color: #666; font-size: 14px;">Get your data from <a
+        <p style="color: var(--text-secondary); font-size: 14px;">Upload your Spotify data export ZIP file
+            (my_spotify_data.zip)</p>
+        <p style="color: var(--text-secondary); font-size: 14px;">Get your data from <a
                 href="https://www.spotify.com/us/account/privacy/" target="_blank"
                 style="color: #1DB954;">spotify.com/account/privacy</a> under "Extended streaming history"</p>
         <input type="file" id="historicalDataFile" accept=".zip" style="margin: 10px;">
-        <button onclick="analyzeImport()" style="color: black" class="btn">Analyze Import</button>
+        <button onclick="analyzeImport()" class="btn">Analyze Import</button>
         <div id="importProgress" style="margin-top: 10px; display: none;">
             <p>Processing... This may take a few minutes.</p>
         </div>
         <br><br>
         <h3>Input Playlist URL to Track:</h3>
-        <input type="text" id="playlist" value=""> <button onclick=playlist() style="color: black" class="btn">Submit
+        <input type="text" id="playlist" value=""> <button onclick=playlist() class="btn">Submit
             Playlist</button>
     </div>
     <div id="playlists"></div>

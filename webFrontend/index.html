@@ -16,6 +16,7 @@
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+    <script type="text/javascript" src="theme.js"></script>
 
     <style>
         canvas {
@@ -53,11 +54,12 @@
             margin: 0 5px;
             padding: 8px 16px;
             border: 1px solid #1DB954;
-            background-color: white;
+            background-color: var(--bg-primary);
             color: #1DB954;
             cursor: pointer;
             border-radius: 4px;
             font-size: 14px;
+            transition: all 0.3s ease;
         }
 
         .filter-buttons button.active {
@@ -80,12 +82,13 @@
         }
 
         .stat-box {
-            background-color: #f8f8f8;
-            border: 2px solid #1DB954;
+            background-color: var(--stat-box-bg);
+            border: 2px solid var(--stat-box-border);
             border-radius: 8px;
             padding: 20px 30px;
             min-width: 200px;
             text-align: center;
+            transition: all 0.3s ease;
         }
 
         .stat-value {
@@ -97,7 +100,7 @@
 
         .stat-label {
             font-size: 14px;
-            color: #666;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -139,8 +142,11 @@
 
     <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>
     <div style="text-align: center;">
+        <button id="theme-toggle" onclick="ThemeManager.toggleTheme()" aria-label="Toggle theme">
+            ◐ Auto
+        </button>
         <button onclick="window.location.href = '/analytics/login/';" class="btn btn-spotify">Log In</button>
-        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">
             <span class="desktop-note">Note: You must be whitelisted in the Spotify Developer App to use this
                 application. Want to self-host? Visit <a
                     href="https://github.com/ArthurVardevanyan/Analytics-for-Spotify" target="_blank"
