@@ -241,18 +241,18 @@ window.onload = function () {
       data = data.split(":");
       if (data[0] === "1") {
         document.getElementById("status").innerHTML =
-          "<h3 style='margin: 0px; color:green'>Service is Running</h3>";
+          "<h3 style='margin: 0px; color:#1DB954'>Service is Running</h3>";
       } else if (data[1] === "1") {
         document.getElementById("status").innerHTML =
-          "<h3 style='margin: 0px; color:yellow'>Service is being Stopped</h3>";
+          "<h3 style='margin: 0px; color:#FFD700'>Service is being Stopped</h3>";
       } else if (data[1] === "0") {
         document.getElementById("status").innerHTML =
-          "<h3 style='margin: 0px; color:red'>Service is not Running</h3>";
+          "<h3 style='margin: 0px; color:#FF4444'>Service is not Running</h3>";
       }
       if (data[2] === "0" || data[2] === "2") {
         document.getElementById("realTime").style.display = "";
         document.getElementById("realTime").innerHTML =
-          "<h3 style='margin: 0px; color:black'>Their may be up to a 20 minute delay in song history.</h3>";
+          "<h3 style='margin: 0px;'>20 Minute Song Polling.</h3>";
       }
     },
   });
