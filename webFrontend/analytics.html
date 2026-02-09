@@ -103,10 +103,16 @@
         </button>
         <button id="realTime" class="btn " style="text-transform: none; display:none;"></button>
         <button id="status" class="btn "></button>
-        <button onclick="deleteUser();" class="btn btn-delete">Delete User</button>
-        <button onclick="start();" class="btn btn-green">Start Service</button>
-        <button onclick="stop();" class="btn btn-red">Stop Service</button>
-        <button onclick='deleteCookies();' class="btn btn-spotify">Log Out</button>
+        <button onclick="toggleOptions()" class="btn">Settings</button>
+        <div id="options-menu"
+            style="display: none; position: absolute; right: 10px; margin-top: 5px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px var(--shadow-color); z-index: 100;">
+            <button onclick="deleteUser();" class="btn btn-delete" style="width: 100%; margin: 2px 0;">Delete
+                User</button>
+            <button onclick="stop();" class="btn btn-red" style="width: 100%; margin: 2px 0;">Stop Service</button>
+            <button onclick="start();" class="btn btn-green" style="width: 100%; margin: 2px 0;">Start Service</button>
+            <button onclick='deleteCookies();' class="btn btn-spotify" style="width: 100%; margin: 2px 0;">Log
+                Out</button>
+        </div>
     </div>
     <div style="clear: right; float:center; display:block;">
         <h1 style="margin-bottom: 5px;">Analytics for Spotify</h1>

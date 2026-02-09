@@ -388,6 +388,21 @@ h3 {
   color: var(--text-secondary);
 }
 
+/* Options dropdown menu */
+#options-menu {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+#options-menu button {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+}
+
 [data-theme="dark"] .filter-buttons button {
   background-color: var(--bg-secondary);
   color: #1DB954;
