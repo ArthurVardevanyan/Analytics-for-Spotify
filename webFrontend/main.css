@@ -22,6 +22,11 @@
   --btn-text: #000000;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 [data-theme="dark"] {
   /* Dark theme */
   --bg-primary: #1a1a1a;
@@ -50,6 +55,11 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 ul.nav,
@@ -296,26 +306,30 @@ h3 {
 
   #hourlyLineChartDIV {
     width: 100%;
-    text-align: right;
-    float: right
+    text-align: center;
+    float: none;
+    box-sizing: border-box;
   }
 
   #lineChartDIV {
     width: 100%;
     text-align: center;
-    float: center
+    float: none;
+    box-sizing: border-box;
   }
 
   #listeningHistoryDIV {
     width: 100%;
     text-align: center;
-    float: center
+    float: none;
+    box-sizing: border-box;
   }
 
   #playCountDIV {
     width: 100%;
     text-align: center;
-    float: center;
+    float: none;
+    box-sizing: border-box;
   }
 
   .songSpread {
@@ -470,10 +484,20 @@ h3 {
 }
 
 /* Chart containers */
+.chart-container {
+  box-sizing: border-box;
+}
+
 [data-theme="dark"] .chart-container {
   background-color: var(--bg-secondary);
   border-radius: 8px;
   padding: 20px;
+}
+
+@media only screen and (max-width: 768px) {
+  [data-theme="dark"] .chart-container {
+    padding: 10px;
+  }
 }
 
 /* Spotify button adjustments for dark theme */
