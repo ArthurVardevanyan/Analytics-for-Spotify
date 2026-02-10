@@ -11,9 +11,9 @@ Analytics for Spotify is a self-hosted listening history tracker built with Djan
 │                          User Layer                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Browser → index.html (public) / analytics.html (authenticated)  │
-└────────────────────┬────────────────────────────────────────────┘
-                     │
-                     ▼
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Application Layer                           │
 ├─────────────────────────────────────────────────────────────────┤
@@ -21,9 +21,9 @@ Analytics for Spotify is a self-hosted listening history tracker built with Djan
 │  ├── Authentication (credentials.py)                             │
 │  ├── API Endpoints (REST)                                        │
 │  └── Historical Import (import_historical.py)                    │
-└────────────────────┬────────────────────────────────────────────┘
-                     │
-                     ▼
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                       Data Layer                                 │
 ├─────────────────────────────────────────────────────────────────┤
@@ -31,9 +31,9 @@ Analytics for Spotify is a self-hosted listening history tracker built with Djan
 │  ├── Users, Songs, Artists, Listening History                    │
 │  ├── Play Counts, Playlists                                      │
 │  └── Automated Backups (Local + S3)                              │
-└────────────────────┬────────────────────────────────────────────┘
-                     │
-                     ▼
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                   Background Worker System                        │
 ├─────────────────────────────────────────────────────────────────┤
@@ -41,17 +41,17 @@ Analytics for Spotify is a self-hosted listening history tracker built with Djan
 │  ├── Playlist Scanner Thread                                     │
 │  ├── Listening Monitor Thread (History/Realtime/Hybrid)          │
 │  └── Song ID Updater Thread                                      │
-└────────────────────┬────────────────────────────────────────────┘
-                     │
-                     ▼
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                   Kubernetes CronJob                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Artist Linker (link_artists.py)                                 │
 │  └── Daily execution at 3 AM                                     │
-└────────────────────┬────────────────────────────────────────────┘
-                     │
-                     ▼
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      External Services                            │
 ├─────────────────────────────────────────────────────────────────┤
@@ -369,15 +369,15 @@ except requests.exceptions.RequestException:
 
 ```text
 User plays song in Spotify
-       ↓
-(wait ~20 minutes)
-       ↓
+              ↓
+    (wait ~20 minutes)
+              ↓
 Background worker polls /v1/me/player/recently-played
-       ↓
-Worker compares with last 50 DB entries
-       ↓
+              ↓
+   Worker compares with last 50 DB entries
+              ↓
 New song detected → database.database_input()
-       ↓
+              ↓
 ┌──────────────────────────────────────┐
 │ database_input() orchestrates:       │
 ├──────────────────────────────────────┤
@@ -390,21 +390,21 @@ New song detected → database.database_input()
 │ 4. add_listening_history()           │
 │    └─> insert ListeningHistory       │
 └──────────────────────────────────────┘
-       ↓
-Data available in API immediately
-       ↓
+              ↓
+  Data available in API immediately
+              ↓
 Frontend polls /analytics/listeningHistory/
-       ↓
-Chart.js renders on analytics.html
+              ↓
+  Chart.js renders on analytics.html
 ```
 
 ### Historical Import Flow
 
 ```text
-User uploads Spotify data export ZIP
-       ↓
+ User uploads Spotify data export ZIP
+                  ↓
 POST /analytics/analyzeHistoricalImport/
-       ↓
+                  ↓
 ┌────────────────────────────────────────┐
 │ analyze_historical_data()              │
 ├────────────────────────────────────────┤
@@ -421,13 +421,13 @@ POST /analytics/analyzeHistoricalImport/
 │    └─ Sequential context check         │
 │ 5. Return statistics                   │
 └────────────────────────────────────────┘
-       ↓
+                  ↓
 Display stats to user (songs to import, duplicates, year breakdown)
-       ↓
-User clicks "Import"
-       ↓
+                  ↓
+       User clicks "Import"
+                  ↓
 POST /analytics/executeHistoricalImport/
-       ↓
+                  ↓
 ┌────────────────────────────────────────┐
 │ import_historical_data()               │
 ├────────────────────────────────────────┤
@@ -441,8 +441,8 @@ POST /analytics/executeHistoricalImport/
 │    └─ Link artists (individual queries)│
 │ 3. Bulk update PlayCounts              │
 └────────────────────────────────────────┘
-       ↓
-Data available in API
+                  ↓
+      Data available in API
 ```
 
 ### Duplicate Detection Algorithm
@@ -771,29 +771,29 @@ The project uses Tekton Pipelines for continuous integration and deployment on K
 **Execution Flow**:
 
 ```text
-GitHub Push Event
-       ↓
+   GitHub Push Event
+            ↓
 EventListener (webhook)
-       ↓
+            ↓
 TriggerTemplate creates PipelineRun
-       ↓
+            ↓
 ┌──────────────────────────────┐
 │ 1. git-pending               │ ← Set GitHub status to "pending"
 └──────────────────────────────┘
-       ↓
+            ↓
 ┌──────────────────────────────┐
 │ 2. git-clone                 │ ← Clone repository at commit SHA
 └──────────────────────────────┘
-       ↓
+            ↓
 ┌────────────────┬─────────────┐
 │ 3a. unit-test  │ 3b. build-  │ ← Parallel execution
 │                │     image   │
 └────────────────┴─────────────┘
-       ↓
+            ↓
 ┌──────────────────────────────┐
 │ 4. deploy                    │ ← Update Kustomize overlay with new image SHA
 └──────────────────────────────┘
-       ↓
+            ↓
 ┌──────────────────────────────┐
 │ finally: git-success/failure │ ← Set GitHub commit status
 └──────────────────────────────┘
