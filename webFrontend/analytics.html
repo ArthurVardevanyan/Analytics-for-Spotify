@@ -30,6 +30,11 @@
             height: 400px !important;
         }
 
+        .chart-container {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+
         .chart-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -43,12 +48,21 @@
         .chart-wrapper .chart-container {
             flex: 1;
             min-width: 0;
+            box-sizing: border-box;
         }
 
         #lineChartDIV,
         #hourlyLineChartDIV {
             width: auto;
             float: none;
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+
+        #listeningHistoryDIV,
+        #playCountDIV {
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         @media (max-width: 768px) {

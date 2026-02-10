@@ -22,6 +22,11 @@
   --btn-text: #000000;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 [data-theme="dark"] {
   /* Dark theme */
   --bg-primary: #1a1a1a;
@@ -53,6 +58,8 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 ul.nav,
