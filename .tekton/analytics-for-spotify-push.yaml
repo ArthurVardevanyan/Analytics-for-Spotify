@@ -31,7 +31,7 @@ spec:
     - name: target-service-account
       value: pipeline
     - name: token-exchange-endpoint
-      value: https://kfca.apps.okd.homelab.arthurvardevanyan.com/exchangeToken
+      value: https://kfca.okd.homelab.arthurvardevanyan.com/exchangeToken
   pipelineSpec:
     params:
       - name: git-url
