@@ -28,7 +28,7 @@ spec:
   postgresGID: 26
   postgresql:
     parameters:
-      shared_buffers: "128MB"
+      shared_buffers: "256MB"
       pg_stat_statements.max: "10000"
       pg_stat_statements.track: all
     pg_hba:
@@ -50,11 +50,11 @@ spec:
     size: 3Gi
   resources:
     requests:
-      cpu: 10m
-      memory: 128Mi
+      cpu: 25m
+      memory: 512Mi
     limits:
       cpu: 250m
-      memory: 512Mi
+      memory: 1Gi
   affinity:
     enablePodAntiAffinity: true
     podAntiAffinityType: required
