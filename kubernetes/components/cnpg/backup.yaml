@@ -1,0 +1,11 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: spotify-backup
+  namespace: analytics-for-spotify
+spec:
+  schedule: "0 0 7 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: spotify
+  method: volumeSnapshot

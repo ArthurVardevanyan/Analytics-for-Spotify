@@ -1,0 +1,14 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cnpg-spotify
+  namespace: analytics-for-spotify
+  labels:
+    app.kubernetes.io/instance: analytics-for-spotify
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: spotify
+  podMetricsEndpoints:
+    - port: metrics

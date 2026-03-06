@@ -4,17 +4,3 @@ resources:
   - ../../base
 components:
   - ../../components/knative
-patches:
-  - target:
-      kind: PostgresCluster
-      name: spotify
-    patch: |-
-      - op: replace
-        path: /spec/instances/0/dataVolumeClaimSpec/storageClassName
-        value: lvms-vg1-immediate
-      - op: replace
-        path: /spec/instances/0/replicas
-        value: 1
-      - op: replace
-        path: /spec/backups/pgbackrest/repos/0/volume/volumeClaimSpec/storageClassName
-        value: lvms-vg1-immediate
