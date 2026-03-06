@@ -6,6 +6,8 @@ resources:
   # - limit-range.yaml
   - secret.yaml
   - application.yaml
-  - postgres.yaml
   - network-policy.yaml
   - cronjob.yaml
+
+components:
+  - ../components/cnpg

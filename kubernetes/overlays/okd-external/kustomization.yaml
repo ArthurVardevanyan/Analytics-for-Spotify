@@ -50,15 +50,8 @@ patches:
         path: /spec/ignoreDifferences/0/kind
         value: Deployment
   - target:
-      kind: PostgresCluster
-      name: spotify
-    patch: |-
-      - op: replace
-        path: /spec/backups/pgbackrest/global/repo2-path
-        value: /spotify-ext
-  - target:
       kind: NetworkPolicy
-      name: analytics-for-spotify-app
+      name: cnpg-spotify-app
     patch: |-
       - op: replace
         path: /spec/ingress/0/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
@@ -73,7 +66,7 @@ patches:
         value: analytics-for-spotify-ext
   - target:
       kind: NetworkPolicy
-      name: analytics-for-spotify-postgres
+      name: cnpg-spotify-cluster
     patch: |-
       - op: replace
         path: /spec/ingress/0/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
@@ -83,7 +76,7 @@ patches:
         value: analytics-for-spotify-ext
   - target:
       kind: NetworkPolicy
-      name: allow-postgres
+      name: cnpg-spotify-app-egress
     patch: |-
       - op: remove
         path: /spec/podSelector/matchLabels/serving.knative.dev~1service
@@ -122,7 +115,7 @@ patches:
         value: analytics-for-spotify
   - target:
       kind: NetworkPolicy
-      name: allow-postgres-cronjob
+      name: cnpg-spotify-cronjob-egress
     patch: |-
       - op: replace
         path: /spec/egress/0/to/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
