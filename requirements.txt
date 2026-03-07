@@ -1,6 +1,6 @@
 asgiref==3.11.1
 certifi==2026.1.4
-charset-normalizer==3.4.4
+charset-normalizer==3.4.5
 # coverage only for CI
 Django==6.0.3
 django-cors-headers==4.9.0
