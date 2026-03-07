@@ -11,4 +11,4 @@ typing_extensions==4.15.0
 urllib3==2.6.3
 # PostgreSQL
 psycopg==3.3.2
-psycopg-binary==3.3.2
+psycopg-binary==3.3.3
