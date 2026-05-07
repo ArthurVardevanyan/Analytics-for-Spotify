@@ -86,23 +86,23 @@ spec:
         - protocol: TCP
           port: 6443
 ---
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: spotify-egress
-  namespace: analytics-for-spotify
-spec:
-  podSelector:
-    matchLabels:
-      serving.knative.dev/service: analytics-for-spotify
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: knative-serving
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: spotify-egress
+#   namespace: analytics-for-spotify
+# spec:
+#   podSelector:
+#     matchLabels:
+#       serving.knative.dev/service: analytics-for-spotify
+#   policyTypes:
+#     - Ingress
+#     - Egress
+#   ingress:
+#     - from:
+#         - namespaceSelector:
+#             matchLabels:
+#               kubernetes.io/metadata.name: knative-serving
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -114,7 +114,7 @@ spec:
     - Egress
   podSelector:
     matchLabels:
-      serving.knative.dev/service: analytics-for-spotify
+      app: analytics-for-spotify # serving.knative.dev/service: analytics-for-spotify
   egress:
     - to:
         - ipBlock:

@@ -21,7 +21,7 @@ spec:
               kubernetes.io/metadata.name: analytics-for-spotify
           podSelector:
             matchLabels:
-              serving.knative.dev/service: analytics-for-spotify
+              app: analytics-for-spotify # serving.knative.dev/service: analytics-for-spotify
       ports:
         - protocol: TCP
           port: 5432
@@ -48,7 +48,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      serving.knative.dev/service: analytics-for-spotify
+      app: analytics-for-spotify # serving.knative.dev/service: analytics-for-spotify
   policyTypes:
     - Egress
   egress:
