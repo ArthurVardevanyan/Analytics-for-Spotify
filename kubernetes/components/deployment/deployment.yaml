@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: analytics-for-spotify
-  namespace: analytics-for-spotify-ext
+  namespace: analytics-for-spotify
   labels:
     app: analytics-for-spotify
 spec:

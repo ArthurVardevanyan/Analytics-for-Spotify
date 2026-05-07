@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: analytics-for-spotify
-  namespace: analytics-for-spotify-ext
+  namespace: analytics-for-spotify
 spec:
   ports:
     - protocol: TCP

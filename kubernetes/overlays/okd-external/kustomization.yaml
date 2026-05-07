@@ -43,12 +43,6 @@ patches:
       - op: replace
         path: /spec/source/path
         value: kubernetes/overlays/okd-external
-      - op: replace
-        path: /spec/ignoreDifferences/0/group
-        value: apps
-      - op: replace
-        path: /spec/ignoreDifferences/0/kind
-        value: Deployment
   - target:
       kind: NetworkPolicy
       name: cnpg-spotify-app
@@ -56,11 +50,6 @@ patches:
       - op: replace
         path: /spec/ingress/0/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
         value: analytics-for-spotify-ext
-      - op: remove
-        path: /spec/ingress/0/from/0/podSelector/matchLabels/serving.knative.dev~1service
-      - op: add
-        path: /spec/ingress/0/from/0/podSelector/matchLabels/app
-        value: analytics-for-spotify
       - op: replace
         path: /spec/ingress/1/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
         value: analytics-for-spotify-ext
@@ -78,41 +67,9 @@ patches:
       kind: NetworkPolicy
       name: cnpg-spotify-app-egress
     patch: |-
-      - op: remove
-        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
-      - op: add
-        path: /spec/podSelector/matchLabels/app
-        value: analytics-for-spotify
       - op: replace
         path: /spec/egress/0/to/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
         value: analytics-for-spotify-ext
-  - target:
-      kind: NetworkPolicy
-      name: knative-ingress
-    patch: |-
-      - op: remove
-        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
-      - op: add
-        path: /spec/podSelector/matchLabels/app
-        value: analytics-for-spotify
-  - target:
-      kind: NetworkPolicy
-      name: spotify-egress
-    patch: |-
-      - op: remove
-        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
-      - op: add
-        path: /spec/podSelector/matchLabels/app
-        value: analytics-for-spotify
-  - target:
-      kind: NetworkPolicy
-      name: allow-internet-egress
-    patch: |-
-      - op: remove
-        path: /spec/podSelector/matchLabels/serving.knative.dev~1service
-      - op: add
-        path: /spec/podSelector/matchLabels/app
-        value: analytics-for-spotify
   - target:
       kind: NetworkPolicy
       name: cnpg-spotify-cronjob-egress
