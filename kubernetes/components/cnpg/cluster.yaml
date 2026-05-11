@@ -12,7 +12,7 @@ metadata:
 spec:
   enablePDB: true
   imageName: "ghcr.io/cloudnative-pg/postgresql:18.1-system-trixie@sha256:51bc94428be3df3e234447278e33803544a93d27a57a4b6af737f218d6472d12"
-  instances: 2
+  instances: 3
   imagePullPolicy: IfNotPresent
   logLevel: info
   primaryUpdateMethod: restart
@@ -22,8 +22,8 @@ spec:
   smartShutdownTimeout: 180
   switchoverDelay: 3600
   failoverDelay: 0
-  minSyncReplicas: 0
-  maxSyncReplicas: 0
+  minSyncReplicas: 1
+  maxSyncReplicas: 1
   postgresUID: 26
   postgresGID: 26
   postgresql:
