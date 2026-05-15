@@ -8,7 +8,7 @@ idna==3.13
 requests==2.33.1
 sqlparse==0.5.5
 typing_extensions==4.15.0
-urllib3==2.6.3
+urllib3==2.7.0
 # PostgreSQL
 psycopg==3.3.3
 psycopg-binary==3.3.3
