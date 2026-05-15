@@ -2,7 +2,7 @@ asgiref==3.11.1
 certifi==2026.2.25
 charset-normalizer==3.4.7
 # coverage only for CI
-Django==6.0.4
+Django==6.0.5
 django-cors-headers==4.9.0
 idna==3.13
 requests==2.33.1
