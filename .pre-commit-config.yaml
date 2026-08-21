@@ -34,7 +34,7 @@ repos:
       - id: prettier
   - repo: https://github.com/ansible/ansible-lint.git
     # renovate: datasource=github-releases depName=ansible/ansible-lint
-    rev: v26.6.0
+    rev: v26.8.0
     hooks:
       - id: ansible-lint
         files: ^ansible/.*\.(yaml|yml)$
@@ -44,6 +44,6 @@ repos:
           - jmespath
   - repo: https://github.com/bridgecrewio/checkov.git
     # renovate: datasource=github-releases depName=bridgecrewio/checkov
-    rev: 3.3.9
+    rev: 3.3.13
     hooks:
       - id: checkov_diff
