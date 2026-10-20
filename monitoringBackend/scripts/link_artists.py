@@ -97,9 +97,9 @@ def link_missing_artists():
 
     log.info(f"Found {len(songs_without_artists)} songs missing artist data (excluding local files)")
 
-    # Get a valid access token from any enabled user
-    enabled_users = models.Users.objects.filter(enabled=True)
-    if not enabled_users.exists():
+    # Try each enabled user until we find one with a working token
+    enabled_users = list(models.Users.objects.filter(enabled=True))
+    if not enabled_users:
         log.error("No enabled users found, cannot proceed")
         return {
             'success': False,
@@ -108,9 +108,24 @@ def link_missing_artists():
             'failed_links': 0
         }
 
-    # Use first enabled user's token
-    user = enabled_users.first()
-    access_token = authorize(user.user)
+    user = None
+    access_token = None
+    for u in enabled_users:
+        access_token = authorize(u.user)
+        if access_token:
+            user = u
+            break
+
+    if access_token is None:
+        log.error("No enabled user has a valid Spotify token; "
+                  "their refresh token may be revoked. They must re-authorize.")
+        return {
+            'success': False,
+            'error': 'No valid access token - all enabled users failed to refresh (re-authorize required)',
+            'successful_links': 0,
+            'failed_links': 0
+        }
+
     last_token_refresh = time.time()
 
     # Process each song
@@ -123,6 +138,11 @@ def link_missing_artists():
             if time.time() - last_token_refresh > 2700:
                 log.info("Refreshing access token")
                 access_token = authorize(user.user)
+                if not access_token:
+                    log.error(
+                        "Access token refresh failed mid-run; "
+                        "stopping to avoid invalid calls")
+                    break
                 last_token_refresh = time.time()
 
             # Fetch track info from Spotify API
