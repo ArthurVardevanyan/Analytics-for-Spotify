@@ -1,3 +1,4 @@
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -9,6 +10,10 @@ spec:
       kind: Gateway
       name: https-gateway-external
       namespace: openshift-ingress
+    - group: gateway.networking.k8s.io
+      kind: ListenerSet
+      name: analytics-for-spotify-ext
+      namespace: analytics-for-spotify-ext
   hostnames:
     - analytics-for-spotify.arthurvardevanyan.com
   rules:
