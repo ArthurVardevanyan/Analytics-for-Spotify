@@ -82,3 +82,55 @@ class TestCase(TestCase):
     def test_get_playlists(self):
         database.get_playlists('')
         self.assertEqual(1, 1)
+
+    @patch('webBackend.credentials.getUserJson')
+    @patch('webBackend.credentials.getAPI')
+    @patch('webBackend.credentials.requests.post')
+    def test_refresh_token_returns_none_on_failure(self, mock_post, mock_getAPI, mock_getUserJson):
+        mock_getUserJson.return_value = {
+            "access_token": "old_access",
+            "refresh_token": "old_refresh",
+            "expires_at": 0
+        }
+        mock_response = mock_post.return_value
+        mock_response.status_code = 400
+        mock_response.text = '{"error": "invalid_grant"}'
+        from webBackend.credentials import refresh_token
+        result = refresh_token("test_user")
+        self.assertIsNone(result)
+
+    @patch('webBackend.credentials.getUserJson')
+    @patch('webBackend.credentials.getAPI')
+    @patch('webBackend.credentials.requests.post')
+    def test_refresh_token_returns_none_on_missing_expires_in(self, mock_post, mock_getAPI, mock_getUserJson):
+        mock_getUserJson.return_value = {
+            "access_token": "old_access",
+            "refresh_token": "old_refresh",
+            "expires_at": 0
+        }
+        mock_response = mock_post.return_value
+        mock_response.status_code = 200
+        mock_response.json.return_value = {}
+        from webBackend.credentials import refresh_token
+        result = refresh_token("test_user")
+        self.assertIsNone(result)
+
+    @patch('webBackend.credentials.getUserJson')
+    @patch('webBackend.credentials.getAPI')
+    @patch('webBackend.credentials.requests.post')
+    def test_refresh_token_succeeds(self, mock_post, mock_getAPI, mock_getUserJson):
+        mock_getUserJson.return_value = {
+            "access_token": "old_access",
+            "refresh_token": "old_refresh",
+            "expires_at": 0
+        }
+        mock_response = mock_post.return_value
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "new_access",
+            "refresh_token": "new_refresh",
+            "expires_in": 3600
+        }
+        from webBackend.credentials import refresh_token
+        result = refresh_token("test_user")
+        self.assertEqual(result, "new_access")

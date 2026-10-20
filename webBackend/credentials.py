@@ -2,6 +2,9 @@ import webBackend.models as models
 import requests
 import json
 import time
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def getUserJson(userID: str):
@@ -55,20 +58,29 @@ def refresh_token(userID: str):
     Checks For and Provides Refresh Token
 
     Parameters:
-        None
+        userID (str): User ID
     Returns:
-        str: Access Token
+        str: Access Token, or None if the refresh failed (e.g. revoked token)
     """
-    access = ''
     access = getUserJson(userID)
-    if(int(time.time()) >= access["expires_at"]):
+    if int(time.time()) >= access.get("expires_at", 0):
         header = {"Authorization": "Basic " + getAPI().get("B64CS")}
         data = {"grant_type": "refresh_token",
                 "refresh_token": access.get("refresh_token"),
                 "redirect_uri": "http://localhost/analytics/loginResponse"}
-        auth = requests.post(
-            'https://accounts.spotify.com/api/token', headers=header, data=data).json()
+        response = requests.post(
+            'https://accounts.spotify.com/api/token', headers=header, data=data)
+        if response.status_code != 200:
+            log.error(
+                f"Token refresh failed for user {userID}: "
+                f"HTTP {response.status_code} - {response.text}")
+            return None
+        auth = response.json()
         expire = auth.get("expires_in")
+        if not auth.get("access_token") or expire is None:
+            log.error(
+                f"Token refresh returned invalid payload for user {userID}: {auth}")
+            return None
         auth["expires_at"] = int(time.time()) + expire
         auth["refresh_token"] = auth.get(
             "refresh_token", access.get("refresh_token"))
