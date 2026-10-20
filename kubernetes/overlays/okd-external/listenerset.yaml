@@ -9,6 +9,7 @@ spec:
     group: gateway.networking.k8s.io
     kind: Gateway
     name: https-gateway-external
+    namespace: openshift-ingress
   listeners:
     - name: spotify
       hostname: "analytics-for-spotify.arthurvardevanyan.com"
