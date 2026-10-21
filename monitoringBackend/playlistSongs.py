@@ -33,9 +33,7 @@ def main(user: str, playlist: str):
     try:
         token = authorize(user)
         if not token:
-            log.warning("Playlist: revoked/invalid token for %s, retrying after backoff", user)
-            database.reset_db_connection()
-            time.sleep(3600)
+            log.warning("Playlist: revoked/invalid token for %s, skipping until next cycle", user)
             return False
         header = {"Accept": "application/json",
                   "Content-Type": "application/json", "Authorization": "Bearer " + token}

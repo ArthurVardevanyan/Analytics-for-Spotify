@@ -652,17 +652,23 @@ def boot():
         int: unused return
     """
     global WORKER
-    WORKER = database.createWorker()
-    if WORKER is None:
-        log.error("boot: failed to create worker, retrying in 60s")
-        time.sleep(60)
-        return boot()
-    workerCount = database.scanWorkers(WORKER)
-    if workerCount == -1:
+    while True:
+        try:
+            WORKER = database.createWorker()
+            if WORKER is None:
+                raise RuntimeError("createWorker returned None")
+            break
+        except Exception:
+            log.error("boot: failed to create worker, retrying in 60s")
+            database.reset_db_connection()
+            time.sleep(60)
+    while True:
+        workerCount = database.scanWorkers(WORKER)
+        if workerCount != -1:
+            break
         log.error("boot: DB unavailable, retrying in 60s")
         database.reset_db_connection()
         time.sleep(60)
-        return boot()
     log.info("Worker ID: " + str(WORKER))
     log.info("Workers  : " + str(workerCount))
     users = models.Users.objects.filter(enabled=1).count()
