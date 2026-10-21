@@ -86,19 +86,21 @@ def user_status(user: str, detailed: int = 0):
         user        (str)  : User ID
         detailed    (int)  : Whether to Return Detailed output or not.
     Returns:
-        models.Users | str: Depends on if Detailed Output or not.
+        models.Users | int | None: Detailed user object, the enabled flag,
+        or None if the database is unavailable. A reachable-but-absent user
+        yields 0 (treated as disabled) so callers break out rather than retry.
     """
-
     try:
-        users = models.Users.objects.filter(user=str(user))
-        if(detailed):
-            return users.first()
-        else:
-            return users.first().enabled
+        first = models.Users.objects.filter(user=str(user)).first()
     except Exception:
         log.warning("user_status: DB unavailable for %s", user)
         reset_db_connection()
         return None
+    if first is None:
+        return None if detailed else 0
+    if detailed:
+        return first
+    return first.enabled
 
 
 def add_artists(spotify: dict, playlist: bool = False):
