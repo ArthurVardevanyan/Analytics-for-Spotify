@@ -20,6 +20,19 @@ KILL = {}
 log = logging.getLogger(__name__)
 
 
+def pruneDeadThreads():
+    """
+    Removes finished threads from THREADS registry.
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
+    global THREADS
+    THREADS = [thread for thread in THREADS if thread[1].is_alive()]
+
+
 def keepAlive():
     """
     Calls Thread Management Function on Loop
@@ -33,10 +46,13 @@ def keepAlive():
     global WORKER
     while(1 == 1):
         time.sleep(75)
+        pruneDeadThreads()
         workerCount = database.scanWorkers(WORKER)
         if workerCount == -1:
             WORKER_HEALTHY = False
-            log.exception("KeepAlive: DB Error: Skipping")
+            log.warning("KeepAlive: DB error, skipping; retrying in 60s")
+            database.reset_db_connection()
+            time.sleep(60)
             continue
         else:
             WORKER_HEALTHY = True
@@ -177,15 +193,20 @@ def update_status(user: str, status: str, value: int):
     Returns:
         int: unused return
     """
-    if status == "statusPlaylist":
-        models.Users.objects.filter(user=str(user)).update(
-            statusPlaylist=str(value))
-    elif status == "statusSong":
-        models.Users.objects.filter(
-            user=str(user)).update(statusSong=str(value))
-    else:
+    try:
+        if status == "statusPlaylist":
+            models.Users.objects.filter(user=str(user)).update(
+                statusPlaylist=str(value))
+        elif status == "statusSong":
+            models.Users.objects.filter(
+                user=str(user)).update(statusSong=str(value))
+        else:
+            return 1
+        return 0
+    except Exception:
+        log.warning("update_status: DB unavailable for %s (%s=%s)", user, status, value)
+        database.reset_db_connection()
         return 1
-    return 0
 
 
 def playlistSongsChecker(user: str, once: int = 0):
@@ -198,37 +219,51 @@ def playlistSongsChecker(user: str, once: int = 0):
     Returns:
         int: unused return
     """
-    update_status(user, "statusPlaylist", 0)
-    time.sleep(15)
-    previousDay = ""
-    status = database.user_status(user)
-    while(status == 1):
-        global KILL
-        if (KILL.get(user+"playlistSongThread", 0) == 1):
-            del KILL[str(user)+"playlistSongThread"]
-            break
-        update_status(user, "statusPlaylist", 2)
-        utc_time = datetime.now()
-        local_time = utc_time.astimezone()
-        lastUpdated = local_time.strftime("%Y-%m-%d")
-        if previousDay != lastUpdated:
-            playlists = database.get_playlists(user)
-            count = 0
-            for playlist in playlists:
-                playlistSongs.main(user, playlist)
-                count = count + 1
-            if(count == 0):
-                update_status(user, "statusPlaylist", 0)
-                return
-            if(once == 1):
+    try:
+        update_status(user, "statusPlaylist", 0)
+        time.sleep(15)
+        previousDay = ""
+        while True:
+            global KILL
+            status = database.user_status(user)
+            if status is None:
+                log.warning("Playlist: DB unavailable for %s, retrying", user)
+                database.reset_db_connection()
+                time.sleep(360)
+                continue
+            if status != 1:
+                break
+            if (KILL.get(user+"playlistSongThread", 0) == 1):
+                del KILL[str(user)+"playlistSongThread"]
+                break
+            update_status(user, "statusPlaylist", 2)
+            utc_time = datetime.now()
+            local_time = utc_time.astimezone()
+            lastUpdated = local_time.strftime("%Y-%m-%d")
+            if previousDay != lastUpdated:
+                playlists = database.get_playlists(user)
+                if playlists is None:
+                    log.warning("Playlist: DB unavailable for %s (get_playlists), retrying", user)
+                    time.sleep(360)
+                    continue
+                count = 0
+                for playlist in playlists:
+                    playlistSongs.main(user, playlist)
+                    count = count + 1
+                if(count == 0):
+                    update_status(user, "statusPlaylist", 0)
+                    return
+                if(once == 1):
+                    update_status(user, "statusPlaylist", 1)
+                    return
+                previousDay = lastUpdated
                 update_status(user, "statusPlaylist", 1)
-                return
-            previousDay = lastUpdated
+                time.sleep(3600)
             update_status(user, "statusPlaylist", 1)
-            time.sleep(3600)
-        update_status(user, "statusPlaylist", 1)
-        time.sleep(360)
-        status = database.user_status(user)
+            time.sleep(360)
+    except Exception:
+        log.exception("Playlist Thread Failure: " + str(user))
+        database.reset_db_connection()
     update_status(user, "statusPlaylist", 0)
     return 0
 
@@ -312,25 +347,46 @@ def historySpotify(user: str):
     try:
         update_status(user, "statusSong", 0)
         time.sleep(10)
-        status = database.user_status(user)
-        if (status != 1):
-            return
         url = "https://api.spotify.com/v1/me/player/recently-played?limit=50"
-        header = {"Accept": "application/json",
-                  "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
-        while(status == 1):
-            workerCount = database.scanWorkers(WORKER)
-            killThreads(workerCount, user)
+        while True:
             global KILL
+            status = database.user_status(user)
+            if status is None:
+                log.warning("History: DB unavailable for %s, retrying", user)
+                database.reset_db_connection()
+                time.sleep(60)
+                continue
+            if status != 1:
+                break
             if (KILL.get(user+"SpotifyThread", 0) == 1):
                 del KILL[str(user)+"SpotifyThread"]
                 break
+            workerCount = database.scanWorkers(WORKER)
+            if workerCount == -1:
+                database.reset_db_connection()
+                time.sleep(60)
+                continue
+            killThreads(workerCount, user)
             update_status(user, "statusSong", 2)
             try:
+                token = authorize(user)
+                if not token:
+                    log.warning("History: invalid/revoked Spotify token for %s; retrying after backoff (re-authorization may be required)", user)
+                    update_status(user, "statusSong", 1)
+                    time.sleep(3600)
+                    continue
+                header = {"Accept": "application/json",
+                          "Content-Type": "application/json", "Authorization": "Bearer " + token}
                 response = requests.get(url, headers=header)
                 if("the access token expired" in str.lower(response.text)):
+                    token = authorize(user)
+                    if not token:
+                        log.warning("History: invalid/revoked Spotify token for %s; retrying after backoff (re-authorization may be required)", user)
+                        update_status(user, "statusSong", 1)
+                        time.sleep(3600)
+                        continue
                     header = {"Accept": "application/json",
-                              "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
+                              "Content-Type": "application/json", "Authorization": "Bearer " + token}
                     response = requests.get(url, headers=header)
                 else:
                     newSongs = False
@@ -372,14 +428,14 @@ def historySpotify(user: str):
                         log.debug("No New Songs: " + str(user))
                 update_status(user, "statusSong", 1)
                 time.sleep(1200)
-            except:
+            except Exception:
                 log.exception("Song Lookup Failure: " + str(user))
-                log.warning(str(response))
+                database.reset_db_connection()
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
-            status = database.user_status(user)
-    except:
+    except Exception:
         log.exception("History Song Failure: " + str(user))
+        database.reset_db_connection()
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
@@ -388,7 +444,7 @@ def historySpotify(user: str):
 
 def realTimeSpotify(user: str, hybrid: bool):
     """
-    Incepts Thread for Monitoring User's Playback History using RealTime Mode
+    Incepts Thread for monitoring Spotify User Playback History using RealTime Mode
 
     Parameters:
         user    (str): User ID
@@ -399,26 +455,47 @@ def realTimeSpotify(user: str, hybrid: bool):
     try:
         update_status(user, "statusSong", 0)
         time.sleep(10)
-        status = database.user_status(user)
-        if (status != 1):
-            return
         url = 'https://api.spotify.com/v1/me/player/currently-playing?market=US'
-        header = {"Accept": "application/json",
-                  "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
         previous = " "
-        while(status == 1):
-            workerCount = database.scanWorkers(WORKER)
-            killThreads(workerCount, user)
+        while True:
             global KILL
+            status = database.user_status(user)
+            if status is None:
+                log.warning("Realtime: DB unavailable for %s, retrying", user)
+                database.reset_db_connection()
+                time.sleep(60)
+                continue
+            if status != 1:
+                break
             if (KILL.get(user+"SpotifyThread", 0) == 1):
                 del KILL[str(user)+"SpotifyThread"]
                 break
+            workerCount = database.scanWorkers(WORKER)
+            if workerCount == -1:
+                database.reset_db_connection()
+                time.sleep(60)
+                continue
+            killThreads(workerCount, user)
             update_status(user, "statusSong", 2)
             try:
+                token = authorize(user)
+                if not token:
+                    log.warning("Realtime: invalid/revoked Spotify token for %s; retrying after backoff (re-authorization may be required)", user)
+                    update_status(user, "statusSong", 1)
+                    time.sleep(3600)
+                    continue
+                header = {"Accept": "application/json",
+                          "Content-Type": "application/json", "Authorization": "Bearer " + token}
                 response = requests.get(url, headers=header)
                 if("the access token expired" in str.lower(response.text)):
+                    token = authorize(user)
+                    if not token:
+                        log.warning("Realtime: invalid/revoked Spotify token for %s; retrying after backoff (re-authorization may be required)", user)
+                        update_status(user, "statusSong", 1)
+                        time.sleep(3600)
+                        continue
                     header = {"Accept": "application/json",
-                              "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
+                              "Content-Type": "application/json", "Authorization": "Bearer " + token}
                     response = requests.get(url, headers=header)
                 elif("no content" in str.lower(response.reason)):
                     log.debug("Nothing is Playing: " + str(user))
@@ -478,14 +555,14 @@ def realTimeSpotify(user: str, hybrid: bool):
                         time.sleep(60)
                 update_status(user, "statusSong", 1)
                 time.sleep(5)
-            except:
+            except Exception:
                 log.exception("Song Lookup Failure: " + str(user))
-                log.warning(str(response))
+                database.reset_db_connection()
                 update_status(user, "statusSong", 1)
                 time.sleep(60)
-            status = database.user_status(user)
-    except:
+    except Exception:
         log.exception("Realtime Song Failure: " + str(user))
+        database.reset_db_connection()
         update_status(user, "statusSong", 1)
         time.sleep(60)
     update_status(user, "statusSong", 0)
@@ -525,28 +602,42 @@ def songIdUpdaterChecker(user: str, once: int = 0):
     Returns:
         int: unused return
     """
-    previousDay = ""
-    status = database.user_status(user)
-    time.sleep(15)
-    while(status == 1):
-        global KILL
-        if (KILL.get(user+"songIdUpdaterThread", 0) == 1):
-            del KILL[str(user)+"songIdUpdaterThread"]
-            break
-        time.sleep(300)
-        utc_time = datetime.now()
-        local_time = utc_time.astimezone()
-        lastUpdated = local_time.strftime("%Y-%m-%d")
-        if previousDay != lastUpdated:
-            changeHistory = songIdUpdater(user)
-            if changeHistory:
-                log.info(str(changeHistory))
-            if(once == 1):
-                return
-            previousDay = lastUpdated
-            time.sleep(5000)
-        time.sleep(500)
+    try:
+        previousDay = ""
         status = database.user_status(user)
+        if status is None:
+            log.warning("SongIdUpdater: DB unavailable for %s, retrying", user)
+            database.reset_db_connection()
+            time.sleep(60)
+            status = database.user_status(user)
+        time.sleep(15)
+        while status == 1:
+            global KILL
+            if (KILL.get(user+"songIdUpdaterThread", 0) == 1):
+                del KILL[str(user)+"songIdUpdaterThread"]
+                break
+            time.sleep(300)
+            utc_time = datetime.now()
+            local_time = utc_time.astimezone()
+            lastUpdated = local_time.strftime("%Y-%m-%d")
+            if previousDay != lastUpdated:
+                changeHistory = songIdUpdater(user)
+                if changeHistory:
+                    log.info(str(changeHistory))
+                if(once == 1):
+                    return
+                previousDay = lastUpdated
+                time.sleep(5000)
+            time.sleep(500)
+            status = database.user_status(user)
+            if status is None:
+                log.warning("SongIdUpdater: DB unavailable for %s, retrying", user)
+                database.reset_db_connection()
+                time.sleep(60)
+                status = database.user_status(user)
+    except Exception:
+        log.exception("SongIdUpdater Thread Failure: " + str(user))
+        database.reset_db_connection()
 
 
 def boot():
@@ -561,8 +652,23 @@ def boot():
         int: unused return
     """
     global WORKER
-    WORKER = database.createWorker()
-    workerCount = database.scanWorkers(WORKER)
+    while True:
+        try:
+            WORKER = database.createWorker()
+            if WORKER is None:
+                raise RuntimeError("createWorker returned None")
+            break
+        except Exception:
+            log.error("boot: failed to create worker, retrying in 60s")
+            database.reset_db_connection()
+            time.sleep(60)
+    while True:
+        workerCount = database.scanWorkers(WORKER)
+        if workerCount != -1:
+            break
+        log.error("boot: DB unavailable, retrying in 60s")
+        database.reset_db_connection()
+        time.sleep(60)
     log.info("Worker ID: " + str(WORKER))
     log.info("Workers  : " + str(workerCount))
     users = models.Users.objects.filter(enabled=1).count()

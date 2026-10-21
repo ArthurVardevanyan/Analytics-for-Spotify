@@ -1,4 +1,5 @@
 import webBackend.models as models
+import monitoringBackend.database as database
 import logging
 import sys
 sys.path.append("..")
@@ -15,9 +16,14 @@ def songIdUpdater(user: str):
     Returns:
         list: List of Changed Song IDs
     """
-    history = getHistory(user)
-    history = duplicateFinder(history)
-    return databaseUpdate(history, user)
+    try:
+        history = getHistory(user)
+        history = duplicateFinder(history)
+        return databaseUpdate(history, user)
+    except Exception:
+        log.exception("Song ID Updater: General error for user %s", user)
+        database.reset_db_connection()
+        return []
 
 
 def getHistory(user: str):
