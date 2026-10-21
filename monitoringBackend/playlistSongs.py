@@ -1,6 +1,7 @@
 import monitoringBackend.database as database
 from webBackend.credentials import refresh_token as authorize
 import requests
+import time
 import sys
 import logging
 sys.path.append("..")
@@ -25,35 +26,63 @@ def main(user: str, playlist: str):
     try:
         url = 'https://api.spotify.com/v1/playlists/' + \
             playlist + "/tracks?offset=0&limit=100&market=US"
-    except:
+    except Exception:
         logging.exception("Playlist Retrieval Failure")
         return False
 
-    header = {"Accept": "application/json",
-              "Content-Type": "application/json", "Authorization": "Bearer " + authorize(user)}
+    try:
+        token = authorize(user)
+        if not token:
+            log.warning("Playlist: revoked/invalid token for %s, retrying after backoff", user)
+            database.reset_db_connection()
+            time.sleep(3600)
+            return False
+        header = {"Accept": "application/json",
+                  "Content-Type": "application/json", "Authorization": "Bearer " + token}
+    except Exception:
+        log.exception("Playlist: authorize failed for %s", user)
+        database.reset_db_connection()
+        return False
+
     playlistSections = []
     loop = True
-    response = requests.get(url, headers=header).json()
+    try:
+        response = requests.get(url, headers=header).json()
+    except Exception:
+        logging.exception("Playlist: API request failed for %s", user)
+        database.reset_db_connection()
+        return False
+
     database.add_playlist(playlist)
     playlistSections.append(response.get("items"))
-    if response.get("next") == None:
+    if response.get("next") is None:
         loop = False
     else:
         url = response.get("next")
 
     while(loop):
-        response = requests.get(url, headers=header).json()
+        try:
+            response = requests.get(url, headers=header).json()
+        except Exception:
+            log.warning("Playlist: API pagination request failed, retrying")
+            time.sleep(60)
+            try:
+                response = requests.get(url, headers=header).json()
+            except Exception:
+                log.exception("Playlist: API pagination failed after retry")
+                database.reset_db_connection()
+                return False
         playlistSections.append(response.get("items"))
-        if response.get("next") == None:
+        if response.get("next") is None:
             loop = False
         else:
             url = response.get("next")
 
     playListDB = []
     for section in playlistSections:
-        if section != None:
+        if section is not None:
             for song in section:
-                if song.get("track") != None:
+                if song is not None and song.get("track") is not None:
                     if song.get("is_local"):
                         playListDB.append((song, "local"))
                     elif song.get("track").get("is_playable"):
@@ -61,7 +90,12 @@ def main(user: str, playlist: str):
                     else:
                         playListDB.append((song, "unplayable"))
 
-    database.playlist_input(user, playlist, playListDB)
+    try:
+        database.playlist_input(user, playlist, playListDB)
+    except Exception:
+        log.exception("Playlist: DB input failed for %s", user)
+        database.reset_db_connection()
+        return False
 
     return True
 

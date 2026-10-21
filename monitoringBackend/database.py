@@ -3,10 +3,28 @@ import sys
 from random import randint
 import logging
 import sys
+from django.db import connection
 import webBackend.models as models
 sys.path.append("..")
 
 log = logging.getLogger(__name__)
+
+
+def reset_db_connection():
+    """
+    Drop the current (possibly stale) database connection so that the next
+    query transparently establishes a fresh one. Worker threads call this
+    after a transient database outage so they recover without a pod restart.
+
+    Parameters:
+        None
+    Returns:
+        None
+    """
+    try:
+        connection.close()
+    except Exception:
+        log.exception("reset_db_connection: failed to close connection")
 
 
 def scanWorkers(workerID: int):
@@ -25,17 +43,17 @@ def scanWorkers(workerID: int):
 
     try:
         models.Workers.objects.filter(worker=str(workerID)).update(
-         lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
-    except:
+            lastUpdated=str(currentEpoch), updatedTime=str(utc_time.strftime("%Y-%m-%d %H:%M:%S")))
+        for worker in models.Workers.objects.all():
+            if currentEpoch - worker.lastUpdated > 90:
+                models.Workers.objects.filter(
+                    worker=str(worker.worker)).delete()
+            else:
+                count += 1
+    except Exception:
         log.exception("Scan Worker DB Error")
+        reset_db_connection()
         return -1
-
-    for worker in models.Workers.objects.all():
-        if currentEpoch - worker.lastUpdated > 90:
-            models.Workers.objects.filter(
-                worker=str(worker.worker)).delete()
-        else:
-            count += 1
     return count
 
 
@@ -71,11 +89,16 @@ def user_status(user: str, detailed: int = 0):
         models.Users | str: Depends on if Detailed Output or not.
     """
 
-    users = models.Users.objects.filter(user=str(user))
-    if(detailed):
-        return users.first()
-    else:
-        return users.first().enabled
+    try:
+        users = models.Users.objects.filter(user=str(user))
+        if(detailed):
+            return users.first()
+        else:
+            return users.first().enabled
+    except Exception:
+        log.warning("user_status: DB unavailable for %s", user)
+        reset_db_connection()
+        return None
 
 
 def add_artists(spotify: dict, playlist: bool = False):
@@ -255,14 +278,19 @@ def get_playlists(user: str):
         list: List of Playlists
     """
 
-    playlistsList = models.PlaylistsUsers.objects.filter(
-        user_id=user).select_related('playlistID').values('playlistID', 'playlistID__name', 'playlistID__lastUpdated')
+    try:
+        playlistsList = models.PlaylistsUsers.objects.filter(
+            user_id=user).select_related('playlistID').values('playlistID', 'playlistID__name', 'playlistID__lastUpdated')
 
-    playlists = []
-    for playlist in playlistsList:
-        playlists.append(
-            (playlist['playlistID'], playlist['playlistID__name'], playlist['playlistID__lastUpdated']))
-    return playlists
+        playlists = []
+        for playlist in playlistsList:
+            playlists.append(
+                (playlist['playlistID'], playlist['playlistID__name'], playlist['playlistID__lastUpdated']))
+        return playlists
+    except Exception:
+        log.warning("get_playlists: DB unavailable for %s", user)
+        reset_db_connection()
+        return None
 
 
 def add_playlist(playlist: str):
